@@ -6,6 +6,7 @@ from io import StringIO
 
 from pyinfra import host, logger
 from pyinfra.operations import apt, files, server, systemd, python
+from pyinfra.facts.files import File
 from .acmetool import deploy_acmetool
 
 
@@ -23,7 +24,7 @@ def _install_chatctl() -> None:
 
 
 def _configure_opendkim(
-    domain: str, dkim_selector: str, dkim_key: str, dkim_txt: str
+    domain: str, dkim_selector: str
 ) -> bool:
     """Configures OpenDKIM"""
     need_restart = False
@@ -46,20 +47,7 @@ def _configure_opendkim(
         present=True,
     )
 
-    if dkim_key:
-        files.put(
-            name="Put the DKIM key",
-            src=StringIO(dkim_key),
-            dest=f"/etc/dkimkeys/{dkim_selector}.private",
-            mode="600",
-        )
-        files.put(
-            name="Put the DKIM DNS textfile",
-            src=StringIO(dkim_txt),
-            dest=f"/etc/dkimkeys/{dkim_selector}.txt",
-            mode="600",
-        )
-    else:
+    if not host.get_fact(File, f"/etc/dkimkeys/{dkim_selector}.private"):
         server.shell(
             name="Generate OpenDKIM domain keys",
             commands=[
@@ -132,8 +120,6 @@ def _configure_dovecot(domain: str) -> bool:
 def deploy_chatmail() -> None:
     domain = host.data.domain
     dkim_selector = host.data.dkim_selector
-    dkim_key = host.data.dkim_key
-    dkim_txt = host.data.dkim_txt
 
     apt.update(name="apt update")
     server.group(name="Create vmail group", group="vmail", system=True)
@@ -176,7 +162,7 @@ def deploy_chatmail() -> None:
     dovecot_need_restart = _configure_dovecot(domain)
     postfix_need_restart = _configure_postfix(domain)
     opendkim_need_restart = _configure_opendkim(
-        domain, dkim_selector, dkim_key, dkim_txt
+        domain, dkim_selector
     )
 
     systemd.service(

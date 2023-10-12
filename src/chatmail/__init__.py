@@ -1,0 +1,215 @@
+"""
+Chat Mail pyinfra deploy.
+"""
+import importlib.resources
+from io import StringIO
+
+from pyinfra import host, logger
+from pyinfra.operations import apt, files, server, systemd, python
+from .acmetool import deploy_acmetool
+
+
+def _install_chatctl() -> None:
+    """Setup chatctl."""
+    files.put(
+        src=importlib.resources.files(__package__)
+        .joinpath("chatctl/chatctl.py")
+        .open("rb"),
+        dest="/home/vmail/chatctl",
+        user="vmail",
+        group="vmail",
+        mode="755",
+    )
+
+
+def _configure_opendkim(
+    domain: str, dkim_selector: str, dkim_key: str, dkim_txt: str
+) -> bool:
+    """Configures OpenDKIM"""
+    need_restart = False
+
+    main_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("opendkim/opendkim.conf"),
+        dest="/etc/opendkim.conf",
+        user="root",
+        group="root",
+        mode="644",
+        config={"domain_name": domain, "opendkim_selector": dkim_selector},
+    )
+
+    files.directory(
+        name="Add opendkim socket directory to /var/spool/postfix",
+        path="/var/spool/postfix/opendkim",
+        user="opendkim",
+        group="opendkim",
+        mode="750",
+        present=True,
+    )
+
+    if dkim_key:
+        files.put(
+            name="Put the DKIM key",
+            src=StringIO(dkim_key),
+            dest=f"/etc/dkimkeys/{dkim_selector}.private",
+            mode="600",
+        )
+        files.put(
+            name="Put the DKIM DNS textfile",
+            src=StringIO(dkim_txt),
+            dest=f"/etc/dkimkeys/{dkim_selector}.txt",
+            mode="600",
+        )
+    else:
+        server.shell(
+            name="Generate OpenDKIM domain keys",
+            commands=[
+                f"opendkim-genkey -D /etc/dkimkeys -d {domain} -s {dkim_selector}"
+            ],
+            _sudo=True,
+            _sudo_user="opendkim",
+        )
+
+    need_restart |= main_config.changed
+
+    return need_restart
+
+
+def _configure_postfix(domain: str) -> bool:
+    """Configures Postfix SMTP server."""
+    need_restart = False
+
+    main_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
+        dest="/etc/postfix/main.cf",
+        user="root",
+        group="root",
+        mode="644",
+        config={"domain_name": domain},
+    )
+    need_restart |= main_config.changed
+
+    master_config = files.put(
+        src=importlib.resources.files(__package__)
+        .joinpath("postfix/master.cf")
+        .open("rb"),
+        dest="/etc/postfix/master.cf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= master_config.changed
+
+    return need_restart
+
+
+def _configure_dovecot(domain: str) -> bool:
+    """Configures Dovecot IMAP server."""
+    need_restart = False
+
+    main_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
+        dest="/etc/dovecot/dovecot.conf",
+        user="root",
+        group="root",
+        mode="644",
+        config={"hostname": domain},
+    )
+    need_restart |= main_config.changed
+
+    # luarocks install http lpeg_patterns fifo
+    auth_script = files.put(
+        src=importlib.resources.files(__package__).joinpath("dovecot/auth.lua"),
+        dest="/etc/dovecot/auth.lua",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= auth_script.changed
+
+    return need_restart
+
+
+def deploy_chatmail() -> None:
+    domain = host.data.domain
+    dkim_selector = host.data.dkim_selector
+    dkim_key = host.data.dkim_key
+    dkim_txt = host.data.dkim_txt
+
+    apt.update(name="apt update")
+    server.group(name="Create vmail group", group="vmail", system=True)
+    server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
+
+    server.group(name="Create opendkim group", group="opendkim", system=True)
+    server.user(
+        name="Add postfix user to opendkim group for socket access",
+        user="postfix",
+        groups=["opendkim"],
+        system=True,
+    )
+
+    # Deploy acmetool to have TLS certificates.
+    deploy_acmetool(domains=[domain])
+
+    apt.packages(
+        name="Install Postfix",
+        packages="postfix",
+    )
+
+    apt.packages(
+        name="Install Dovecot",
+        packages=[
+            "dovecot-imapd",
+            "dovecot-lmtpd",
+            "dovecot-auth-lua",
+        ],
+    )
+
+    apt.packages(
+        name="Install OpenDKIM",
+        packages=[
+            "opendkim",
+            "opendkim-tools",
+        ],
+    )
+
+    _install_chatctl()
+    dovecot_need_restart = _configure_dovecot(domain)
+    postfix_need_restart = _configure_postfix(domain)
+    opendkim_need_restart = _configure_opendkim(
+        domain, dkim_selector, dkim_key, dkim_txt
+    )
+
+    systemd.service(
+        name="Start and enable OpenDKIM",
+        service="opendkim.service",
+        running=True,
+        enabled=True,
+        restarted=opendkim_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable Postfix",
+        service="postfix.service",
+        running=True,
+        enabled=True,
+        restarted=postfix_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable Dovecot",
+        service="dovecot.service",
+        running=True,
+        enabled=True,
+        restarted=dovecot_need_restart,
+    )
+
+    def callback():
+        result = server.shell(
+            commands=[
+                f"""sed 's/\tIN/ 600 IN/;s/\t(//;s/\"$//;s/^\t  \"//g; s/ ).*//' """
+                f"""/etc/dkimkeys/{dkim_selector}.txt | tr --delete '\n'"""
+            ]
+        )
+        logger.info(f"Add this TXT entry into DNS zone: {result.stdout}")
+
+    python.call(name="Print TXT entry for DKIM", function=callback)

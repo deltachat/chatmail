@@ -1,0 +1,94 @@
+## Dovecot configuration file
+
+protocols = imap lmtp
+
+auth_mechanisms = plain
+
+# Authentication for system users.
+passdb {
+  driver = lua
+  args = file=/etc/dovecot/auth.lua
+}
+userdb {
+  driver = lua
+  args = file=/etc/dovecot/auth.lua
+}
+
+##
+## Mailbox locations and namespaces
+##
+
+# Mailboxes are stored in the "mail" directory of the vmail user home.
+mail_location = maildir:/home/vmail/mail/%d/%u
+
+namespace inbox {
+  inbox = yes
+
+  mailbox Drafts {
+    special_use = \Drafts
+  }
+  mailbox Junk {
+    special_use = \Junk
+  }
+  mailbox Trash {
+    special_use = \Trash
+  }
+
+  # For \Sent mailboxes there are two widely used names. We'll mark both of
+  # them as \Sent. User typically deletes one of them if duplicates are created.
+  mailbox Sent {
+    special_use = \Sent
+  }
+  mailbox "Sent Messages" {
+    special_use = \Sent
+  }
+}
+
+mail_uid = vmail
+mail_gid = vmail
+mail_privileged_group = vmail
+
+##
+## Mail processes
+##
+
+# Enable IMAP COMPRESS (RFC 4978).
+# <https://datatracker.ietf.org/doc/html/rfc4978.html>
+protocol imap {
+  mail_plugins = $mail_plugins imap_zlib
+}
+
+plugin {
+  imap_compress_deflate_level = 6
+}
+
+service lmtp {
+  user=vmail
+
+  unix_listener /var/spool/postfix/private/dovecot-lmtp {
+    group = postfix
+    mode = 0600
+    user = postfix
+  }
+}
+
+service auth {
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0660
+    user = postfix
+    group = postfix
+  }
+}
+
+service auth-worker {
+  # Default is root.
+  # Drop privileges we don't need.
+  user = $default_internal_user
+}
+
+ssl = required
+ssl_cert = </var/lib/acme/live/{{ config.hostname }}/fullchain
+ssl_key = </var/lib/acme/live/{{ config.hostname }}/privkey
+ssl_dh = </usr/share/dovecot/dh.pem
+ssl_min_protocol = TLSv1.2
+ssl_prefer_server_ciphers = yes

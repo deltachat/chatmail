@@ -12,3 +12,9 @@ Dovecot listens on ports 143(imap) and 993 (imaps).
 ## DNS
 
 For DKIM you must add a DNS entry as in /etc/opendkim/selector.txt (where selector is the opendkim_selector configured in the chatmail inventory).
+
+## Run with pyinfra
+
+```
+CHATMAIL_DOMAIN=c1.testrun.org pyinfra c1.testrun.org deploy.py
+```

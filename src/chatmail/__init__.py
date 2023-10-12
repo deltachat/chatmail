@@ -88,7 +88,7 @@ def _configure_postfix(domain: str) -> bool:
     return need_restart
 
 
-def _configure_dovecot(domain: str) -> bool:
+def _configure_dovecot(mail_server: str) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
@@ -98,7 +98,7 @@ def _configure_dovecot(domain: str) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"hostname": domain},
+        config={"hostname": mail_server},
     )
     need_restart |= main_config.changed
 
@@ -115,9 +115,13 @@ def _configure_dovecot(domain: str) -> bool:
     return need_restart
 
 
-def deploy_chatmail() -> None:
-    domain = host.data.domain
-    dkim_selector = host.data.dkim_selector
+def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
+    """Deploy a chat-mail instance.
+
+    :param mail_domain: the domain part of your future email addresses, so "example.org" in user@example.org
+    :param mail_server: the DNS name under which your mail server is reachable
+    :param dkim_selector:
+    """
 
     apt.update(name="apt update")
     server.group(name="Create vmail group", group="vmail", system=True)
@@ -132,7 +136,7 @@ def deploy_chatmail() -> None:
     )
 
     # Deploy acmetool to have TLS certificates.
-    deploy_acmetool(domains=[domain])
+    deploy_acmetool(domains=[mail_server])
 
     apt.packages(
         name="Install Postfix",
@@ -157,9 +161,9 @@ def deploy_chatmail() -> None:
     )
 
     _install_chatctl()
-    dovecot_need_restart = _configure_dovecot(domain)
-    postfix_need_restart = _configure_postfix(domain)
-    opendkim_need_restart = _configure_opendkim(domain, dkim_selector)
+    dovecot_need_restart = _configure_dovecot(mail_server)
+    postfix_need_restart = _configure_postfix(mail_domain)
+    opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
 
     systemd.service(
         name="Start and enable OpenDKIM",

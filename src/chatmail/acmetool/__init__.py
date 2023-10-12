@@ -1,6 +1,14 @@
-import importlib.resources
+from pathlib import Path
 
 from pyinfra.operations import apt, files, systemd, server
+
+
+def openfile(basename):
+    # on newer python versions:
+    # importlib.resources.files(__package__).joinpath(basename).open("rb")
+    # but here we use a way supported on old pythons
+    dirpath = Path(__path__[0])
+    return dirpath.joinpath(basename).open("rb")
 
 
 def deploy_acmetool(nginx_hook=False, email="", domains=[]):
@@ -11,7 +19,7 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
     )
 
     files.put(
-        src=importlib.resources.files(__package__).joinpath("acmetool.cron").open("rb"),
+        src=openfile("acmetool.cron"),
         dest="/etc/cron.d/acmetool",
         user="root",
         group="root",
@@ -20,9 +28,7 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
 
     if nginx_hook:
         files.put(
-            src=importlib.resources.files(__package__)
-            .joinpath("acmetool.hook")
-            .open("rb"),
+            src=openfile("acmetool.hook"),
             dest="/usr/lib/acme/hooks/nginx",
             user="root",
             group="root",
@@ -30,7 +36,7 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         )
 
     files.template(
-        src=importlib.resources.files(__package__).joinpath("response-file.yaml.j2"),
+        src=openfile("response-file.yaml.j2"),
         dest="/var/lib/acme/conf/responses",
         user="root",
         group="root",
@@ -39,9 +45,7 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
     )
 
     service_file = files.put(
-        src=importlib.resources.files(__package__)
-        .joinpath("acmetool-redirector.service")
-        .open("rb"),
+        src=openfile("acmetool-redirector.service"),
         dest="/etc/systemd/system/acmetool-redirector.service",
         user="root",
         group="root",

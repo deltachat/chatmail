@@ -9,17 +9,30 @@ def get_user_data(user):
             homedir="/home/vmail/link2xt",
             uid="vmail",
             gid="vmail",
-            password=b"Ahyei6ie"
+            password=b"Ahyei6ie",
         )
     return {}
 
 
+def create_user(user, password):
+    assert isinstance(password, bytes)
+    return dict(
+        homedir=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password
+    )
+
+
 def verify_user(user, password):
     userdata = get_user_data(user)
-    if userdata.get("password") == password:
+    if userdata:
+        if userdata.get("password") == password:
+            userdata["status"] = "ok"
+        else:
+            userdata["status"] = "fail"
+    else:
+        userdata = create_user(user, password)
         userdata["status"] = "ok"
-        return userdata
-    return dict(status="fail")
+
+    return userdata
 
 
 def lookup_user(user):
@@ -36,13 +49,13 @@ def dump_result(res):
         print(f"{key}={value}")
 
 
-if sys.argv[1] == "hexauth":
-    login = base64.b16decode(sys.argv[2])
-    password = base64.b16decode(sys.argv[3])
-    res = verify_user(login, password)
-    dump_result(res)
-elif sys.argv[1] == "hexlookup":
-    login = base64.b16decode(sys.argv[2])
-    res = lookup_user(login)
-    dump_result(res)
-
+if __name__ == "__main__":
+    if sys.argv[1] == "hexauth":
+        login = base64.b16decode(sys.argv[2])
+        password = base64.b16decode(sys.argv[3])
+        res = verify_user(login, password)
+        dump_result(res)
+    elif sys.argv[1] == "hexlookup":
+        login = base64.b16decode(sys.argv[2])
+        res = lookup_user(login)
+        dump_result(res)

@@ -2,7 +2,6 @@
 Chat Mail pyinfra deploy.
 """
 import importlib.resources
-from io import StringIO
 
 from pyinfra import host, logger
 from pyinfra.operations import apt, files, server, systemd, python
@@ -118,7 +117,7 @@ def _configure_dovecot(mail_server: str) -> bool:
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
     """Deploy a chat-mail instance.
 
-    :param mail_domain: the domain part of your future email addresses, so "example.org" in user@example.org
+    :param mail_domain: domain part of your future email addresses
     :param mail_server: the DNS name under which your mail server is reachable
     :param dkim_selector:
     """

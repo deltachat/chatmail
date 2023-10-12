@@ -1,12 +1,14 @@
 
 -- To run this test: run "lua test.lua" while in the same directory as chatctl.py
 
-dovecot = {
-    auth = {
-        PASSDB_RESULT_OK="OK",
-        PASSDB_RESULT_PASSWORD_MISMATCH="MISMATCH"
+if dovecot == nil then
+    dovecot = {
+        auth = {
+            PASSDB_RESULT_OK="OK",
+            PASSDB_RESULT_PASSWORD_MISMATCH="MISMATCH"
+        }
     }
-}
+end
 
 -- Escape shell argument by hex encoding it and wrapping in quotes.
 function escape(data)
@@ -57,13 +59,14 @@ end
 function test_ok(user, password) 
     local res = auth_password_verify({user=user}, password)
     assert(res=="OK")
+    print("OK test_ok "..user.." "..password)
 end
 
 function test_mismatch(user, password) 
     local res = auth_password_verify({user=user}, password)
     assert(res == "MISMATCH")
+    print("OK test_mismatch "..user.." "..password)
 end
-
 
 test_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
 test_mismatch("link2xt@instant2.testrun.org", "Aqwlek")

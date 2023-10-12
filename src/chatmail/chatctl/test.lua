@@ -4,8 +4,10 @@
 if dovecot == nil then
     dovecot = {
         auth = {
-            PASSDB_RESULT_OK="OK",
-            PASSDB_RESULT_PASSWORD_MISMATCH="MISMATCH"
+            PASSDB_RESULT_OK="PASSWORD-OK",
+            PASSDB_RESULT_PASSWORD_MISMATCH="PASSWORD-MISMATCH",
+            USERDB_RESULT_OK="USERDB-OK",
+            USERDB_RESULT_USER_UNKNOWN="USERDB-UNKNOWN"
         }
     }
 end
@@ -19,17 +21,29 @@ end
 -- call out to python program to actually manage authentication for dovecot
 
 function chatctl_verify(user, password)
-    return os.execute("python chatctl.py hexauth "..escape(user).." "..escape(password))
+    local handle = io.popen("python chatctl.py hexauth "..escape(user).." "..escape(password))
+    local result = handle:read("*a")
+    handle:close()
+    return split_chatctl(result)
 end
 
-function chatctl_lookup(hex, user) 
-    return os.execute("python chatctl.py hexlookup "..escape(user))
+function chatctl_lookup(user) 
+    assert(user)
+    local handle = io.popen("python chatctl.py hexlookup "..escape(user))
+    local result = handle:read("*a")
+    handle:close()
+    return split_chatctl(result)
+end
+
+function get_extra_dovecot_output(res)
+    return {homedir=res.homedir, uid=res.uid, gid=res.gid}
 end
 
 
-function auth_password_verify(request, password)
-    if chatctl_verify(request.user, password) then
-        return dovecot.auth.PASSDB_RESULT_OK, {}
+function auth_passdb_verify(request, password)
+    local res = chatctl_verify(request.user, password)
+    if res.status == "ok" then 
+        return dovecot.auth.PASSDB_RESULT_OK, get_extra_dovecot_output(res)
     end
     return dovecot.auth.PASSDB_RESULT_PASSWORD_MISMATCH, ""
 end
@@ -42,8 +56,9 @@ function auth_passdb_lookup(request)
 end
 
 function auth_userdb_lookup(request)
-    if chatctl_lookup(request.user) then
-        return dovecot.auth.USERDB_RESULT_OK, "uid=vmail gid=vmail"
+    local res = chatctl_lookup(request.user) 
+    if res.status == "ok" then
+        return dovecot.auth.USERDB_RESULT_OK, get_extra_dovecot_output(res)
     end
     return dovecot.auth.USERDB_RESULT_USER_UNKNOWN, "no such user"
 end
@@ -58,16 +73,27 @@ end
 
 -- Tests for testing the lua<->python interaction 
 
-function test_verify_ok(user, password) 
-    local res = auth_password_verify({user=user}, password)
-    assert(res=="OK")
-    print("OK test_verify_ok "..user.." "..password)
+function test_passdb_verify_ok(user, password) 
+    local res, extra = auth_passdb_verify({user=user}, password)
+    assert(res==dovecot.auth.PASSDB_RESULT_OK)
+    assert(extra.uid == "vmail")
+    assert(extra.gid == "vmail")
+    -- assert(extra.homedir == "/home/vmail/link2xt")
+    print("OK test_passdb_verify_ok "..user.." "..password)
 end
 
-function test_verify_mismatch(user, password) 
-    local res = auth_password_verify({user=user}, password)
-    assert(res == "MISMATCH")
-    print("OK test_verify_mismatch "..user.." "..password)
+function test_passdb_verify_mismatch(user, password) 
+    local res = auth_passdb_verify({user=user}, password)
+    assert(res == dovecot.auth.PASSDB_RESULT_PASSWORD_MISMATCH)
+    print("OK test_passdb_verify_mismatch "..user.." "..password)
+end
+
+function test_userdb_lookup_ok(user)
+    local res, extra = auth_userdb_lookup({user=user})
+    assert(extra.uid == "vmail")
+    assert(extra.gid == "vmail")
+    assert(res == dovecot.auth.USERDB_RESULT_OK)
+    print("OK test_lookup_ok "..user)
 end
 
 function test_split_chatctl()
@@ -79,6 +105,7 @@ function test_split_chatctl()
 end 
 
 test_split_chatctl()
-test_verify_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
-test_verify_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
+test_passdb_verify_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
+test_passdb_verify_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
+test_userdb_lookup_ok("link2xt@instant2.testrun.org")
 

@@ -49,8 +49,9 @@ function auth_passdb_verify(request, password)
 end
 
 function auth_passdb_lookup(request)
-    if chatctl_lookup(request.user) then
-        return dovecot.auth.PASSDB_RESULT_OK, {}
+    local res = chatctl_lookup(request.user) 
+    if res.status == "ok" then 
+        return dovecot.auth.PASSDB_RESULT_OK, get_extra_dovecot_output(res)
     end
     return dovecot.auth.PASSDB_RESULT_USER_UNKNOWN, "no such user"
 end
@@ -70,6 +71,9 @@ function split_chatctl(output)
     end
     return ret
 end
+
+
+
 
 -- Tests for testing the lua<->python interaction 
 
@@ -93,7 +97,27 @@ function test_userdb_lookup_ok(user)
     assert(extra.uid == "vmail")
     assert(extra.gid == "vmail")
     assert(res == dovecot.auth.USERDB_RESULT_OK)
-    print("OK test_lookup_ok "..user)
+    print("OK test_userdb_lookup_ok "..user)
+end
+
+function test_userdb_lookup_mismatch(user)
+    local res, extra = auth_userdb_lookup({user=user})
+    assert(res == dovecot.auth.USERDB_RESULT_USER_UNKNOWN)
+    print("OK test_userdb_lookup_mismatch "..user)
+end
+
+function test_passdb_lookup_ok(user)
+    local res, extra = auth_passdb_lookup({user=user})
+    assert(extra.uid == "vmail")
+    assert(extra.gid == "vmail")
+    assert(res == dovecot.auth.PASSDB_RESULT_OK)
+    print("OK test_passdb_lookup_ok "..user)
+end
+
+function test_passdb_lookup_mismatch(user)
+    local res, extra = auth_passdb_lookup({user=user})
+    assert(res == dovecot.auth.PASSDB_RESULT_USER_UNKNOWN)
+    print("OK test_passdb_lookup_mismatch "..user)
 end
 
 function test_split_chatctl()
@@ -108,4 +132,7 @@ test_split_chatctl()
 test_passdb_verify_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
 test_passdb_verify_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
 test_userdb_lookup_ok("link2xt@instant2.testrun.org")
+test_userdb_lookup_mismatch("wlekqjlew@xyz.org")
+test_passdb_lookup_ok("link2xt@instant2.testrun.org")
+test_passdb_lookup_mismatch("llqkwjelqwe@xyz.org")
 

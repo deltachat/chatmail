@@ -1,4 +1,6 @@
 
+-- To run this test: run "lua test.lua" while in the same directory as chatctl.py
+
 dovecot = {
     auth = {
         PASSDB_RESULT_OK="OK",
@@ -11,6 +13,8 @@ function escape(data)
    b16 = data:gsub(".", function(char) return string.format("%2X", char:byte()) end)
    return ("'"..b16.."'")
 end
+
+-- call out to python program to actually manage authentication for dovecot
 
 function chatctl_verify(user, password)
     return os.execute("python chatctl.py hexauth "..escape(user).." "..escape(password))
@@ -50,6 +54,17 @@ function split_chatctl_results(output)
     return ret
 end
 
-local res = auth_password_verify({user="link2xt@instant2.testrun.org"}, "Ahyei6ie")
-print(res)
+function test_ok(user, password) 
+    local res = auth_password_verify({user=user}, password)
+    assert(res=="OK")
+end
+
+function test_mismatch(user, password) 
+    local res = auth_password_verify({user=user}, password)
+    assert(res == "MISMATCH")
+end
+
+
+test_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
+test_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
 

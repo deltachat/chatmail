@@ -48,7 +48,7 @@ function auth_userdb_lookup(request)
     return dovecot.auth.USERDB_RESULT_USER_UNKNOWN, "no such user"
 end
 
-function split_chatctl_results(output) 
+function split_chatctl(output) 
     local ret = {}
     for key, value in output:gmatch "(%w+)%s*=%s*(%w+)" do
         ret[key] = value
@@ -56,18 +56,29 @@ function split_chatctl_results(output)
     return ret
 end
 
-function test_ok(user, password) 
+-- Tests for testing the lua<->python interaction 
+
+function test_verify_ok(user, password) 
     local res = auth_password_verify({user=user}, password)
     assert(res=="OK")
-    print("OK test_ok "..user.." "..password)
+    print("OK test_verify_ok "..user.." "..password)
 end
 
-function test_mismatch(user, password) 
+function test_verify_mismatch(user, password) 
     local res = auth_password_verify({user=user}, password)
     assert(res == "MISMATCH")
-    print("OK test_mismatch "..user.." "..password)
+    print("OK test_verify_mismatch "..user.." "..password)
 end
 
-test_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
-test_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
+function test_split_chatctl()
+    local res = split_chatctl("a=3 b=4\nc=5")
+    assert(res["a"] == "3")
+    assert(res["b"] == "4")
+    assert(res["c"] == "5")
+    print("OK test_split_chatctl")
+end 
+
+test_split_chatctl()
+test_verify_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
+test_verify_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
 

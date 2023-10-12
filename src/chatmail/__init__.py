@@ -23,9 +23,7 @@ def _install_chatctl() -> None:
     )
 
 
-def _configure_opendkim(
-    domain: str, dkim_selector: str
-) -> bool:
+def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
     """Configures OpenDKIM"""
     need_restart = False
 
@@ -161,9 +159,7 @@ def deploy_chatmail() -> None:
     _install_chatctl()
     dovecot_need_restart = _configure_dovecot(domain)
     postfix_need_restart = _configure_postfix(domain)
-    opendkim_need_restart = _configure_opendkim(
-        domain, dkim_selector
-    )
+    opendkim_need_restart = _configure_opendkim(domain, dkim_selector)
 
     systemd.service(
         name="Start and enable OpenDKIM",

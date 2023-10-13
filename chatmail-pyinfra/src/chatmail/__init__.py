@@ -12,8 +12,10 @@ from .acmetool import deploy_acmetool
 
 def _install_doveauth() -> None:
     """Setup chatctl."""
-    doveauth_filename = f'doveauth-0.1.tar.gz'
-    doveauth_path = importlib.resources.files(__package__).joinpath(f'../../../doveauth/dist/{doveauth_filename}')
+    doveauth_filename = "doveauth-0.1.tar.gz"
+    doveauth_path = importlib.resources.files(__package__).joinpath(
+        f"../../../doveauth/dist/{doveauth_filename}"
+    )
     remote_path = f"/tmp/{doveauth_filename}"
     if os.path.exists(str(doveauth_path)):
         files.put(
@@ -27,7 +29,7 @@ def _install_doveauth() -> None:
         )
         server.shell(
             name="install local doveauth build with pip",
-            commands=[f"pip install --break-system-packages {remote_path}"]
+            commands=[f"pip install --break-system-packages {remote_path}"],
         )
 
 

@@ -4,20 +4,17 @@ import sys
 
 
 def get_user_data(user):
-    if user == b"link2xt@c1.testrun.org":
+    if user == "link2xt@c1.testrun.org":
         return dict(
             uid="vmail",
             gid="vmail",
-            password=b"Ahyei6ie",
+            password="Ahyei6ie",
         )
     return {}
 
 
 def create_user(user, password):
-    assert isinstance(password, bytes)
-    return dict(
-        home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password
-    )
+    return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
 
 
 def verify_user(user, password):
@@ -50,11 +47,11 @@ def dump_result(res):
 
 if __name__ == "__main__":
     if sys.argv[1] == "hexauth":
-        login = base64.b16decode(sys.argv[2])
-        password = base64.b16decode(sys.argv[3])
+        login = base64.b16decode(sys.argv[2]).decode()
+        password = base64.b16decode(sys.argv[3]).decode()
         res = verify_user(login, password)
         dump_result(res)
     elif sys.argv[1] == "hexlookup":
-        login = base64.b16decode(sys.argv[2])
+        login = base64.b16decode(sys.argv[2]).decode()
         res = lookup_user(login)
         dump_result(res)

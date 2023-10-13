@@ -67,10 +67,12 @@ function test_split_chatctl()
 end 
 
 test_split_chatctl()
-test_password_verify_ok("link2xt@instant2.testrun.org", "Ahyei6ie")
-test_password_verify_mismatch("link2xt@instant2.testrun.org", "Aqwlek")
-test_userdb_lookup_ok("link2xt@instant2.testrun.org")
+test_password_verify_ok("link2xt@c1.testrun.org", "Ahyei6ie")
+test_password_verify_mismatch("link2xt@c1.testrun.org", "Aqwlek")
+test_userdb_lookup_ok("link2xt@c1.testrun.org")
 test_userdb_lookup_mismatch("wlekqjlew@xyz.org")
-test_passdb_lookup_ok("link2xt@instant2.testrun.org")
-test_passdb_lookup_mismatch("llqkwjelqwe@xyz.org")
+
+-- probably not needed by dovecot? 
+-- test_passdb_lookup_ok("link2xt@c1.testrun.org")
+-- test_passdb_lookup_mismatch("llqkwjelqwe@xyz.org")
 

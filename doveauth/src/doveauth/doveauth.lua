@@ -17,8 +17,10 @@ function chatctl_verify(user, password)
 end
 
 function chatctl_lookup(user) 
+    local cmd = "doveauth hexlookup "..escape(user)
     assert(user)
-    local handle = io.popen("doveauth hexlookup "..escape(user))
+    print("executing: "..cmd)
+    local handle = io.popen(cmd)
     local result = handle:read("*a")
     handle:close()
     return split_chatctl(result)

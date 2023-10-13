@@ -14,3 +14,9 @@ def test_verify_or_create():
     assert res["status"] == "ok"
     res = verify_user(b"newuser1@something.org", b"kajdlqweqwe")
     assert res["status"] == "fail"
+
+
+def test_lua_integration(request):
+    p = request.fspath.dirpath("test.lua")
+    assert p.exists()
+    assert 0

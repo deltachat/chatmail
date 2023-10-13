@@ -8,3 +8,20 @@ version = "0.1"
 dependencies = [
   "pyinfra",
 ]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = true
+envlist = lint
+
+[testenv:lint]
+skipdist = True
+skip_install = True
+deps =
+  ruff
+  black
+commands =
+  black --quiet --check --diff src/
+  ruff src/
+"""

@@ -6,6 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "doveauth"
 version = "0.1"
 
+[project.scripts]
+doveauth = "doveauth.doveauth:main"
+
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"
 

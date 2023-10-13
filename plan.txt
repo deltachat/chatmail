@@ -1,0 +1,39 @@
+# Chat-mail server development (up until Oct 18th)
+
+## Dovecot goals/steps
+
+1. create-user-on-login ("doveauth")
+  - repackage so that "doveauth" does not come from a hard-coded path
+  - persistence of accounts
+
+2. per-user quota (adaptive)
+
+3. automatic expiry of messages older than M days
+
+4. automatic expiry of users that haven't logged in for N days
+
+
+## Postfix goals/steps
+
+1. block all outgoing mails with our own LMTP program
+
+2. only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format
+   (probably via an lmtp service)
+
+3. basic outgoing send rate/limits (depending on "account-rating")
+
+
+## online tests (first with plain python/pytest)
+
+- write tests for dovecot login (exists)
+- write tests for postfix logins
+- write A<>B send/receive tests
+
+
+## Delta Chat
+
+1. qr code that defines access to a chatmail instance (like mailadm but without http etc.)
+
+2. support for creating username/password and verifying login works
+
+

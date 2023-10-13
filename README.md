@@ -17,7 +17,6 @@ then run with pyinfra command line tool:
 
 
 ## Structure (wip)
-
 ```
 
 # package doveauth tool and deploy chatmail server to a envvar-specified ssh-reachable host 
@@ -38,6 +37,20 @@ doveauth
     doveauth.py
     doveauth.lua
     test_doveauth.py
+
+# lmtp server to block (outgoing) unencrypted messages 
+filtermail 
+    README.md
+    pyproject.toml
+    .... 
+
+
+# scripts for setup/development/deployment 
+
+scripts/
+    init.sh  # create venv/other perequires
+    deploy.sh  # run pyinfra based deploy of everything
+
 ```
 
 ## Dovecot/Postfix configuration

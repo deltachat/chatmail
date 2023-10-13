@@ -7,11 +7,11 @@ auth_mechanisms = plain
 # Authentication for system users.
 passdb {
   driver = lua
-  args = file=/etc/dovecot/auth.lua
+  args = file=/etc/dovecot/doveauth.lua
 }
 userdb {
   driver = lua
-  args = file=/etc/dovecot/auth.lua
+  args = file=/etc/dovecot/doveauth.lua
 }
 
 ##

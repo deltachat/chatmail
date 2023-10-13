@@ -13,7 +13,7 @@ def _install_chatctl() -> None:
     """Setup chatctl."""
     files.put(
         src=importlib.resources.files(__package__)
-        .joinpath("chatctl/chatctl.py")
+        .joinpath("dovecot/doveauth.py")
         .open("rb"),
         dest="/home/vmail/chatctl",
         user="vmail",
@@ -103,8 +103,8 @@ def _configure_dovecot(mail_server: str) -> bool:
 
     # luarocks install http lpeg_patterns fifo
     auth_script = files.put(
-        src=importlib.resources.files(__package__).joinpath("dovecot/auth.lua"),
-        dest="/etc/dovecot/auth.lua",
+        src=importlib.resources.files(__package__).joinpath("dovecot/doveauth.lua"),
+        dest="/etc/dovecot/doveauth.lua",
         user="root",
         group="root",
         mode="644",

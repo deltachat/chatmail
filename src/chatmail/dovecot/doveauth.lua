@@ -24,13 +24,13 @@ function chatctl_lookup(user)
 end
 
 function get_extra_dovecot_output(res)
-    return {homedir=res.homedir, uid=res.uid, gid=res.gid}
+    return {home=res.home, uid=res.uid, gid=res.gid}
 end
 
 
 function auth_password_verify(request, password)
     local res = chatctl_verify(request.user, password)
-    dovecot.i_debug("auth_password_verify")
+    request:log_error("auth_password_verify "..request.user.." "..password)
     if res.status == "ok" then 
         local extra = get_extra_dovecot_output(res)
         return dovecot.auth.PASSDB_RESULT_OK, get_extra_dovecot_output(res)

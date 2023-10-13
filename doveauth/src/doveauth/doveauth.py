@@ -45,7 +45,7 @@ def dump_result(res):
         print(f"{key}={value}")
 
 
-if __name__ == "__main__":
+def main():
     if sys.argv[1] == "hexauth":
         login = base64.b16decode(sys.argv[2]).decode()
         password = base64.b16decode(sys.argv[3]).decode()
@@ -55,3 +55,7 @@ if __name__ == "__main__":
         login = base64.b16decode(sys.argv[2]).decode()
         res = lookup_user(login)
         dump_result(res)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,5 @@
 import os
-from pyinfra import host, facts
+import pyinfra
 from chatmail import deploy_chatmail
 
 
@@ -15,4 +15,5 @@ def main():
     deploy_chatmail(mail_domain, mail_server, dkim_selector)
 
 
-main()
+if pyinfra.is_cli:
+    main()

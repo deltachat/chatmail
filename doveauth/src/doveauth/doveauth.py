@@ -2,37 +2,40 @@
 import base64
 import sys
 
-
-def get_user_data(user):
-    if user.startswith("link2xt@"):
-        return dict(
-            uid="vmail",
-            gid="vmail",
-            password="Ahyei6ie",
-        )
-    return {}
+from .database import Database
 
 
-def create_user(user, password):
+def get_user_data(db, user):
+    with db.read_connection() as conn:
+        result = conn.get_user(user)
+    if result:
+        result['uid'] = "vmail"
+        result['gid'] = "vmail"
+    return result
+
+
+def create_user(db, user, password):
+    with db.write_transaction() as conn:
+        conn.create_user(user, password)
     return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
 
 
-def verify_user(user, password):
-    userdata = get_user_data(user)
+def verify_user(db, user, password):
+    userdata = get_user_data(db, user)
     if userdata:
         if userdata.get("password") == password:
             userdata["status"] = "ok"
         else:
             userdata["status"] = "fail"
     else:
-        userdata = create_user(user, password)
+        userdata = create_user(db, user, password)
         userdata["status"] = "ok"
 
     return userdata
 
 
-def lookup_user(user):
-    userdata = get_user_data(user)
+def lookup_user(db, user):
+    userdata = get_user_data(db, user)
     if userdata:
         userdata["status"] = "ok"
     else:
@@ -46,14 +49,15 @@ def dump_result(res):
 
 
 def main():
+    db = Database("/home/vmail/passdb.sqlite")
     if sys.argv[1] == "hexauth":
         login = base64.b16decode(sys.argv[2]).decode()
         password = base64.b16decode(sys.argv[3]).decode()
-        res = verify_user(login, password)
+        res = verify_user(db, login, password)
         dump_result(res)
     elif sys.argv[1] == "hexlookup":
         login = base64.b16decode(sys.argv[2]).decode()
-        res = lookup_user(login)
+        res = lookup_user(db, login)
         dump_result(res)
 
 

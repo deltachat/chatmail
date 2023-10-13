@@ -1,19 +1,21 @@
 import subprocess
 import pytest
 
-from doveauth.doveauth import get_user_data, verify_user
+from doveauth.doveauth import get_user_data, verify_user, Database
 
 
-def test_basic():
-    data = get_user_data("link2xt@c1.testrun.org")
+def test_basic(tmpdir):
+    db = Database(tmpdir / "passdb.sqlite")
+    verify_user(db, "link2xt@c1.testrun.org", "asdf")
+    data = get_user_data(db, "link2xt@c1.testrun.org")
     assert data
 
 
-@pytest.mark.xfail(reason="no persistence yet")
-def test_verify_or_create():
-    res = verify_user("newuser1@something.org", "kajdlkajsldk12l3kj1983")
+def test_verify_or_create(tmpdir):
+    db = Database(tmpdir / "passdb.sqlite")
+    res = verify_user(db, "newuser1@something.org", "kajdlkajsldk12l3kj1983")
     assert res["status"] == "ok"
-    res = verify_user("newuser1@something.org", "kajdlqweqwe")
+    res = verify_user(db, "newuser1@something.org", "kajdlqweqwe")
     assert res["status"] == "fail"
 
 

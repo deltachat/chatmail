@@ -11,14 +11,12 @@
 4. automatic expiry of users that haven't logged in for N days
 
 
-## Postfix goals/steps
+## Filtermail
 
-1. block all outgoing mails with our own LMTP program
+1. Only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format.
+   Currently only checks for "-----BEGIN PGP MESSAGE-----".
 
-2. only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format
-   (probably via an lmtp service)
-
-3. basic outgoing send rate/limits (depending on "account-rating")
+2. basic outgoing send rate/limits (depending on "account-rating")
 
 
 ## online tests (first with plain python/pytest)

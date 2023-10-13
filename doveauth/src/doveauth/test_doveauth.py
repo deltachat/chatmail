@@ -1,7 +1,7 @@
 import subprocess
 import pytest
 
-from doveauth import get_user_data, verify_user
+from doveauth.doveauth import get_user_data, verify_user
 
 
 def test_basic():

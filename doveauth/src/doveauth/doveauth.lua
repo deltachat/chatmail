@@ -8,7 +8,7 @@ end
 -- call out to python program to actually manage authentication for dovecot
 
 function chatctl_verify(user, password)
-    local cmd = "python3 /home/vmail/chatctl hexauth "..escape(user).." "..escape(password)
+    local cmd = "doveauth hexauth "..escape(user).." "..escape(password)
     print("executing: "..cmd)
     local handle = io.popen(cmd)
     local result = handle:read("*a")
@@ -18,7 +18,7 @@ end
 
 function chatctl_lookup(user) 
     assert(user)
-    local handle = io.popen("python3 /home/vmail/chatctl hexlookup "..escape(user))
+    local handle = io.popen("doveauth hexlookup "..escape(user))
     local result = handle:read("*a")
     handle:close()
     return split_chatctl(result)

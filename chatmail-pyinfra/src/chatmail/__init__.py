@@ -2,7 +2,7 @@
 Chat Mail pyinfra deploy.
 """
 import importlib.resources
-import os.path
+from pathlib import Path
 
 from pyinfra import host, logger
 from pyinfra.operations import apt, files, server, systemd, python
@@ -17,7 +17,7 @@ def _install_doveauth() -> None:
         f"../../../doveauth/dist/{doveauth_filename}"
     )
     remote_path = f"/tmp/{doveauth_filename}"
-    if os.path.exists(str(doveauth_path)):
+    if Path(str(doveauth_path)).exists():
         files.put(
             name="upload local doveauth build",
             src=doveauth_path.open("rb"),

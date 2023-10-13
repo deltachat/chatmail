@@ -6,7 +6,6 @@ import sys
 def get_user_data(user):
     if user == b"link2xt@c1.testrun.org":
         return dict(
-            home="/home/vmail/link2xt",
             uid="vmail",
             gid="vmail",
             password=b"Ahyei6ie",

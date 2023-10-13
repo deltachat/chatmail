@@ -3,7 +3,6 @@
 ## Dovecot goals/steps
 
 1. create-user-on-login ("doveauth")
-  - persistence of accounts
 
 2. per-user quota (adaptive)
 

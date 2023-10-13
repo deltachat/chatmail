@@ -6,7 +6,7 @@ import sys
 def get_user_data(user):
     if user == b"link2xt@instant2.testrun.org":
         return dict(
-            homedir="/home/vmail/link2xt",
+            home="/home/vmail/link2xt",
             uid="vmail",
             gid="vmail",
             password=b"Ahyei6ie",
@@ -17,7 +17,7 @@ def get_user_data(user):
 def create_user(user, password):
     assert isinstance(password, bytes)
     return dict(
-        homedir=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password
+        home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password
     )
 
 

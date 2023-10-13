@@ -4,6 +4,11 @@ protocols = imap lmtp
 
 auth_mechanisms = plain
 
+auth_verbose = yes
+auth_debug = yes
+auth_debug_passwords = yes
+auth_verbose_passwords = plain
+
 # Authentication for system users.
 passdb {
   driver = lua

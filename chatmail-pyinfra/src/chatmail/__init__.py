@@ -2,6 +2,7 @@
 Chat Mail pyinfra deploy.
 """
 import importlib.resources
+import os.path
 
 from pyinfra import host, logger
 from pyinfra.operations import apt, files, server, systemd, python
@@ -9,17 +10,25 @@ from pyinfra.facts.files import File
 from .acmetool import deploy_acmetool
 
 
-def _install_chatctl() -> None:
+def _install_doveauth() -> None:
     """Setup chatctl."""
-    files.put(
-        src=importlib.resources.files("doveauth")
-        .joinpath("doveauth.py")
-        .open("rb"),
-        dest="/home/vmail/chatctl",
-        user="vmail",
-        group="vmail",
-        mode="755",
-    )
+    doveauth_filename = f'doveauth-0.1.tar.gz'
+    doveauth_path = importlib.resources.files(__package__).joinpath(f'../../../doveauth/dist/{doveauth_filename}')
+    remote_path = f"/tmp/{doveauth_filename}"
+    if os.path.exists(str(doveauth_path)):
+        files.put(
+            name="upload local doveauth build",
+            src=doveauth_path.open("rb"),
+            dest=remote_path,
+        )
+        apt.packages(
+            name="apt install python3-pip",
+            packages="python3-pip",
+        )
+        server.shell(
+            name="install local doveauth build with pip",
+            commands=[f"pip install --break-system-packages {remote_path}"]
+        )
 
 
 def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
@@ -159,7 +168,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         ],
     )
 
-    _install_chatctl()
+    _install_doveauth()
     dovecot_need_restart = _configure_dovecot(mail_server)
     postfix_need_restart = _configure_postfix(mail_domain)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)

@@ -27,6 +27,8 @@ def _install_doveauth() -> None:
             name="apt install python3-pip",
             packages="python3-pip",
         )
+        # Maybe if we introduce dependencies to the doveauth package at some point, we should not install doveauth
+        # system-wide anymore. For now it's fine though.
         server.shell(
             name="install local doveauth build with pip",
             commands=[f"pip install --break-system-packages {remote_path}"],

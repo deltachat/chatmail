@@ -88,7 +88,7 @@ service auth {
 service auth-worker {
   # Default is root.
   # Drop privileges we don't need.
-  user = $default_internal_user
+  user = vmail
 }
 
 ssl = required

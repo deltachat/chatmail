@@ -9,6 +9,9 @@ dependencies = [
   "pyinfra",
 ]
 
+[tool.pytest.ini_options]
+addopts = "-v -ra --strict-markers"
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]

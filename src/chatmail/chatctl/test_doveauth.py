@@ -1,6 +1,7 @@
+import subprocess
 import pytest
 
-from chatctl import get_user_data, verify_user
+from doveauth import get_user_data, verify_user
 
 
 def test_basic():
@@ -17,6 +18,6 @@ def test_verify_or_create():
 
 
 def test_lua_integration(request):
-    p = request.fspath.dirpath("test.lua")
-    assert p.exists()
-    assert 0
+    p = request.fspath.dirpath("test_doveauth.lua")
+    proc = subprocess.run(["lua", str(p)])
+    assert proc.returncode == 0

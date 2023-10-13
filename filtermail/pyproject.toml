@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filtermail"
+version = "0.1"
+dependencies = [
+  "aiosmtpd"
+]
+
+[project.scripts]
+filtermail = "filtermail.filtermail:main"
+
+[tool.pytest.ini_options]
+addopts = "-v -ra --strict-markers"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = true
+envlist = lint
+
+[testenv:lint]
+skipdist = True
+skip_install = True
+deps =
+  ruff
+  black
+commands =
+  black --quiet --check --diff src/
+  ruff src/
+"""

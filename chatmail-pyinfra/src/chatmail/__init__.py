@@ -23,15 +23,53 @@ def _install_doveauth() -> None:
             src=doveauth_path.open("rb"),
             dest=remote_path,
         )
-        apt.packages(
-            name="apt install python3-pip",
-            packages="python3-pip",
-        )
         # Maybe if we introduce dependencies to the doveauth package at some point, we should not install doveauth
         # system-wide anymore. For now it's fine though.
         server.shell(
             name="install local doveauth build with pip",
             commands=[f"pip install --break-system-packages {remote_path}"],
+        )
+
+
+def _install_filtermail() -> None:
+    """Setup filtermail."""
+    filtermail_filename = "filtermail-0.1.tar.gz"
+    filtermail_path = importlib.resources.files(__package__).joinpath(
+        f"../../../filtermail/dist/{filtermail_filename}"
+    )
+    remote_path = f"/tmp/{filtermail_filename}"
+    if Path(str(filtermail_path)).exists():
+        files.put(
+            name="upload local filtermail build",
+            src=filtermail_path.open("rb"),
+            dest=remote_path,
+        )
+        apt.packages(
+            name="apt install python3-aiosmtpd",
+            packages="python3-aiosmtpd",
+        )
+
+        # --no-deps because aiosmtplib is installed with `apt`.
+        server.shell(
+            name="install local doveauth build with pip",
+            commands=[f"pip install --break-system-packages --no-deps {remote_path}"],
+        )
+
+        files.put(
+            src=importlib.resources.files(__package__)
+            .joinpath("../../../filtermail/filtermail.service")
+            .open("rb"),
+            dest="/etc/systemd/system/filtermail.service",
+            user="root",
+            group="root",
+            mode="644",
+        )
+        systemd.service(
+            name="Setup filtermail service",
+            service="filtermail.service",
+            running=True,
+            enabled=True,
+            restarted=True,
         )
 
 
@@ -172,7 +210,12 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         ],
     )
 
+    apt.packages(
+        name="apt install python3-pip",
+        packages="python3-pip",
+    )
     _install_doveauth()
+    _install_filtermail()
     dovecot_need_restart = _configure_dovecot(mail_server)
     postfix_need_restart = _configure_postfix(mail_domain)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)

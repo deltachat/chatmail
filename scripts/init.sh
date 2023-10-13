@@ -10,3 +10,7 @@ doveauth/venv/bin/pip install -e doveauth
 
 python3 -m venv online-tests/venv
 online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat
+
+python3 -m venv filtermail/venv
+filtermail/venv/bin/pip install build
+filtermail/venv/bin/pip install -e filtermail

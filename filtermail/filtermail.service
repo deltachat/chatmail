@@ -1,0 +1,10 @@
+[Unit]
+Description=Email filter for chatmail servers
+
+[Service]
+ExecStart=/usr/local/bin/filtermail
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

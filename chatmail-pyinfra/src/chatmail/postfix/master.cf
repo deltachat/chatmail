@@ -28,6 +28,7 @@ submission inet n       -       y       -       -       smtpd
   -o smtpd_recipient_restrictions=
   -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
   -o milter_macro_daemon_name=ORIGINATING
+  -o content_filter=filter:unix:private/filtemail
 smtps     inet  n       -       y       -       -       smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes
@@ -42,6 +43,7 @@ smtps     inet  n       -       y       -       -       smtpd
   -o smtpd_recipient_restrictions=
   -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
   -o milter_macro_daemon_name=ORIGINATING
+  -o content_filter=filter:unix:private/filtermail
 #628       inet  n       -       y       -       -       qmqpd
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup
@@ -70,3 +72,7 @@ lmtp      unix  -       -       y       -       -       lmtp
 anvil     unix  -       -       y       -       1       anvil
 scache    unix  -       -       y       -       1       scache
 postlog   unix-dgram n  -       n       -       1       postlogd
+filter    unix -        n       n       -       -       lmtp
+# Local SMTP server for reinjecting filered mail.
+localhost:10026 inet  n       -       n       -       10      smtpd
+        -o content_filter=

@@ -4,7 +4,7 @@ import sys
 
 
 def get_user_data(user):
-    if user == "link2xt@c1.testrun.org":
+    if user.startswith("link2xt@"):
         return dict(
             uid="vmail",
             gid="vmail",

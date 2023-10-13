@@ -16,5 +16,5 @@ For DKIM you must add a DNS entry as in /etc/opendkim/selector.txt (where select
 ## Run with pyinfra
 
 ```
-CHATMAIL_DOMAIN=c1.testrun.org pyinfra c1.testrun.org deploy.py
+CHATMAIL_DOMAIN=c1.testrun.org pyinfra --ssh-user root c1.testrun.org deploy.py
 ```

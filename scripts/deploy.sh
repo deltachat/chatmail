@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
-export CHATMAIL_DOMAIN="${1:-c1.testrun.org}"
+: ${CHATMAIL_DOMAIN:=c1.testrun.org}
+export CHATMAIL_DOMAIN
 chatmail-pyinfra/venv/bin/pyinfra --ssh-user root "$CHATMAIL_DOMAIN" deploy.py

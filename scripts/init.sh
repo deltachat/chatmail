@@ -9,4 +9,4 @@ doveauth/venv/bin/pip install pytest build
 doveauth/venv/bin/pip install -e doveauth
 
 python3 -m venv online-tests/venv
-online-tests/venv/bin/pip install pytest pytest-timeout pdbpp
+online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat

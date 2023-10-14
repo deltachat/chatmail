@@ -1,3 +1,4 @@
+import os
 import imaplib
 import smtplib
 import itertools
@@ -5,8 +6,13 @@ import pytest
 
 
 @pytest.fixture
-def imap():
-    return ImapConn("c1.testrun.org")
+def maildomain():
+    return os.environ.get("CHATMAIL_DOMAIN", "c1.testrun.org")
+
+
+@pytest.fixture
+def imap(maildomain):
+    return ImapConn(maildomain)
 
 
 class ImapConn:
@@ -23,8 +29,8 @@ class ImapConn:
 
 
 @pytest.fixture
-def smtp():
-    return SmtpConn("c1.testrun.org")
+def smtp(maildomain):
+    return SmtpConn(maildomain)
 
 
 class SmtpConn:
@@ -41,12 +47,12 @@ class SmtpConn:
 
 
 @pytest.fixture
-def gencreds():
+def gencreds(maildomain):
     count = itertools.count()
 
     def gen():
         while 1:
             num = next(count)
-            yield f"user{num}", f"password{num}"
+            yield f"user{num}@{maildomain}", f"password{num}"
 
     return lambda: next(gen())

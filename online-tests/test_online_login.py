@@ -40,5 +40,3 @@ class TestPostfix:
             smtp.login(user, password + "wrong")
         assert excinfo.value.smtp_code == 535
         assert "authentication failed" in str(excinfo)
-
-

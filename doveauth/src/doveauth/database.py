@@ -35,7 +35,7 @@ class Connection:
 
     def create_user(self, addr: str, password: str):
         """Create a row in the users table."""
-        self.execute("PRAGMA foreign_keys=on;")
+        self.execute("PRAGMA foreign_keys=on")
         q = """INSERT INTO users (addr, password, last_login)
                VALUES (?, ?, ?)"""
         self.execute(q, (addr, password, int(time.time())))
@@ -116,7 +116,7 @@ class Database:
 
     def get_schema_version(self) -> int:
         with self.read_connection() as conn:
-            dbversion = conn.execute("PRAGMA user_version;").fetchone()[0]
+            dbversion = conn.execute("PRAGMA user_version").fetchone()[0]
         return dbversion
 
     CURRENT_DBVERSION = 1
@@ -137,4 +137,4 @@ class Database:
                 )
             """,
             )
-            conn.execute("PRAGMA user_version=%s;" % (self.CURRENT_DBVERSION,))
+            conn.execute("PRAGMA user_version=%s" % (self.CURRENT_DBVERSION,))

@@ -40,17 +40,3 @@ class TestPostfix:
             smtp.login(user, password + "wrong")
         assert excinfo.value.smtp_code == 535
         assert "authentication failed" in str(excinfo)
-
-
-class TestMailSending:
-    def test_one_on_one(self, smtp, imap, gencreds):
-        user1, pass1 = gencreds()
-        user2, pass2 = gencreds()
-        smtp.connect()
-        smtp.login(user1, pass1)
-        imap.connect()
-        imap.login(user2, pass2)
-        import pdb ; pdb.set_trace()
-
-
-

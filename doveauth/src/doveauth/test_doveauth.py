@@ -1,12 +1,14 @@
 import subprocess
 import pytest
 
-from doveauth.doveauth import get_user_data, verify_user, Database
+from doveauth import get_user_data, verify_user, Database, DBError
 
 
 @pytest.fixture()
 def db(tmpdir):
-    return Database(tmpdir / "passdb.sqlite")
+    db_path = tmpdir / "passdb.sqlite"
+    print("database path:", db_path)
+    return Database(db_path)
 
 
 def test_basic(db):
@@ -26,3 +28,14 @@ def test_lua_integration(request):
     p = request.fspath.dirpath("test_doveauth.lua")
     proc = subprocess.run(["lua", str(p)])
     assert proc.returncode == 0
+
+
+def test_db_version(db):
+    assert db.get_schema_version() == 1
+
+
+def test_too_high_db_version(db):
+    with db.write_transaction() as conn:
+        conn.execute("PRAGMA user_version=%s;" % (999,))
+    with pytest.raises(DBError):
+        db.ensure_tables()

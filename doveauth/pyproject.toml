@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "doveauth"
-version = "0.1"
+version = "0.2"
 
 [project.scripts]
 doveauth = "doveauth.doveauth:main"
+doveauth-dictproxy = "doveauth.dictproxy:main"
 
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"

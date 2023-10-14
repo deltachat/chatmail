@@ -12,7 +12,7 @@ from .acmetool import deploy_acmetool
 
 def _install_doveauth() -> None:
     """Setup chatctl."""
-    doveauth_filename = "doveauth-0.1.tar.gz"
+    doveauth_filename = "doveauth-0.2.tar.gz"
     doveauth_path = importlib.resources.files(__package__).joinpath(
         f"../../../dist/{doveauth_filename}"
     )
@@ -28,6 +28,24 @@ def _install_doveauth() -> None:
         server.shell(
             name="install local doveauth build with pip",
             commands=[f"pip install --break-system-packages {remote_path}"],
+        )
+
+        files.put(
+            src=importlib.resources.files("doveauth")
+            .joinpath("doveauth-dictproxy.service")
+            .open("rb"),
+            dest="/etc/systemd/system/doveauth-dictproxy.service",
+            user="root",
+            group="root",
+            mode="644",
+        )
+        systemd.service(
+            name="Setup doveauth-dictproxy service",
+            service="doveauth-dictproxy.service",
+            running=True,
+            enabled=True,
+            restarted=True,
+            daemon_reload=True,
         )
 
 
@@ -152,16 +170,14 @@ def _configure_dovecot(mail_server: str) -> bool:
         config={"hostname": mail_server},
     )
     need_restart |= main_config.changed
-
-    # luarocks install http lpeg_patterns fifo
-    auth_script = files.put(
-        src=importlib.resources.files("doveauth").joinpath("doveauth.lua"),
-        dest="/etc/dovecot/doveauth.lua",
+    auth_config = files.put(
+        src=importlib.resources.files(__package__).joinpath("dovecot/auth.conf"),
+        dest="/etc/dovecot/auth.conf",
         user="root",
         group="root",
         mode="644",
     )
-    need_restart |= auth_script.changed
+    need_restart |= auth_config.changed
 
     return need_restart
 
@@ -196,11 +212,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
 
     apt.packages(
         name="Install Dovecot",
-        packages=[
-            "dovecot-imapd",
-            "dovecot-lmtpd",
-            "dovecot-auth-lua",
-        ],
+        packages=["dovecot-imapd", "dovecot-lmtpd"],
     )
 
     apt.packages(

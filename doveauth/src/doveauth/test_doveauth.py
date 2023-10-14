@@ -1,7 +1,9 @@
 import subprocess
 import pytest
 
-from doveauth import get_user_data, verify_user, Database, DBError
+from .dictproxy import get_user_data
+from .doveauth import verify_user
+from .database import Database, DBError
 
 
 @pytest.fixture()
@@ -22,12 +24,6 @@ def test_verify_or_create(db):
     assert res["status"] == "ok"
     res = verify_user(db, "newuser1@something.org", "kajdlqweqwe")
     assert res["status"] == "fail"
-
-
-def test_lua_integration(request):
-    p = request.fspath.dirpath("test_doveauth.lua")
-    proc = subprocess.run(["lua", str(p)])
-    assert proc.returncode == 0
 
 
 def test_db_version(db):

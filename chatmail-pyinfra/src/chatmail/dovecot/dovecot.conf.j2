@@ -11,14 +11,13 @@ auth_verbose_passwords = plain
 
 # Authentication for system users.
 passdb {
-  driver = lua
-  args = file=/etc/dovecot/doveauth.lua
+  driver = dict
+  args = /etc/dovecot/auth.conf
 }
 userdb {
-  driver = lua
-  args = file=/etc/dovecot/doveauth.lua
+  driver = dict
+  args = /etc/dovecot/auth.conf
 }
-
 ##
 ## Mailbox locations and namespaces
 ##

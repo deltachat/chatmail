@@ -32,7 +32,6 @@ doveauth
     README.md
     pyproject.toml
     doveauth.py
-    doveauth.lua
     test_doveauth.py
 
 # lmtp server to block (outgoing) unencrypted messages 

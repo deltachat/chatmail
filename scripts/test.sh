@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 pushd doveauth/src/doveauth
 ../../venv/bin/pytest
 popd

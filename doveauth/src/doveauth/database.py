@@ -125,7 +125,7 @@ class Database:
         with self.write_transaction() as conn:
             if self.get_schema_version() > 1:
                 raise DBError(
-                    "Database version is %s; downgrading database schema is not supported"
+                    "version is %s; downgrading schema is not supported"
                     % (self.get_schema_version(),)
                 )
             conn.execute(

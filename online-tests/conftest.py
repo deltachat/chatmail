@@ -1,4 +1,5 @@
 import os
+import io
 import imaplib
 import smtplib
 import itertools
@@ -56,3 +57,45 @@ def gencreds(maildomain):
             yield f"user{num}@{maildomain}", f"password{num}"
 
     return lambda: next(gen())
+
+
+#
+# Delta Chat testplugin re-use
+# use the cmfactory fixture to get chatmail instance accounts
+#
+
+class ChatmailTestProcess:
+    """Provider for chatmail instance accounts as used by deltachat.testplugin.acfactory """
+    def __init__(self, pytestconfig, maildomain, gencreds):
+        self.pytestconfig = pytestconfig
+        self.maildomain = maildomain
+        self.gencreds = gencreds
+        self._addr2files = {}
+
+    def get_liveconfig_producer(self):
+        while 1:
+            user, password = self.gencreds()
+            config = {"addr": user, "mail_pw": password}
+            yield config
+
+    def cache_maybe_retrieve_configured_db_files(self, cache_addr, db_target_path):
+        pass
+
+    def cache_maybe_store_configured_db_files(self, acc):
+        pass
+
+
+@pytest.fixture
+def cmfactory(request, maildomain, gencreds, tmpdir, data):
+    # cloned from deltachat.testplugin.amfactory
+    pytest.importorskip("deltachat")
+    from deltachat.testplugin import ACFactory
+    testproc = ChatmailTestProcess(request.config, maildomain, gencreds)
+    am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
+    yield am
+    if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
+        if testprocess.pytestconfig.getoption("--extra-info"):
+            logfile = io.StringIO()
+            am.dump_imap_summary(logfile=logfile)
+            print(logfile.getvalue())
+            # request.node.add_report_section("call", "imap-server-state", s)

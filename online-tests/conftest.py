@@ -64,8 +64,10 @@ def gencreds(maildomain):
 # use the cmfactory fixture to get chatmail instance accounts
 #
 
+
 class ChatmailTestProcess:
-    """Provider for chatmail instance accounts as used by deltachat.testplugin.acfactory """
+    """Provider for chatmail instance accounts as used by deltachat.testplugin.acfactory"""
+
     def __init__(self, pytestconfig, maildomain, gencreds):
         self.pytestconfig = pytestconfig
         self.maildomain = maildomain
@@ -90,6 +92,7 @@ def cmfactory(request, maildomain, gencreds, tmpdir, data):
     # cloned from deltachat.testplugin.amfactory
     pytest.importorskip("deltachat")
     from deltachat.testplugin import ACFactory
+
     testproc = ChatmailTestProcess(request.config, maildomain, gencreds)
     am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
     yield am

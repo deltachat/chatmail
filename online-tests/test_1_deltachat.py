@@ -1,5 +1,3 @@
-
-
 class TestMailSending:
     def test_one_on_one(self, cmfactory, lp):
         ac1, ac2 = cmfactory.get_online_accounts(2)

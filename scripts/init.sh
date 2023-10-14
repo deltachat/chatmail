@@ -5,12 +5,11 @@ chatmail-pyinfra/venv/bin/pip install -e chatmail-pyinfra
 chatmail-pyinfra/venv/bin/pip install -e doveauth
 
 python3 -m venv doveauth/venv
-doveauth/venv/bin/pip install pytest build
+doveauth/venv/bin/pip install pytest
 doveauth/venv/bin/pip install -e doveauth
 
 python3 -m venv online-tests/venv
 online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat
 
-python3 -m venv filtermail/venv
-filtermail/venv/bin/pip install build
-filtermail/venv/bin/pip install -e filtermail
+python3 -m venv venv
+venv/bin/pip install build

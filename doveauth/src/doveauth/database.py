@@ -76,7 +76,9 @@ class Database:
         self.path = Path(path)
         self.ensure_tables()
 
-    def _get_connection(self, write=False, transaction=False, closing=False) -> Connection:
+    def _get_connection(
+        self, write=False, transaction=False, closing=False
+    ) -> Connection:
         # we let the database serialize all writers at connection time
         # to play it very safe (we don't have massive amounts of writes).
         mode = "ro"

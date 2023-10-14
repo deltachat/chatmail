@@ -9,8 +9,8 @@ def get_user_data(db, user):
     with db.read_connection() as conn:
         result = conn.get_user(user)
     if result:
-        result['uid'] = "vmail"
-        result['gid'] = "vmail"
+        result["uid"] = "vmail"
+        result["gid"] = "vmail"
     return result
 
 

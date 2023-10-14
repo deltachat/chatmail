@@ -1,10 +1,14 @@
 import pytest
 import imaplib
+import smtplib
 
 
 class TestDovecot:
     def test_login_ok(self, imap, gencreds):
         user, password = gencreds()
+        imap.connect()
+        imap.login(user, password)
+        # verify it works on another connection
         imap.connect()
         imap.login(user, password)
 
@@ -16,3 +20,37 @@ class TestDovecot:
         with pytest.raises(imaplib.IMAP4.error) as excinfo:
             imap.login(user, password + "wrong")
         assert "AUTHENTICATIONFAILED" in str(excinfo)
+
+
+class TestPostfix:
+    def test_login_ok(self, smtp, gencreds):
+        user, password = gencreds()
+        smtp.connect()
+        smtp.login(user, password)
+        # verify it works on another connection
+        smtp.connect()
+        smtp.login(user, password)
+
+    def test_login_fail(self, smtp, gencreds):
+        user, password = gencreds()
+        smtp.connect()
+        smtp.login(user, password)
+        smtp.connect()
+        with pytest.raises(smtplib.SMTPAuthenticationError) as excinfo:
+            smtp.login(user, password + "wrong")
+        assert excinfo.value.smtp_code == 535
+        assert "authentication failed" in str(excinfo)
+
+
+class TestMailSending:
+    def test_one_on_one(self, smtp, imap, gencreds):
+        user1, pass1 = gencreds()
+        user2, pass2 = gencreds()
+        smtp.connect()
+        smtp.login(user1, pass1)
+        imap.connect()
+        imap.login(user2, pass2)
+        import pdb ; pdb.set_trace()
+
+
+

@@ -2,15 +2,9 @@
 : ${CHATMAIL_DOMAIN:=c1.testrun.org}
 export CHATMAIL_DOMAIN
 
-pushd doveauth
-venv/bin/python3 -m build
-popd
-
-pushd filtermail
-venv/bin/python3 -m build
-popd
+venv/bin/python3 -m build --sdist doveauth --outdir dist
+venv/bin/python3 -m build --sdist filtermail --outdir dist
 
 chatmail-pyinfra/venv/bin/pyinfra --ssh-user root "$CHATMAIL_DOMAIN" deploy.py
 
-#rm -r doveauth/dist/
-#rm -r filtermail/dist/
+rm -r dist/

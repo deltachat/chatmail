@@ -14,7 +14,7 @@ def _install_doveauth() -> None:
     """Setup chatctl."""
     doveauth_filename = "doveauth-0.1.tar.gz"
     doveauth_path = importlib.resources.files(__package__).joinpath(
-        f"../../../doveauth/dist/{doveauth_filename}"
+        f"../../../dist/{doveauth_filename}"
     )
     remote_path = f"/tmp/{doveauth_filename}"
     if Path(str(doveauth_path)).exists():
@@ -35,7 +35,7 @@ def _install_filtermail() -> None:
     """Setup filtermail."""
     filtermail_filename = "filtermail-0.1.tar.gz"
     filtermail_path = importlib.resources.files(__package__).joinpath(
-        f"../../../filtermail/dist/{filtermail_filename}"
+        f"../../../dist/{filtermail_filename}"
     )
     remote_path = f"/tmp/{filtermail_filename}"
     if Path(str(filtermail_path)).exists():

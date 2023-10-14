@@ -70,6 +70,7 @@ def _install_filtermail() -> None:
             running=True,
             enabled=True,
             restarted=True,
+            daemon_reload=True,
         )
 
 

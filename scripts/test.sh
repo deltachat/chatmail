@@ -1,4 +1,5 @@
-#!/bin/sh
-chatmail-pyinfra/venv/bin/pytest chatmail-pyinfra/tests
-cd doveauth/src/doveauth
+#!/bin/bash
+pushd doveauth/src/doveauth
 ../../venv/bin/pytest
+popd
+online-tests/venv/bin/pytest online-tests/

@@ -27,9 +27,6 @@ chatmail-pyinfra
     pyproject.toml
     chatmail/__init__ ...
 
-    # tests against the deployed system 
-    tests/test_online_test.py
-
 # doveauth tool used by dovecot's auth mechanism on the host system 
 doveauth
     README.md
@@ -44,12 +41,18 @@ filtermail
     pyproject.toml
     .... 
 
+# online tests (after deploy)
+
+online-tests  # runnable via pytest 
+
+
 
 # scripts for setup/development/deployment 
 
 scripts/
     init.sh  # create venv/other perequires
     deploy.sh  # run pyinfra based deploy of everything
+    test.sh # run all local and online tests 
 
 ```
 

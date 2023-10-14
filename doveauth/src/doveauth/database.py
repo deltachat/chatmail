@@ -53,23 +53,6 @@ class Connection:
             )
         return result
 
-    def set_config(self, name: str, value: str) -> str:
-        ok = [
-            "dbversion",
-        ]
-        assert name in ok, name
-        q = "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)"
-        self.cursor().execute(q, (name, value)).fetchone()
-        return value
-
-    def get_config(self, key: str) -> str:
-        q = "SELECT key, value from config WHERE name = ?"
-        c = self._sqlconn.cursor()
-        try:
-            return c.execute(q, key).fetchone()
-        except sqlite3.OperationalError:
-            return None
-
 
 class Database:
     def __init__(self, path: str):
@@ -131,10 +114,20 @@ class Database:
     def read_connection(self, closing=True) -> Connection:
         return self._get_connection(closing=closing, write=False)
 
+    def get_schema_version(self) -> int:
+        with self.read_connection() as conn:
+            dbversion = conn.execute("PRAGMA user_version;").fetchone()[0]
+        return dbversion
+
     CURRENT_DBVERSION = 1
 
     def ensure_tables(self):
         with self.write_transaction() as conn:
+            if self.get_schema_version() > 1:
+                raise DBError(
+                    "Database version is %s; downgrading database schema is not supported"
+                    % (self.get_schema_version(),)
+                )
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS users (
@@ -144,12 +137,4 @@ class Database:
                 )
             """,
             )
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS config (
-                    key TEXT PRIMARY KEY,
-                    value TEXT
-                )
-            """,
-            )
-            conn.set_config("dbversion", self.CURRENT_DBVERSION)
+            conn.execute("PRAGMA user_version=%s;" % (self.CURRENT_DBVERSION,))

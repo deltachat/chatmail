@@ -171,7 +171,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     :param dkim_selector:
     """
 
-    apt.update(name="apt update")
+    apt.update(name="apt update", cache_time=24 * 3600)
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
 

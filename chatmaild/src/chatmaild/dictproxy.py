@@ -59,7 +59,7 @@ def handle_dovecot_request(msg, db):
     if short_command == "L":  # LOOKUP
         parts = msg[1:].split("\t")
         keyname, user = parts[:2]
-        namespace, type, arg = keyname.split("/", 3)
+        namespace, type, *args = keyname.split("/")
         reply_command = "F"
         res = ""
         if namespace == "shared":
@@ -70,7 +70,7 @@ def handle_dovecot_request(msg, db):
                 else:
                     reply_command = "N"
             elif type == "passdb":
-                res = lookup_passdb(db, user, password=arg)
+                res = lookup_passdb(db, user, password=args[0])
                 if res:
                     reply_command = "O"
                 else:

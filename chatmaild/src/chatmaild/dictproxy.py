@@ -16,7 +16,7 @@ def encrypt_password(password: str):
     password = password.encode("ascii")
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
     process = subprocess.Popen(
-        ["doveadm", "pw", "-s", "BLF-CRYPT"],
+        ["doveadm", "pw", "-s", "SHA512-CRYPT"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-pushd doveauth/src/doveauth
+pushd chatmaild/src/chatmaild
 ../../venv/bin/pytest
 popd
 

@@ -35,7 +35,7 @@ def _install_chatmaild() -> None:
         )
 
         files.put(
-            src=importlib.resources.files("doveauth")
+            src=importlib.resources.files("chatmaild")
             .joinpath("doveauth-dictproxy.service")
             .open("rb"),
             dest="/etc/systemd/system/doveauth-dictproxy.service",
@@ -58,7 +58,7 @@ def _install_chatmaild() -> None:
         )
 
         files.put(
-            src=importlib.resources.files("filtermail")
+            src=importlib.resources.files("chatmaild")
             .joinpath("filtermail.service")
             .open("rb"),
             dest="/etc/systemd/system/filtermail.service",

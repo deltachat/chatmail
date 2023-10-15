@@ -10,9 +10,9 @@ dependencies = [
 ]
 
 [project.scripts]
-doveauth = "doveauth.doveauth:main"
-doveauth-dictproxy = "doveauth.dictproxy:main"
-filtermail = "filtermail.filtermail:main"
+doveauth = "chatmaild.doveauth:main"
+doveauth-dictproxy = "chatmaild.dictproxy:main"
+filtermail = "chatmaild.filtermail:main"
 
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"

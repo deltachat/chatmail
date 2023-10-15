@@ -24,12 +24,6 @@
   (including an online test exceeding rate limit)
 
 
-## (alex) merge + and rename filtermail and doveauth packages
-
-- chatmail-pyinfra/src/chatmail -> deploy-chatmail/src/deploy_chatmail
-- filtermail and doveauth -> chatmaild/src/chatmaild/...
-
-
 ## doveauth questions/futures
 
 - measurement:

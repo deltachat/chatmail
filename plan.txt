@@ -2,13 +2,10 @@
 
 ## Dovecot goals/steps
 
-2. (holger) per-user storage quota (adaptive)
-   a) define a static 100MB per-user quota
-
-3. automatic expiry of messages older than M days
+- automatic expiry of messages older than M days
    - delete unconditionally messages older than 40 days
 
-4. limit: max-connections per account
+- limit: configure max-connections per account
 
 
 ## Filtermail

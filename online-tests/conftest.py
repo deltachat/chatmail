@@ -4,6 +4,7 @@ import imaplib
 import smtplib
 import itertools
 import pytest
+import time
 
 
 @pytest.fixture
@@ -49,12 +50,13 @@ class SmtpConn:
 
 @pytest.fixture
 def gencreds(maildomain):
+    prefix = str(time.time())
     count = itertools.count()
 
     def gen():
         while 1:
             num = next(count)
-            yield f"user{num}@{maildomain}", f"password{num}"
+            yield f"user{prefix}_{num}@{maildomain}", f"password{prefix}_{num}"
 
     return lambda: next(gen())
 

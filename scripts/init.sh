@@ -14,3 +14,4 @@ online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat
 
 python3 -m venv venv
 venv/bin/pip install build
+venv/bin/pip install 'setuptools>=68'

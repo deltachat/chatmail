@@ -25,7 +25,7 @@ def _install_chatmaild() -> None:
 
         apt.packages(
             name="apt install python3-aiosmtpd",
-            packages="python3-aiosmtpd",
+            packages=["python3-aiosmtpd", "python3-pip"],
         )
 
         # --no-deps because aiosmtplib is installed with `apt`.
@@ -35,6 +35,7 @@ def _install_chatmaild() -> None:
         )
 
         files.put(
+            name="upload doveauth-dictproxy.service",
             src=importlib.resources.files("chatmaild")
             .joinpath("doveauth-dictproxy.service")
             .open("rb"),
@@ -52,12 +53,8 @@ def _install_chatmaild() -> None:
             daemon_reload=True,
         )
 
-        server.shell(
-            name="install local doveauth build with pip",
-            commands=[f"pip install --break-system-packages --no-deps {remote_path}"],
-        )
-
         files.put(
+            name="upload filtermail.service",
             src=importlib.resources.files("chatmaild")
             .joinpath("filtermail.service")
             .open("rb"),
@@ -207,10 +204,6 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         ],
     )
 
-    apt.packages(
-        name="apt install python3-pip",
-        packages="python3-pip",
-    )
     _install_chatmaild()
     dovecot_need_restart = _configure_dovecot(mail_server)
     postfix_need_restart = _configure_postfix(mail_domain)

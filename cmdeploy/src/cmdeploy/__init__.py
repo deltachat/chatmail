@@ -398,6 +398,26 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     """Configures rspamd for Rate Limiting."""
     need_restart = False
 
+    phishing_conf = files.put(
+        name="disable phishing rspamd plugin",
+        src=importlib.resources.files(__package__).joinpath("rspamd/phishing.conf"),
+        dest="/etc/rspamd/local.d/phishing.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= phishing_conf.changed
+
+    hfilter = files.put(
+        name="disable hfilter rspamd plugin",
+        src=importlib.resources.files(__package__).joinpath("rspamd/hfilter.conf"),
+        dest="/etc/rspamd/local.d/hfilter.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= hfilter.changed
+
     dkim_directory = "/var/lib/rspamd/dkim/"
     dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
 

@@ -14,6 +14,8 @@ def check_encrypted(content):
     message = BytesParser(policy=policy.default).parsebytes(content)
     if not message.is_multipart():
         return False
+    if message.get("subject") != "...":
+        return False
     if message.get_content_type() != "multipart/encrypted":
         return False
     parts_count = 0

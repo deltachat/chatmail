@@ -28,7 +28,7 @@ submission inet n       -       y       -       -       smtpd
   -o smtpd_recipient_restrictions=
   -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
   -o milter_macro_daemon_name=ORIGINATING
-  -o content_filter=filter:unix:private/filtemail
+  -o content_filter=filter:unix:private/filtermail
 smtps     inet  n       -       y       -       -       smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes

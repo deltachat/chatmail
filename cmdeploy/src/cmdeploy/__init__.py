@@ -418,6 +418,16 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= hfilter.changed
 
+    ratelimit_conf = files.put(
+        name="enable rate limiting",
+        src=importlib.resources.files(__package__).joinpath("rspamd/ratelimit.conf"),
+        dest="/etc/rspamd/local.d/ratelimit.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= ratelimit_conf.changed
+
     dkim_directory = "/var/lib/rspamd/dkim/"
     dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
 

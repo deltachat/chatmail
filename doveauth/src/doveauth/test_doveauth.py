@@ -1,4 +1,3 @@
-import subprocess
 import pytest
 
 from .dictproxy import get_user_data

@@ -372,6 +372,86 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
+def remove_opendkim() -> bool:
+    """Remove OpenDKIM, deprecated"""
+    files.file(
+        name="Remove legacy opendkim.conf",
+        path="/etc/opendkim.conf",
+        present=False,
+    )
+
+    files.directory(
+        name="Remove legacy opendkim socket directory from /var/spool/postfix",
+        path="/var/spool/postfix/opendkim",
+        present=False,
+    )
+
+    apt.packages(
+        name="Remove openDKIM",
+        packages="opendkim",
+        present=False
+    )
+    return False
+
+
+def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
+    """Configures rspamd for Rate Limiting."""
+    need_restart = False
+
+    dkim_directory = "/var/lib/rspamd/dkim/"
+    dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
+
+    dkim_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("rspamd/dkim_signing.conf.j2"),
+        dest="/etc/rspamd/local.d/dkim_signing.conf",
+        user="root",
+        group="root",
+        mode="644",
+        config={
+            "dkim_selector": str(dkim_selector),
+            "mail_domain": mail_domain,
+            "dkim_key_path": dkim_key_path,
+        },
+    )
+    need_restart |= dkim_config.changed
+
+    files.directory(
+        name="ensure DKIM key directory exists",
+        path=dkim_directory,
+        present=True,
+        user="_rspamd",
+        group="_rspamd",
+    )
+
+    if not host.get_fact(File, dkim_key_path):
+        server.shell(
+            name="Generate DKIM domain keys with rspamd",
+            commands=[
+                f"rspamadm dkim_keygen -s {dkim_selector} -d {mail_domain} -k {dkim_key_path}"
+            ],
+            _sudo=True,
+            _sudo_user="_rspamd",
+        )
+
+    return need_restart
+
+
+def _configure_redis() -> bool:
+    """Configures redis as a key-value storage for rspamd."""
+    need_restart = False
+
+    redis_config = files.put(
+        src=importlib.resources.files(__package__).joinpath("rspamd/redis.conf"),
+        dest="/etc/redis/redis.conf",
+        user="redis",
+        group="redis",
+        mode="640",
+    )
+    need_restart |= redis_config.changed
+
+    return need_restart
+
+
 def check_config(config):
     mail_domain = config.mail_domain
     if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
@@ -470,17 +550,29 @@ def deploy_chatmail(config_path: Path) -> None:
     debug = False
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
-    opendkim_need_restart = _configure_opendkim(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
 
+    remove_opendkim()
+    rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
+    redis_need_restart = _configure_redis()
+
     systemd.service(
-        name="Start and enable OpenDKIM",
-        service="opendkim.service",
+        name="Start and enable redis-server",
+        service="redis-server.service",
         running=True,
         enabled=True,
-        restarted=opendkim_need_restart,
+        restarted=redis_need_restart,
     )
+
+    systemd.service(
+        name="Start and enable rspamd",
+        service="rspamd.service",
+        running=True,
+        enabled=True,
+        restarted=rspamd_need_restart,
+    )
+
 
     systemd.service(
         name="Start and enable MTA-STS daemon",

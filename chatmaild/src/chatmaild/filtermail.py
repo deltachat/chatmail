@@ -1,17 +1,33 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
+from email.parser import BytesParser
+from email import policy
 
 from aiosmtpd.lmtp import LMTP
 from aiosmtpd.controller import UnixSocketController
 from smtplib import SMTP as SMTPClient
 
 
-def check_encrypted(envelope):
-    """https://xkcd.com/1181/"""
-    return "-----BEGIN PGP MESSAGE-----" in envelope.content.decode(
-        "utf8", errors="replace"
-    )
+def check_encrypted(content):
+    """Check that the message is an OpenPGP-encrypted message."""
+    message = BytesParser(policy=policy.default).parsebytes(content)
+    if not message.is_multipart():
+        return False
+    if message.get_content_type() != "multipart/encrypted":
+        return False
+    parts_count = 0
+    for part in message.iter_parts():
+        if parts_count == 0:
+            if part.get_content_type() != "application/pgp-encrypted":
+                return False
+        elif parts_count == 1:
+            if part.get_content_type() != "application/octet-stream":
+                return False
+        else:
+            return False
+        parts_count += 1
+    return True
 
 
 class ExampleController(UnixSocketController):
@@ -29,7 +45,7 @@ class ExampleHandler:
 
         valid_recipients = []
 
-        mail_encrypted = check_encrypted(envelope)
+        mail_encrypted = check_encrypted(envelope.content)
 
         res = []
         for recipient in envelope.rcpt_tos:

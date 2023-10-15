@@ -2,28 +2,77 @@
 
 ## Dovecot goals/steps
 
-1. create-user-on-login ("doveauth")
-
-2. per-user quota (adaptive)
+2. (holger) per-user storage quota (adaptive)
+   a) define a static 100MB per-user quota
 
 3. automatic expiry of messages older than M days
+   - delete unconditionally messages older than 40 days
 
-4. automatic expiry of users that haven't logged in for N days
+4. limit: max-connections per account
 
 
 ## Filtermail
 
-1. Only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format.
-   Currently only checks for "-----BEGIN PGP MESSAGE-----".
+- (alex, Only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format.
+  TODO: mime-parse mails and check/add tests
 
-2. basic outgoing send rate/limits (depending on "account-rating")
+
+## nami: send out rate limit / rspamd
+
+- basic outgoing send rate/limits (depending on "account-rating")
+  use rspamd in a minimal way, check support dkim-signing
+  (including an online test exceeding rate limit)
+
+
+## (alex) merge + and rename filtermail and doveauth packages
+
+- chatmail-pyinfra/src/chatmail -> deploy-chatmail/src/deploy_chatmail
+- filtermail and doveauth -> chatmaild/src/chatmaild/...
+
+
+## doveauth questions/futures
+
+- measurement:
+  What happens if you do 100 logins in parallel?
+  What fraction is taken by TLS, what by dovecot-auth?
+
+- bcrypt-password scheme is slow: require long passwords, use faster hashing
+
+- define user-name and password policies, and implement them
+  (be very restrictive at the beginning, we can relax later)
+
+- password is part of the dictproxy-lookup key, is it safe to use auth-caching?
+
+
+## How to limit creation of accounts?
+
+attack: a 3-line bash script to fill the chatmail db with millions of unused accouts
+
+- make it computationally expensive (somehow try to except our tests from it)
+  1st pass instant onboarding: create userid + cheap password -- if it fails then
+  2nd pass instant onboarding: create userdid + comput. expensive password
+
+- probably also do firewall: limit number of new tcp-connections per IP address per duration
+
+
+## Open/deferred questions
+
+- automatic expiry of users that haven't logged in for N days
+  Is it neccessary?  If all messages are gone, does the existence of
+  an e-mail address bother anybody?
+
+
+## web page for chat-mail servers?
+
+- documentation for users, privacy policy etc.
+  (probably also with provider-messages ...)
 
 
 ## online tests (first with plain python/pytest)
 
 - write tests for dovecot login (exists)
-- write tests for postfix logins
-- write A<>B send/receive tests
+- write tests for postfix logins (exists)
+- write A<>B send/receive tests (exists)
 
 
 ## Delta Chat

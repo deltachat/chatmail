@@ -3,7 +3,7 @@ requires = ["setuptools>=45"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "chatmail"
+name = "deploy-chatmail"
 version = "0.1"
 dependencies = [
   "pyinfra",

@@ -408,6 +408,26 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= phishing_conf.changed
 
+    rbl = files.put(
+        name="disable rbl rspamd plugin",
+        src=importlib.resources.files(__package__).joinpath("rspamd/rbl.conf"),
+        dest="/etc/rspamd/override.d/rbl.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= rbl.changed
+
+    options_inc = files.put(
+        name="disable fuzzy checks",
+        src=importlib.resources.files(__package__).joinpath("rspamd/options.inc"),
+        dest="/etc/rspamd/local.d/options.inc",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= options_inc.changed
+
     hfilter = files.put(
         name="disable hfilter rspamd plugin",
         src=importlib.resources.files(__package__).joinpath("rspamd/hfilter.conf"),

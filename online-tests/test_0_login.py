@@ -12,6 +12,19 @@ class TestDovecot:
         imap.connect()
         imap.login(user, password)
 
+    def test_login_same_password(self, imap, gencreds):
+        """Test two different users logging in with the same password.
+
+        This ensures that authentication process does not confuse the users
+        by using only the password hash as a key.
+        """
+        user1, password1 = gencreds()
+        user2, _password2 = gencreds()
+        imap.connect()
+        imap.login(user1, password1)
+        imap.connect()
+        imap.login(user2, password1)
+
     def test_login_fail(self, imap, gencreds):
         user, password = gencreds()
         imap.connect()

@@ -26,10 +26,6 @@
 
 ## doveauth questions/futures
 
-- measurement:
-  What happens if you do 100 logins in parallel?
-  What fraction is taken by TLS, what by dovecot-auth?
-
 - bcrypt-password scheme is slow: require long passwords, use faster hashing
 
 - define user-name and password policies, and implement them

@@ -1,7 +1,8 @@
-
+import os
 import time
-
 import imaplib
+
+domain = os.environ.get("CHATMAIL_DOMAIN", "c3.testrun.org")
 
 NUM_CONNECTIONS=10
 
@@ -9,8 +10,8 @@ conns = []
 
 start = time.time()
 for i in range(NUM_CONNECTIONS):
-    print(f"opening connection {i}")
-    conn = imaplib.IMAP4_SSL("c3.testrun.org")
+    print(f"opening connection {i} to {domain}")
+    conn = imaplib.IMAP4_SSL(domain)
     conns.append(conn)
 
 tlsdone = time.time()

@@ -10,23 +10,27 @@ from pyinfra.facts.files import File
 from .acmetool import deploy_acmetool
 
 
-def _install_doveauth() -> None:
-    """Setup chatctl."""
-    doveauth_filename = "doveauth-0.2.tar.gz"
-    doveauth_path = importlib.resources.files(__package__).joinpath(
-        f"../../../dist/{doveauth_filename}"
+def _install_chatmaild() -> None:
+    chatmaild_filename = "chatmaild-0.1.tar.gz"
+    chatmaild_path = importlib.resources.files(__package__).joinpath(
+        f"../../../dist/{chatmaild_filename}"
     )
-    remote_path = f"/tmp/{doveauth_filename}"
-    if Path(str(doveauth_path)).exists():
+    remote_path = f"/tmp/{chatmaild_filename}"
+    if Path(str(chatmaild_path)).exists():
         files.put(
-            name="upload local doveauth build",
-            src=doveauth_path.open("rb"),
+            name="Upload chatmaild source package",
+            src=chatmaild_path.open("rb"),
             dest=remote_path,
         )
-        # Maybe if we introduce dependencies to the doveauth package at some point, we should not install doveauth
-        # system-wide anymore. For now it's fine though.
+
+        apt.packages(
+            name="apt install python3-aiosmtpd",
+            packages="python3-aiosmtpd",
+        )
+
+        # --no-deps because aiosmtplib is installed with `apt`.
         server.shell(
-            name="install local doveauth build with pip",
+            name="install chatmaild with pip",
             commands=[f"pip install --break-system-packages {remote_path}"],
         )
 
@@ -48,34 +52,14 @@ def _install_doveauth() -> None:
             daemon_reload=True,
         )
 
-
-def _install_filtermail() -> None:
-    """Setup filtermail."""
-    filtermail_filename = "filtermail-0.1.tar.gz"
-    filtermail_path = importlib.resources.files(__package__).joinpath(
-        f"../../../dist/{filtermail_filename}"
-    )
-    remote_path = f"/tmp/{filtermail_filename}"
-    if Path(str(filtermail_path)).exists():
-        files.put(
-            name="upload local filtermail build",
-            src=filtermail_path.open("rb"),
-            dest=remote_path,
-        )
-        apt.packages(
-            name="apt install python3-aiosmtpd",
-            packages="python3-aiosmtpd",
-        )
-
-        # --no-deps because aiosmtplib is installed with `apt`.
         server.shell(
             name="install local doveauth build with pip",
             commands=[f"pip install --break-system-packages --no-deps {remote_path}"],
         )
 
         files.put(
-            src=importlib.resources.files(__package__)
-            .joinpath("../../../filtermail/filtermail.service")
+            src=importlib.resources.files("filtermail")
+            .joinpath("filtermail.service")
             .open("rb"),
             dest="/etc/systemd/system/filtermail.service",
             user="root",
@@ -227,8 +211,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         name="apt install python3-pip",
         packages="python3-pip",
     )
-    _install_doveauth()
-    _install_filtermail()
+    _install_chatmaild()
     dovecot_need_restart = _configure_dovecot(mail_server)
     postfix_need_restart = _configure_postfix(mail_domain)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)

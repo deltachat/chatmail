@@ -3,13 +3,15 @@ requires = ["setuptools>=45"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "filtermail"
+name = "chatmaild"
 version = "0.1"
 dependencies = [
   "aiosmtpd"
 ]
 
 [project.scripts]
+doveauth = "doveauth.doveauth:main"
+doveauth-dictproxy = "doveauth.dictproxy:main"
 filtermail = "filtermail.filtermail:main"
 
 [tool.pytest.ini_options]

@@ -182,15 +182,15 @@ def cmfactory(request, gencreds, tmpdir, data, maildomain):
 
 
 @pytest.fixture
-def remotelog(sshdomain):
-    return RemoteLog(sshdomain)
+def remote(sshdomain):
+    return Remote(sshdomain)
 
 
-class RemoteLog:
+class Remote:
     def __init__(self, sshdomain):
         self.sshdomain = sshdomain
 
-    def iter(self, logcmd=""):
+    def iter_output(self, logcmd=""):
         getjournal = f"journalctl -f" if not logcmd else logcmd
         self.popen = subprocess.Popen(
             ["ssh", f"root@{self.sshdomain}", getjournal],

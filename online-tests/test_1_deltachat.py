@@ -19,7 +19,7 @@ class TestEndToEndDeltaChat:
         assert msg2.text == "message0"
 
     @pytest.mark.slow
-    def test_exceed_quota(self, cmfactory, lp, tmpdir, remotelog):
+    def test_exceed_quota(self, cmfactory, lp, tmpdir, remote):
         """This is a very slow test as it needs to upload >100MB of mail data
         before quota is exceeded, and thus depends on the speed of the upload.
         """
@@ -48,7 +48,7 @@ class TestEndToEndDeltaChat:
 
         addr = ac2.get_config("addr").lower()
         saved_ok = 0
-        for line in remotelog.iter("journalctl -f -u dovecot"):
+        for line in remote.iter_output("journalctl -f -u dovecot"):
             if addr not in line:
                 # print(line)
                 continue

@@ -67,3 +67,17 @@ class TestEndToEndDeltaChat:
                     break
 
         pytest.fail("sending succeeded although messages should exceed quota")
+
+    def test_securejoin(self, cmfactory, lp, maildomain2):
+        ac1 = cmfactory.new_online_configuring_account(cache=False)
+        cmfactory.switch_maildomain(maildomain2)
+        ac2 = cmfactory.new_online_configuring_account(cache=False)
+        cmfactory.bring_accounts_online()
+
+        lp.sec("ac1: create QR code and let ac2 scan it, starting the securejoin")
+        qr = ac1.get_setup_contact_qr()
+
+        lp.sec("ac2: start QR-code based setup contact protocol")
+        ch = ac2.qr_setup_contact(qr)
+        assert ch.id >= 10
+        ac1._evtracker.wait_securejoin_inviter_progress(1000)

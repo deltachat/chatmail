@@ -438,6 +438,16 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= hfilter.changed
 
+    redis_conf = files.put(
+        name="enable redis for caching",
+        src=importlib.resources.files(__package__).joinpath("rspamd/rspamd_redis.conf"),
+        dest="/etc/rspamd/local.d/redis.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= redis_conf.changed
+
     ratelimit_conf = files.put(
         name="enable rate limiting",
         src=importlib.resources.files(__package__).joinpath("rspamd/ratelimit.conf"),

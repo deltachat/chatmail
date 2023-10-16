@@ -2,8 +2,12 @@ import random
 import pytest
 
 
-class TestMailSending:
+class TestEndToEndDeltaChat:
+    "Tests that use Delta Chat accounts on the chat mail instance."
+
     def test_one_on_one(self, cmfactory, lp):
+        """Test that a DC account can send a message to a second DC account
+        on the same chat-mail instance."""
         ac1, ac2 = cmfactory.get_online_accounts(2)
         chat = cmfactory.get_accepted_chat(ac1, ac2)
 
@@ -14,7 +18,11 @@ class TestMailSending:
         msg2 = ac2._evtracker.wait_next_incoming_message()
         assert msg2.text == "message0"
 
+    @pytest.mark.slow
     def test_exceed_quota(self, cmfactory, lp, tmpdir, dovelogreader):
+        """This is a very slow test as it needs to upload >100MB of mail data
+        before quota is exceeded, and thus depends on the speed of the upload.
+        """
         ac1, ac2 = cmfactory.get_online_accounts(2)
         chat = cmfactory.get_accepted_chat(ac1, ac2)
 

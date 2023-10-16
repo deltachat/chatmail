@@ -1,61 +1,40 @@
 # Chat Mail server configuration
 
-This package deploys Postfix and Dovecot servers, including OpenDKIM for DKIM signing.
-
-Postfix uses Dovecot for authentication as described in <https://www.postfix.org/SASL_README.html#server_dovecot>
+This repository setups a ready-to-go chatmail instance
+comprised of a minimal setup of the battle-tested 
+[postfix smtp server](https://www.postfix.org) and [dovecot imap server](https://www.dovecot.org).
 
 ## Getting started 
 
-prepare:
+1. prepare your local system:
 
-    pip install -e chatmail-infra
+    scripts/init.sh 
 
+2. set environment variable to the chatmail domain you want to setup:
 
-then run with pyinfra command line tool: 
+    export CHATMAIL_DOMAIN=c1.testrun.org   # replace with your host
 
-    CHATMAIL_DOMAIN=c1.testrun.org pyinfra --ssh-user root c1.testrun.org deploy.py
+3. run the deploy of the chat mail instance: 
 
-
-## Structure (wip)
-```
-
-# package doveauth tool and deploy chatmail server to a envvar-specified ssh-reachable host 
-deploy.py 
-
-# chatmail pyinfra deploy package 
-chatmail-pyinfra 
-    pyproject.toml
-    chatmail/__init__ ...
-
-# doveauth tool used by dovecot's auth mechanism on the host system 
-doveauth
-    README.md
-    pyproject.toml
-    doveauth.py
-    test_doveauth.py
-
-# lmtp server to block (outgoing) unencrypted messages 
-filtermail 
-    README.md
-    pyproject.toml
-    .... 
-
-# online tests (after deploy)
-
-online-tests  # runnable via pytest 
+    scripts/deploy.sh 
 
 
+## Running tests and benchmarks (offline and online) 
 
-# scripts for setup/development/deployment 
+1. Set `CHATMAIL_SSH` so that `ssh root@$CHATMAIL_SSH` allows 
+   to login to the chatmail instance server. 
 
-scripts/
-    init.sh  # create venv/other perequires
-    deploy.sh  # run pyinfra based deploy of everything
-    test.sh # run all local and online tests 
-    bench.sh # run performance benchmark tests
+2. To run local and online tests: 
+
+    scripts/test.sh 
+
+3. To run benchmarks against your chatmail instance: 
+
+    scripts/bench.sh 
+
+## Running tests (offline and online) 
 
 ```
-
 ## Dovecot/Postfix configuration
 
 ### Ports
@@ -65,4 +44,6 @@ Dovecot listens on ports 143(imap) and 993 (imaps).
 
 ## DNS
 
-For DKIM you must add a DNS entry as in /etc/opendkim/selector.txt (where selector is the opendkim_selector configured in the chatmail inventory).
+For DKIM you must add a DNS entry as found in /etc/opendkim/selector.txt on your chatmail instance.
+The above `scripts/deploy.sh` prints out the DKIM selector and DNS entry you
+need to setup with your DNS provider. 

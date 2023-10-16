@@ -10,7 +10,7 @@ chatmaild/venv/bin/pip install pytest
 chatmaild/venv/bin/pip install -e chatmaild
 
 python3 -m venv online-tests/venv
-online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat
+online-tests/venv/bin/pip install pytest pytest-timeout pdbpp deltachat pytest-benchmark
 
 python3 -m venv venv
 venv/bin/pip install build

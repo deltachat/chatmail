@@ -3,7 +3,7 @@
 ## Dovecot goals/steps
 
 - automatic expiry of messages older than M days
-   - delete unconditionally messages older than 40 days
+   - also expunge unread messages
 
 - limit: configure max-connections per account
 

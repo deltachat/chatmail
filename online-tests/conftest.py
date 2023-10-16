@@ -28,6 +28,14 @@ def maildomain():
         pytest.skip("set CHATMAIL_DOMAIN to a ssh-reachable chatmail instance")
     return domain
 
+
+def pytest_report_header():
+    domain = os.environ.get("CHATMAIL_DOMAIN")
+    if domain:
+        text = f"chatmail test instance: {domain}"
+        return ["-" * len(text), text, "-" * len(text)]
+
+
 @pytest.fixture
 def imap(maildomain):
     return ImapConn(maildomain)

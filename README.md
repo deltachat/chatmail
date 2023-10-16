@@ -52,6 +52,7 @@ scripts/
     init.sh  # create venv/other perequires
     deploy.sh  # run pyinfra based deploy of everything
     test.sh # run all local and online tests 
+    bench.sh # run performance benchmark tests
 
 ```
 

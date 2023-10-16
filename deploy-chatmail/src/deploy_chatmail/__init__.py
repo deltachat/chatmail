@@ -138,7 +138,7 @@ def _configure_postfix(domain: str) -> bool:
     return need_restart
 
 
-def _configure_dovecot(mail_server: str) -> bool:
+def _configure_dovecot(mail_server: str, debug=False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
@@ -149,6 +149,7 @@ def _configure_dovecot(mail_server: str) -> bool:
         group="root",
         mode="644",
         config={"hostname": mail_server},
+        debug=debug,
     )
     need_restart |= main_config.changed
     auth_config = files.put(
@@ -215,7 +216,8 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     )
 
     _install_chatmaild()
-    dovecot_need_restart = _configure_dovecot(mail_server)
+    debug = False
+    dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
 

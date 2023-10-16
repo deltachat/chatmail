@@ -4,13 +4,17 @@ protocols = imap lmtp
 
 auth_mechanisms = plain
 
+{% if debug == true %}
 auth_verbose = yes
 auth_debug = yes
 auth_debug_passwords = yes
 auth_verbose_passwords = plain
 auth_cache_size = 100M
-mail_plugins = quota
 mail_debug = yes
+{% endif %}
+
+
+mail_plugins = quota
 
 # Authentication for system users.
 passdb {

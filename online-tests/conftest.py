@@ -61,7 +61,8 @@ def imap(maildomain):
 
 class ImapConn:
     AuthError = imaplib.IMAP4.error
-    logunit = "dovecot"
+    logcmd = "journalctl -f -u dovecot"
+    name = "dovecot"
 
     def __init__(self, host):
         self.host = host
@@ -82,7 +83,8 @@ def smtp(maildomain):
 
 class SmtpConn:
     AuthError = smtplib.SMTPAuthenticationError
-    logunit = "postfix"
+    logcmd = "journalctl -f -t postfix/smtpd -t postfix/smtp -t postfix/lmtp"
+    name = "postfix"
 
     def __init__(self, host):
         self.host = host
@@ -188,8 +190,8 @@ class RemoteLog:
     def __init__(self, sshdomain):
         self.sshdomain = sshdomain
 
-    def iter(self, unit=""):
-        getjournal = f"journalctl -f -u {unit}" if unit else "journalctl -f"
+    def iter(self, logcmd=""):
+        getjournal = f"journalctl -f" if not logcmd else logcmd
         self.popen = subprocess.Popen(
             ["ssh", f"root@{self.sshdomain}", getjournal],
             stdout=subprocess.PIPE,

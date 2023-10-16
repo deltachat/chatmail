@@ -1,7 +1,7 @@
 def test_remotelog(remotelog, imap_or_smtp):
-    lineproducer = remotelog.iter(imap_or_smtp.logunit)
+    lineproducer = remotelog.iter(imap_or_smtp.logcmd)
     imap_or_smtp.connect()
-    assert imap_or_smtp.logunit in next(lineproducer)
+    assert imap_or_smtp.name in next(lineproducer)
 
 
 def test_use_two_chatmailservers(cmfactory, maildomain2):

@@ -1,5 +1,6 @@
 import os
 import io
+import random
 import imaplib
 import smtplib
 import itertools
@@ -50,13 +51,15 @@ class SmtpConn:
 
 @pytest.fixture
 def gencreds(maildomain):
-    prefix = str(time.time())
     count = itertools.count()
 
     def gen():
         while 1:
             num = next(count)
-            yield f"user{prefix}_{num}@{maildomain}", f"password{prefix}_{num}"
+            alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
+            user = "".join(random.choices(alphanumeric, k=10))
+            password = "".join(random.choices(alphanumeric, k=10))
+            yield f"{user}@{maildomain}", f"{password}"
 
     return lambda: next(gen())
 
@@ -99,7 +102,7 @@ def cmfactory(request, maildomain, gencreds, tmpdir, data):
     am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
     yield am
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
-        if testprocess.pytestconfig.getoption("--extra-info"):
+        if testproc.pytestconfig.getoption("--extra-info"):
             logfile = io.StringIO()
             am.dump_imap_summary(logfile=logfile)
             print(logfile.getvalue())

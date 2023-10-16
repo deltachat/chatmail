@@ -95,7 +95,7 @@ def main():
             while True:
                 msg = self.rfile.readline().strip().decode()
                 if not msg:
-                    continue
+                    break
                 res = handle_dovecot_request(msg, db)
                 if res:
                     print(f"sending result: {res!r}", file=sys.stderr)

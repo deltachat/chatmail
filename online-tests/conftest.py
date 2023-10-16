@@ -30,11 +30,8 @@ def maildomain():
 
 
 @pytest.fixture
-def chatmail_ssh(maildomain):
-    domain = os.environ.get("CHATMAIL_SSH")
-    if not domain:
-        domain = maildomain
-    return domain
+def sshdomain(maildomain):
+    return os.environ.get("CHATMAIL_SSH", maildomain)
 
 
 def pytest_report_header():
@@ -51,6 +48,7 @@ def imap(maildomain):
 
 class ImapConn:
     AuthError = imaplib.IMAP4.error
+    logunit = "dovecot"
 
     def __init__(self, host):
         self.host = host
@@ -71,6 +69,7 @@ def smtp(maildomain):
 
 class SmtpConn:
     AuthError = smtplib.SMTPAuthenticationError
+    logunit = "postfix"
 
     def __init__(self, host):
         self.host = host
@@ -158,13 +157,20 @@ def cmfactory(request, maildomain, gencreds, tmpdir, data):
 
 
 @pytest.fixture
-def dovelogreader(chatmail_ssh):
-    def remote_reader():
-        popen = subprocess.Popen(
-            ["ssh", f"root@{chatmail_ssh}", "journalctl -f -u dovecot"],
+def remotelog(sshdomain):
+    return RemoteLog(sshdomain)
+
+
+class RemoteLog:
+    def __init__(self, sshdomain):
+        self.sshdomain = sshdomain
+
+    def iter(self, unit=""):
+        getjournal = f"journalctl -f -u {unit}" if unit else "journalctl -f"
+        self.popen = subprocess.Popen(
+            ["ssh", f"root@{self.sshdomain}", getjournal],
             stdout=subprocess.PIPE,
         )
         while 1:
-            yield popen.stdout.readline()
-
-    return remote_reader
+            line = self.popen.stdout.readline()
+            yield line.decode().strip().lower()

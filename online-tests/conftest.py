@@ -8,10 +8,25 @@ import itertools
 import pytest
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--slow", action="store_true", default=False, help="also run slow tests"
+    )
+
+
+def pytest_runtest_setup(item):
+    markers = list(item.iter_markers(name="slow"))
+    if markers:
+        if not item.config.getoption("--slow"):
+            pytest.skip("skipping slow test, use --slow to run")
+
+
 @pytest.fixture
 def maildomain():
-    return os.environ.get("CHATMAIL_DOMAIN", "c1.testrun.org")
-
+    domain = os.environ.get("CHATMAIL_DOMAIN")
+    if not domain:
+        pytest.skip("set CHATMAIL_DOMAIN to a ssh-reachable chatmail instance")
+    return domain
 
 @pytest.fixture
 def imap(maildomain):
@@ -19,6 +34,8 @@ def imap(maildomain):
 
 
 class ImapConn:
+    AuthError = imaplib.IMAP4.error
+
     def __init__(self, host):
         self.host = host
 
@@ -37,6 +54,8 @@ def smtp(maildomain):
 
 
 class SmtpConn:
+    AuthError = smtplib.SMTPAuthenticationError
+
     def __init__(self, host):
         self.host = host
 
@@ -47,6 +66,11 @@ class SmtpConn:
     def login(self, user, password):
         print(f"smtp-login {user!r} {password!r}")
         self.conn.login(user, password)
+
+
+@pytest.fixture(params=["imap", "smtp"])
+def imap_or_smtp(request):
+    return request.getfixturevalue(request.param)
 
 
 @pytest.fixture

@@ -107,15 +107,14 @@ def gencreds(maildomain):
     next(count)
 
     def gen(domain=None):
-        if domain is not None:
-            maildomain = domain
+        domain = domain if domain else maildomain
         while 1:
             num = next(count)
             alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
             user = "".join(random.choices(alphanumeric, k=10))
             user = f"ac{num}_{user}"
             password = "".join(random.choices(alphanumeric, k=10))
-            yield f"{user}@{maildomain}", f"{password}"
+            yield f"{user}@{domain}", f"{password}"
 
     return lambda domain=None: next(gen(domain))
 

@@ -29,6 +29,14 @@ def maildomain():
     return domain
 
 
+@pytest.fixture
+def chatmail_ssh(maildomain):
+    domain = os.environ.get("CHATMAIL_SSH")
+    if not domain:
+        domain = maildomain
+    return domain
+
+
 def pytest_report_header():
     domain = os.environ.get("CHATMAIL_DOMAIN")
     if domain:
@@ -150,10 +158,10 @@ def cmfactory(request, maildomain, gencreds, tmpdir, data):
 
 
 @pytest.fixture
-def dovelogreader(maildomain):
+def dovelogreader(chatmail_ssh):
     def remote_reader():
         popen = subprocess.Popen(
-            ["ssh", f"root@{maildomain}", "journalctl -f -u dovecot"],
+            ["ssh", f"root@{chatmail_ssh}", "journalctl -f -u dovecot"],
             stdout=subprocess.PIPE,
         )
         while 1:

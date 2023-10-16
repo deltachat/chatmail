@@ -48,7 +48,7 @@ class TestEndToEndDeltaChat:
 
         addr = ac2.get_config("addr").lower()
         saved_ok = 0
-        for line in remotelog.iter("dovecot"):
+        for line in remotelog.iter("journalctl -f -u dovecot"):
             if addr not in line:
                 # print(line)
                 continue

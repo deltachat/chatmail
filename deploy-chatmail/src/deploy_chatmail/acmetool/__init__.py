@@ -50,8 +50,8 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
     systemd.service(
         name="Setup acmetool-redirector service",
         service="acmetool-redirector.service",
-        running=True,
-        enabled=True,
+        running=False,
+        enabled=False,
         restarted=service_file.changed,
     )
 

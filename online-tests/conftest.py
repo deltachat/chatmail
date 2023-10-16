@@ -58,6 +58,7 @@ def gencreds(maildomain):
             num = next(count)
             alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
             user = "".join(random.choices(alphanumeric, k=10))
+            user = f"ac{num}_{user}"
             password = "".join(random.choices(alphanumeric, k=10))
             yield f"{user}@{maildomain}", f"{password}"
 
@@ -82,7 +83,10 @@ class ChatmailTestProcess:
     def get_liveconfig_producer(self):
         while 1:
             user, password = self.gencreds()
-            config = {"addr": user, "mail_pw": password}
+            config = {"addr": user, "mail_pw": password, }
+            # speed up account configuration
+            config["mail_server"] = self.maildomain
+            config["send_server"] = self.maildomain
             yield config
 
     def cache_maybe_retrieve_configured_db_files(self, cache_addr, db_target_path):

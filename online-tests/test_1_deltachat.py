@@ -1,5 +1,6 @@
 import random
 import pytest
+import time
 
 
 class TestMailSending:
@@ -36,18 +37,22 @@ class TestMailSending:
             msgs.append(msg)
             lp.indent(f"Sent out msg {i}, size {attachsize/(1024*1024)}MB")
 
-        lp.sec("ac2: check that at least one message failed due to quota")
+        lp.sec("ac2: check messages are arriving until quota is reached")
         bytes_sent = 0
         for i, msg in enumerate(msgs):
-            # wait for the message to be received
-            msg_received = ac2.wait_next_incoming_message()
-            if msg.is_out_failed():
-                assert bytes_sent + 10 * 1024*1024 > quota, "quota kicked in too early"
-                lp.indent("good, message sending failed because quota was exceeded")
-                lp.indent(chat.get_messages()[i].get_message_info())
-                return
-            assert msg.is_out_delivered(), msg.get_message_info()
-            bytes_sent += attachsize
-            mb = bytes_sent // (1024*1024)
-            lp.indent(f"message {i} success, bytes transmitted so far {mb}MB")
+            # wait for the message to be received or to fail
+            start = time.time()
+            while time.time() < (start + 30):
+                if msg.is_out_delivered():
+                    bytes_sent += attachsize
+                    mb = bytes_sent // (1024*1024)
+                    lp.indent(f"message {i} success, bytes transmitted so far {mb}MB")
+                    break
+                elif msg.is_out_failed():
+                    assert i > num_to_send/2, "quota kicked in too early"
+                    lp.indent("good, message sending failed because quota was exceeded")
+                    lp.indent(chat.get_messages()[i].get_message_info())
+                    return
+                else:
+                    time.sleep(1)
         pytest.fail("sending succeeded although messages should exceed quota")

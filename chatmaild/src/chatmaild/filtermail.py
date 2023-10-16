@@ -9,9 +9,8 @@ from aiosmtpd.controller import UnixSocketController
 from smtplib import SMTP as SMTPClient
 
 
-def check_encrypted(content):
+def check_encrypted(message):
     """Check that the message is an OpenPGP-encrypted message."""
-    message = BytesParser(policy=policy.default).parsebytes(content)
     if not message.is_multipart():
         return False
     if message.get("subject") != "...":
@@ -47,7 +46,8 @@ class ExampleHandler:
 
         valid_recipients = []
 
-        mail_encrypted = check_encrypted(envelope.content)
+        message = BytesParser(policy=policy.default).parsebytes(envelope.content)
+        mail_encrypted = check_encrypted(message)
 
         res = []
         for recipient in envelope.rcpt_tos:
@@ -68,7 +68,13 @@ class ExampleHandler:
                 continue
 
             is_outgoing = recipient_local_domain[1] != my_local_domain[1]
-            if is_outgoing and not mail_encrypted:
+
+            if (
+                is_outgoing
+                and not mail_encrypted
+                and message.get("secure-join") != "vc-request"
+                and message.get("secure-join") != "vg-request"
+            ):
                 res += ["500 Outgoing mail must be encrypted"]
                 continue
 

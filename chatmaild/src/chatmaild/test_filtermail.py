@@ -1,12 +1,16 @@
-import pytest
-
 from .filtermail import check_encrypted
+from email.parser import BytesParser
+from email import policy
 
 
 def test_filtermail():
-    assert not check_encrypted(b"foo")
+    def check_encrypted_bstr(content):
+        message = BytesParser(policy=policy.default).parsebytes(content)
+        return check_encrypted(message)
 
-    assert not check_encrypted(
+    assert not check_encrypted_bstr(b"foo")
+
+    assert not check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: =?utf-8?q?Message_from_foobar=40c2=2Etestrun=2Eorg?=",
@@ -36,7 +40,7 @@ def test_filtermail():
         ).encode()
     )
 
-    assert not check_encrypted(
+    assert not check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: =?utf-8?q?Message_from_foobar=40c2=2Etestrun=2Eorg?=",
@@ -67,7 +71,7 @@ def test_filtermail():
     )
 
     # https://xkcd.com/1181/
-    assert not check_encrypted(
+    assert not check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: =?utf-8?q?Message_from_foobar=40c2=2Etestrun=2Eorg?=",
@@ -99,7 +103,7 @@ def test_filtermail():
         ).encode()
     )
 
-    assert check_encrypted(
+    assert check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: ...",
@@ -172,7 +176,7 @@ def test_filtermail():
         ).encode()
     )
 
-    assert not check_encrypted(
+    assert not check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: Buy Penis Enlargement at www.malicious-domain.com",
@@ -245,7 +249,7 @@ def test_filtermail():
         ).encode()
     )
 
-    assert not check_encrypted(
+    assert not check_encrypted_bstr(
         "\r\n".join(
             [
                 "Subject: Message opened",

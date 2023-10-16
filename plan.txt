@@ -8,12 +8,6 @@
 - limit: configure max-connections per account
 
 
-## Filtermail
-
-- (alex, Only allow (outgoing) mails if secure-join or autocrypt-pgp-encrypted format.
-  TODO: mime-parse mails and check/add tests
-
-
 ## nami: send out rate limit / rspamd
 
 - basic outgoing send rate/limits (depending on "account-rating")

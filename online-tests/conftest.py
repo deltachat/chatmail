@@ -1,6 +1,7 @@
 import os
 import io
 import random
+import contextlib
 import subprocess
 import imaplib
 import smtplib
@@ -32,6 +33,19 @@ def maildomain():
 @pytest.fixture
 def sshdomain(maildomain):
     return os.environ.get("CHATMAIL_SSH", maildomain)
+
+
+@pytest.fixture
+def maildomain2():
+    domain = os.environ.get("CHATMAIL_DOMAIN2")
+    if not domain:
+        pytest.skip("set CHATMAIL_DOMAIN2 to a ssh-reachable chatmail instance")
+    return domain
+
+
+@pytest.fixture
+def sshdomain2(maildomain2):
+    return os.environ.get("CHATMAIL_SSH2", maildomain2)
 
 
 def pytest_report_header():
@@ -93,7 +107,9 @@ def gencreds(maildomain):
     count = itertools.count()
     next(count)
 
-    def gen():
+    def gen(domain=None):
+        if domain is not None:
+            maildomain = domain
         while 1:
             num = next(count)
             alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
@@ -102,7 +118,7 @@ def gencreds(maildomain):
             password = "".join(random.choices(alphanumeric, k=10))
             yield f"{user}@{maildomain}", f"{password}"
 
-    return lambda: next(gen())
+    return lambda domain=None: next(gen(domain))
 
 
 #
@@ -117,12 +133,13 @@ class ChatmailTestProcess:
     def __init__(self, pytestconfig, maildomain, gencreds):
         self.pytestconfig = pytestconfig
         self.maildomain = maildomain
+        assert "." in self.maildomain, maildomain
         self.gencreds = gencreds
         self._addr2files = {}
 
     def get_liveconfig_producer(self):
         while 1:
-            user, password = self.gencreds()
+            user, password = self.gencreds(self.maildomain)
             config = {
                 "addr": user,
                 "mail_pw": password,
@@ -140,7 +157,25 @@ class ChatmailTestProcess:
 
 
 @pytest.fixture
-def cmfactory(request, maildomain, gencreds, tmpdir, data):
+def switch_maildomain():
+    """return a function that allows to switch an account factory temporarily
+    to another maildomain.
+    """
+
+    # nb. a bit hacky
+    # would probably be better if deltachat's test machinery grows native support
+    @contextlib.contextmanager
+    def switch(acfactory, maildomain2):
+        old_domain = acfactory.testprocess.maildomain
+        acfactory.testprocess.maildomain = maildomain2
+        yield
+        acfactory.testprocess.maildomain = old_domain
+
+    return switch
+
+
+@pytest.fixture
+def cmfactory(request, gencreds, tmpdir, data, maildomain):
     # cloned from deltachat.testplugin.amfactory
     pytest.importorskip("deltachat")
     from deltachat.testplugin import ACFactory

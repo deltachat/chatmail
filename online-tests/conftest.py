@@ -1,11 +1,11 @@
 import os
 import io
 import random
+import subprocess
 import imaplib
 import smtplib
 import itertools
 import pytest
-import time
 
 
 @pytest.fixture
@@ -84,7 +84,10 @@ class ChatmailTestProcess:
     def get_liveconfig_producer(self):
         while 1:
             user, password = self.gencreds()
-            config = {"addr": user, "mail_pw": password, }
+            config = {
+                "addr": user,
+                "mail_pw": password,
+            }
             # speed up account configuration
             config["mail_server"] = self.maildomain
             config["send_server"] = self.maildomain
@@ -112,3 +115,16 @@ def cmfactory(request, maildomain, gencreds, tmpdir, data):
             am.dump_imap_summary(logfile=logfile)
             print(logfile.getvalue())
             # request.node.add_report_section("call", "imap-server-state", s)
+
+
+@pytest.fixture
+def dovelogreader(maildomain):
+    def remote_reader():
+        popen = subprocess.Popen(
+            ["ssh", f"root@{maildomain}", "journalctl -f -u dovecot"],
+            stdout=subprocess.PIPE,
+        )
+        while 1:
+            yield popen.stdout.readline()
+
+    return remote_reader

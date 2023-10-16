@@ -160,6 +160,16 @@ def _configure_dovecot(mail_server: str) -> bool:
     )
     need_restart |= auth_config.changed
 
+    files.put(
+        src=importlib.resources.files(__package__)
+        .joinpath("dovecot/expunge.cron")
+        .open("rb"),
+        dest="/etc/cron.d/expunge",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
     return need_restart
 
 

@@ -17,7 +17,7 @@ def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
     imap_or_smtp.connect()
     lp.sec("success")
 
-    lp.sec("reconnect and verify wrong password fails {user} ")
+    lp.sec(f"reconnect and verify wrong password fails {user} ")
     imap_or_smtp.connect()
     with pytest.raises(imap_or_smtp.AuthError):
         imap_or_smtp.login(user, password + "wrong")

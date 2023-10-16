@@ -52,6 +52,7 @@ class SmtpConn:
 @pytest.fixture
 def gencreds(maildomain):
     count = itertools.count()
+    next(count)
 
     def gen():
         while 1:

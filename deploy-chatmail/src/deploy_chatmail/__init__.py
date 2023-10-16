@@ -110,7 +110,7 @@ def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
     return need_restart
 
 
-def _configure_postfix(domain: str) -> bool:
+def _configure_postfix(domain: str, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
@@ -124,21 +124,20 @@ def _configure_postfix(domain: str) -> bool:
     )
     need_restart |= main_config.changed
 
-    master_config = files.put(
-        src=importlib.resources.files(__package__)
-        .joinpath("postfix/master.cf")
-        .open("rb"),
+    master_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("postfix/master.cf.j2"),
         dest="/etc/postfix/master.cf",
         user="root",
         group="root",
         mode="644",
+        debug=debug,
     )
     need_restart |= master_config.changed
 
     return need_restart
 
 
-def _configure_dovecot(mail_server: str, debug=False) -> bool:
+def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
@@ -218,7 +217,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     _install_chatmaild()
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
-    postfix_need_restart = _configure_postfix(mail_domain)
+    postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
 
     systemd.service(

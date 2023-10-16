@@ -1,7 +1,6 @@
 import os
 import io
 import random
-import contextlib
 import subprocess
 import imaplib
 import smtplib
@@ -157,24 +156,6 @@ class ChatmailTestProcess:
 
 
 @pytest.fixture
-def switch_maildomain():
-    """return a function that allows to switch an account factory temporarily
-    to another maildomain.
-    """
-
-    # nb. a bit hacky
-    # would probably be better if deltachat's test machinery grows native support
-    @contextlib.contextmanager
-    def switch(acfactory, maildomain2):
-        old_domain = acfactory.testprocess.maildomain
-        acfactory.testprocess.maildomain = maildomain2
-        yield
-        acfactory.testprocess.maildomain = old_domain
-
-    return switch
-
-
-@pytest.fixture
 def cmfactory(request, gencreds, tmpdir, data, maildomain):
     # cloned from deltachat.testplugin.amfactory
     pytest.importorskip("deltachat")
@@ -182,6 +163,14 @@ def cmfactory(request, gencreds, tmpdir, data, maildomain):
 
     testproc = ChatmailTestProcess(request.config, maildomain, gencreds)
     am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
+
+    # nb. a bit hacky
+    # would probably be better if deltachat's test machinery grows native support
+    def switch_maildomain(maildomain2):
+        am.testprocess.maildomain = maildomain2
+
+    am.switch_maildomain = switch_maildomain
+
     yield am
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
         if testproc.pytestconfig.getoption("--extra-info"):

@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import json
@@ -10,6 +11,8 @@ import pwd
 import subprocess
 
 from .database import Database
+
+NOCREATE_FILE = "/etc/chatmail-nocreate"
 
 
 def encrypt_password(password: str):
@@ -27,10 +30,12 @@ def encrypt_password(password: str):
 
 
 def create_user(db, user, password):
-    if not os.path.exists("/tmp/nocreate"):
-        with db.write_transaction() as conn:
-            conn.create_user(user, password)
-        return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
+    if os.path.exists(NOCREATE_FILE):
+        logging.warning(f"Didn't create account: {NOCREATE_FILE} exists. Delete the file to enable account creation.")
+        return
+    with db.write_transaction() as conn:
+        conn.create_user(user, password)
+    return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
 
 
 def get_user_data(db, user):

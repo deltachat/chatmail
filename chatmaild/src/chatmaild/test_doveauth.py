@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+import chatmaild.dictproxy
 from .dictproxy import get_user_data, lookup_passdb
 from .database import Database, DBError
 
@@ -14,8 +15,9 @@ def db(tmpdir):
 
 
 def test_basic(db):
-    if os.path.exists("/tmp/nocreate"):
-        os.remove("/tmp/nocreate")
+    chatmaild.dictproxy.NOCREATE_FILE = "/tmp/nocreate"
+    if os.path.exists(chatmaild.dictproxy.NOCREATE_FILE):
+        os.remove(chatmaild.dictproxy.NOCREATE_FILE)
     lookup_passdb(db, "link2xt@c1.testrun.org", "asdf")
     data = get_user_data(db, "link2xt@c1.testrun.org")
     assert data
@@ -31,12 +33,13 @@ def test_dont_overwrite_password_on_wrong_login(db):
 
 
 def test_nocreate_file(db):
-    with open("/tmp/nocreate", "w+") as f:
+    chatmaild.dictproxy.NOCREATE_FILE = "/tmp/nocreate"
+    with open(chatmaild.dictproxy.NOCREATE_FILE, "w+") as f:
         f.write("")
-    assert os.path.exists("/tmp/nocreate")
+    assert os.path.exists(chatmaild.dictproxy.NOCREATE_FILE)
     lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
     assert not get_user_data(db, "newuser1@something.org")
-    os.remove("/tmp/nocreate")
+    os.remove(chatmaild.dictproxy.NOCREATE_FILE)
 
 
 def test_db_version(db):

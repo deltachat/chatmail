@@ -1,7 +1,8 @@
+import os
+
 import pytest
 
-from .dictproxy import get_user_data
-from .doveauth import verify_user
+from .dictproxy import get_user_data, lookup_passdb
 from .database import Database, DBError
 
 
@@ -13,16 +14,29 @@ def db(tmpdir):
 
 
 def test_basic(db):
-    verify_user(db, "link2xt@c1.testrun.org", "asdf")
+    if os.path.exists("/tmp/nocreate"):
+        os.remove("/tmp/nocreate")
+    lookup_passdb(db, "link2xt@c1.testrun.org", "asdf")
     data = get_user_data(db, "link2xt@c1.testrun.org")
     assert data
 
 
-def test_verify_or_create(db):
-    res = verify_user(db, "newuser1@something.org", "kajdlkajsldk12l3kj1983")
-    assert res["status"] == "ok"
-    res = verify_user(db, "newuser1@something.org", "kajdlqweqwe")
-    assert res["status"] == "fail"
+def test_dont_overwrite_password_on_wrong_login(db):
+    """Test that logging in with a different password doesn't create a new user"""
+    res = lookup_passdb(db, "newuser1@something.org", "kajdlkajsldk12l3kj1983")
+    assert res["password"]
+    res2 = lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
+    # this function always returns a password hash, which is actually compared by dovecot.
+    assert res["password"] == res2["password"]
+
+
+def test_nocreate_file(db):
+    with open("/tmp/nocreate", "w+") as f:
+        f.write("")
+    assert os.path.exists("/tmp/nocreate")
+    lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
+    assert not get_user_data(db, "newuser1@something.org")
+    os.remove("/tmp/nocreate")
 
 
 def test_db_version(db):

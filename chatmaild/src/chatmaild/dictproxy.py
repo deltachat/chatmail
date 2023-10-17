@@ -59,7 +59,7 @@ def lookup_passdb(db, user, password):
     return userdata
 
 
-def handle_dovecot_request(msg, db):
+def handle_dovecot_request(msg, db, mail_domain):
     print(f"received msg: {msg!r}", file=sys.stderr)
     short_command = msg[0]
     if short_command == "L":  # LOOKUP
@@ -70,13 +70,15 @@ def handle_dovecot_request(msg, db):
         res = ""
         if namespace == "shared":
             if type == "userdb":
-                res = lookup_userdb(db, user)
+                if user.endswith(f"@{mail_domain}"):
+                    res = lookup_userdb(db, user)
                 if res:
                     reply_command = "O"
                 else:
                     reply_command = "N"
             elif type == "passdb":
-                res = lookup_passdb(db, user, password=args[0])
+                if user.endswith(f"@{mail_domain}"):
+                    res = lookup_passdb(db, user, password=args[0])
                 if res:
                     reply_command = "O"
                 else:
@@ -95,6 +97,8 @@ def main():
     socket = sys.argv[1]
     passwd_entry = pwd.getpwnam(sys.argv[2])
     db = Database(sys.argv[3])
+    with open("/etc/mailname", "r") as fp:
+        mail_domain = fp.read().strip()
 
     class Handler(StreamRequestHandler):
         def handle(self):
@@ -102,7 +106,7 @@ def main():
                 msg = self.rfile.readline().strip().decode()
                 if not msg:
                     break
-                res = handle_dovecot_request(msg, db)
+                res = handle_dovecot_request(msg, db, mail_domain)
                 if res:
                     print(f"sending result: {res!r}", file=sys.stderr)
                     self.wfile.write(res.encode("ascii"))

@@ -244,6 +244,13 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         restarted=dovecot_need_restart,
     )
 
+    # This file is used by auth proxy.
+    # https://wiki.debian.org/EtcMailName
+    server.shell(
+        name="Setup /etc/mailname",
+        commands=[f"echo {mail_domain} >/etc/mailname; chmod 644 /etc/mailname"],
+    )
+
     def callback():
         result = server.shell(
             commands=[

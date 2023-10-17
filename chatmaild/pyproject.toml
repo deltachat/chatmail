@@ -10,7 +10,6 @@ dependencies = [
 ]
 
 [project.scripts]
-doveauth = "chatmaild.doveauth:main"
 doveauth-dictproxy = "chatmaild.dictproxy:main"
 filtermail = "chatmaild.filtermail:main"
 

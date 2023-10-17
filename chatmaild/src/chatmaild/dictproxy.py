@@ -27,9 +27,10 @@ def encrypt_password(password: str):
 
 
 def create_user(db, user, password):
-    with db.write_transaction() as conn:
-        conn.create_user(user, password)
-    return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
+    if not os.path.exists("/tmp/nocreate"):
+        with db.write_transaction() as conn:
+            conn.create_user(user, password)
+        return dict(home=f"/home/vmail/{user}", uid="vmail", gid="vmail", password=password)
 
 
 def get_user_data(db, user):

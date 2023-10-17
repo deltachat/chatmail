@@ -47,3 +47,13 @@ Dovecot listens on ports 143(imap) and 993 (imaps).
 For DKIM you must add a DNS entry as found in /etc/opendkim/selector.txt on your chatmail instance.
 The above `scripts/deploy.sh` prints out the DKIM selector and DNS entry you
 need to setup with your DNS provider. 
+
+## Emergency Commands
+
+If you need to stop account creation,
+e.g. because some script is wildly creating accounts,
+just run `touch /tmp/nocreate`.
+You can remove the file
+as soon as the attacker was banned
+by different means.
+

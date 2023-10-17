@@ -202,7 +202,10 @@ def test_exceed_rate_limit(smtp, gencreds):
         try:
             smtp.conn.sendmail(user, to_addr, mail)
         except smtplib.SMTPSenderRefused as e:
-            assert i > 41
+            if i == 0:
+                pytest.fail(f"rate limit was exceeded too early with msg {i} - maybe wait a minute before testing?")
+            if i < 41:
+                pytest.fail(f"rate limit was exceeded too early with msg {i}")
             assert e.smtp_code == 450
             assert b'4.7.1 Error: too much mail from' in e.smtp_error
             return

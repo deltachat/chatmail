@@ -7,9 +7,8 @@ from email.parser import BytesParser
 from email import policy
 from email.utils import parseaddr
 
-from aiosmtpd.lmtp import LMTP
-from aiosmtpd.smtp import SMTP
-from aiosmtpd.controller import UnixSocketController, Controller
+from aiosmtpd.lmtp import SMTP
+from aiosmtpd.controller import Controller
 from smtplib import SMTP as SMTPClient
 
 
@@ -112,21 +111,16 @@ class SMTPController(Controller):
         return SMTP(self.handler, **self.SMTP_kwargs)
 
 
-async def asyncmain_beforequeue(loop, port):
+async def asyncmain_beforequeue(port):
     Controller(BeforeQueueHandler(), hostname="127.0.0.1", port=port).start()
 
 
 def main():
     args = sys.argv[1:]
-    assert len(args) == 2
+    assert len(args) == 1
     logging.basicConfig(level=logging.INFO)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    if args[0] == "afterqueue":
-        task = asyncmain_afterqueue(loop, args[1])
-    elif args[0] == "beforequeue":
-        task = asyncmain_beforequeue(loop, port=int(args[1]))
-    else:
-        raise SystemExit(1)
+    task = asyncmain_beforequeue(port=int(args[1]))
     loop.create_task(task)
     loop.run_forever()

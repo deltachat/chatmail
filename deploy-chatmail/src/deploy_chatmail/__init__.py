@@ -34,9 +34,12 @@ def _install_chatmaild() -> None:
             commands=[f"pip install --break-system-packages {remote_path}"],
         )
 
-        for fn in ("doveauth-dictproxy", "filtermail-before", ):
+        for fn in (
+            "doveauth-dictproxy",
+            "filtermail",
+        ):
             files.put(
-                name=f"upload {fn}.service",
+                name=f"Upload {fn}.service",
                 src=importlib.resources.files("chatmaild")
                 .joinpath(f"{fn}.service")
                 .open("rb"),

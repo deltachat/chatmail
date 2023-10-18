@@ -38,21 +38,12 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         email=email,
     )
 
-    service_file = files.put(
-        src=importlib.resources.files(__package__)
-        .joinpath("acmetool-redirector.service")
-        .open("rb"),
-        dest="/etc/systemd/system/acmetool-redirector.service",
+    files.template(
+        src=importlib.resources.files(__package__).joinpath("target.yaml.j2"),
+        dest="/var/lib/acme/conf/target",
         user="root",
         group="root",
         mode="644",
-    )
-    systemd.service(
-        name="Setup acmetool-redirector service",
-        service="acmetool-redirector.service",
-        running=False,
-        enabled=False,
-        restarted=service_file.changed,
     )
 
     for domain in domains:

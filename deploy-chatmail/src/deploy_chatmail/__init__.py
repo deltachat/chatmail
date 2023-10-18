@@ -292,6 +292,22 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         commands=[f"echo {mail_domain} >/etc/mailname; chmod 644 /etc/mailname"],
     )
 
+    journald_conf = files.put(
+        name="Configure journald",
+        src=importlib.resources.files(__package__).joinpath("journald.conf"),
+        dest="/etc/systemd/journald.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    systemd.service(
+        name="Start and enable journald",
+        service="systemd-journald.service",
+        running=True,
+        enabled=True,
+        restarted=journald_conf,
+    )
+
     def callback():
         result = server.shell(
             commands=[

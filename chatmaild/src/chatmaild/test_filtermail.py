@@ -28,12 +28,13 @@ def test_reject_forged_from():
         mail_from = "bob@c3.testrun.org"
         rcpt_tos = ["somebody@c3.testrun.org"]
 
+    # test that the filter lets good mail through
     envelope.content = makemail(envelope.mail_from).as_bytes()
-
     valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
     assert valid_recipients == envelope.rcpt_tos
     assert len(res) == 1 and "250" in res[0]
 
+    # test that the filter rejects forged mail
     envelope.content = makemail("forged@c3.testrun.org").as_bytes()
     valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
     assert not valid_recipients

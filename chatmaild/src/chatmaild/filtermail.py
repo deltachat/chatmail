@@ -80,7 +80,7 @@ def lmtp_handle_DATA(envelope):
         _, from_addr = parseaddr(message.get("from").strip().lower())
         logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from}")
         if envelope.mail_from != from_addr:
-            res += [f"500 Invalid FROM <{envelope.mail_from}>"]
+            res += [f"500 Invalid FROM <{from_addr}> for <{envelope.mail_from}>"]
             continue
 
         if envelope.mail_from == recipient:

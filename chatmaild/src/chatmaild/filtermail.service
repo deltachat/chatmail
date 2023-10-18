@@ -2,7 +2,7 @@
 Description=Email filter for chatmail servers
 
 [Service]
-ExecStart=/usr/local/bin/filtermail
+ExecStart=/usr/local/bin/filtermail afterqueue /var/spool/postfix/private/filtermail
 Restart=always
 RestartSec=30
 

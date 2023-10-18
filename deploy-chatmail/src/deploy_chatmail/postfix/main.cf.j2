@@ -29,9 +29,6 @@ myhostname = {{ config.domain_name }}
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
 
-# hard limit, also on internal messages
-smtpd_client_message_rate_limit = 80
-
 # Postfix does not deliver mail for any domain by itself.
 # Primary domain is listed in `virtual_mailbox_domains` instead
 # and handed over to Dovecot.

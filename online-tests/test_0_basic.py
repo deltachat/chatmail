@@ -19,13 +19,19 @@ def test_use_two_chatmailservers(cmfactory, maildomain2):
     assert domain1 != domain2
 
 
-def test_reject_internal_forged_from(cmsetup, mailgen, lp, remote):
+@pytest.mark.parametrize("internal", [True, False])
+def test_reject_forged_from(cmsetup, mailgen, lp, remote, internal):
     user1, user2, user3 = cmsetup.gen_users(3)
 
     lp.sec("send encrypted message with forged from")
     print("envelope_from", user1.addr)
+    if internal:
+        user_to_forge = user2.addr
+    else:
+        user_to_forge = "someone@example.org"
+
     print("message to inject:")
-    msg = mailgen.get_encrypted(from_addr=user2.addr, to_addr=user3.addr)
+    msg = mailgen.get_encrypted(from_addr=user_to_forge, to_addr=user3.addr)
     for line in msg.split("\n")[:4]:
         print(f"   {line}")
 
@@ -33,15 +39,14 @@ def test_reject_internal_forged_from(cmsetup, mailgen, lp, remote):
     user1.smtp.sendmail(from_addr=user1.addr, to_addrs=[user3.addr], msg=msg)
 
     for line in remote_log:
-        print(line)
-        if "500 invalid from" in line:
+        # print(line)
+        if "500 invalid from" in line and user3.addr in line:
             break
     else:
         pytest.fail("remote postfix/filtermail failed to reject message")
 
     # also check that the forging-user got a non-delivery notice
-    for flags, bmsg in user1.imap.fetch_all():
-        message = bmsg.decode()
-        if "Invalid FROM" in message and user2.addr in message:
+    for message in user1.imap.fetch_all_messages():
+        if "Invalid FROM" in message and user_to_forge in message:
             return
-    pytest.fail("forged From did not cause rejection")
+    pytest.fail(f"forged From={user_to_forge} did not cause non-delivery notice")

@@ -84,6 +84,15 @@ class ImapConn:
         assert status == "OK"
         return results
 
+    def fetch_all_messages(self):
+        print("imap-fetch all messages")
+        results = self.fetch_all()
+        messages = []
+        for item in results:
+            if len(item) == 2:
+                messages.append(item[1].decode())
+        return messages
+
 
 @pytest.fixture
 def smtp(maildomain):

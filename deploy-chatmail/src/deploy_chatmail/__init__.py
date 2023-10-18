@@ -53,24 +53,25 @@ def _install_chatmaild() -> None:
             daemon_reload=True,
         )
 
-        files.put(
-            name="upload filtermail.service",
-            src=importlib.resources.files("chatmaild")
-            .joinpath("filtermail.service")
-            .open("rb"),
-            dest="/etc/systemd/system/filtermail.service",
-            user="root",
-            group="root",
-            mode="644",
-        )
-        systemd.service(
-            name="Setup filtermail service",
-            service="filtermail.service",
-            running=True,
-            enabled=True,
-            restarted=True,
-            daemon_reload=True,
-        )
+        for fn in ("filtermail-after", "filtermail-before"):
+            files.put(
+                name=f"upload {fn}.service",
+                src=importlib.resources.files("chatmaild")
+                .joinpath(f"{fn}.service")
+                .open("rb"),
+                dest=f"/etc/systemd/system/{fn}.service",
+                user="root",
+                group="root",
+                mode="644",
+            )
+            systemd.service(
+                name=f"Setup {fn} service",
+                service=f"{fn}.service",
+                running=True,
+                enabled=True,
+                restarted=True,
+                daemon_reload=True,
+            )
 
 
 def _configure_opendkim(domain: str, dkim_selector: str) -> bool:

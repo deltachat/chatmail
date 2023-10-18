@@ -9,7 +9,7 @@ from email.utils import parseaddr
 
 from aiosmtpd.lmtp import LMTP
 from aiosmtpd.smtp import SMTP
-from aiosmtpd.controller import UnixSocketController
+from aiosmtpd.controller import UnixSocketController, Controller
 from smtplib import SMTP as SMTPClient
 
 
@@ -35,10 +35,7 @@ def check_encrypted(message):
     return True
 
 
-
 class BeforeQueueHandler:
-    transport_class = SMTP
-
     def __init__(self):
         self.send_rate_limiter = SendRateLimiter()
 
@@ -47,7 +44,13 @@ class BeforeQueueHandler:
         if self.send_rate_limiter.is_sending_allowed(address):
             envelope.mail_from = address
             return "250 OK"
-        return "400 per-user ratelimit exceeded"
+        return f"450 4.7.1: Too much mail from {address}"
+
+    async def handle_DATA(self, server, session, envelope):
+        logging.info("handle_DATA before-queue: re-injecting the mail")
+        client = SMTPClient("localhost", "10026")
+        client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
+        return "250 OK"
 
 
 class SendRateLimiter:
@@ -67,8 +70,6 @@ class SendRateLimiter:
 
 
 class AfterQueueHandler:
-    transport_class = LMTP
-
     async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
         envelope.rcpt_tos.append(address)
         return "250 OK"
@@ -77,8 +78,8 @@ class AfterQueueHandler:
         valid_recipients, res = lmtp_handle_DATA(envelope)
         # Reinject the mail back into Postfix.
         if valid_recipients:
-            logging.info("Reinjecting the mail")
-            client = SMTPClient("localhost", "10026")
+            logging.info("afterqueue: re-injecting the mail")
+            client = SMTPClient("localhost", "10027")
             client.sendmail(envelope.mail_from, valid_recipients, envelope.content)
         else:
             logging.info("no valid recipients, ignoring mail")
@@ -137,25 +138,35 @@ def lmtp_handle_DATA(envelope):
     return valid_recipients, res
 
 
-class Controller(UnixSocketController):
+class UnixController(UnixSocketController):
     def factory(self):
-        return self.handler.transport_class(self.handler, **self.SMTP_kwargs)
+        return LMTP(self.handler, **self.SMTP_kwargs)
 
 
-async def asyncmain(loop, handler, unix_socket_fn):
-    Controller(handler, unix_socket=unix_socket_fn).start()
+class SMTPController(Controller):
+    def factory(self):
+        return SMTP(self.handler, **self.SMTP_kwargs)
 
 
-name2Handler = {"beforequeue": BeforeQueueHandler, "afterqueue": AfterQueueHandler}
+async def asyncmain_afterqueue(loop, unix_socket_fn):
+    UnixController(AfterQueueHandler(), unix_socket=unix_socket_fn).start()
+
+
+async def asyncmain_beforequeue(loop, port):
+    Controller(BeforeQueueHandler(), hostname="127.0.0.1", port=port).start()
 
 
 def main():
     args = sys.argv[1:]
     assert len(args) == 2
-    handler = name2Handler[args[0]]()
-    unix_socket_fn = args[1]
     logging.basicConfig(level=logging.INFO)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.create_task(asyncmain(loop, handler, unix_socket_fn))
+    if args[0] == "afterqueue":
+        task = asyncmain_afterqueue(loop, args[1])
+    elif args[0] == "beforequeue":
+        task = asyncmain_beforequeue(loop, port=int(args[1]))
+    else:
+        raise SystemExit(1)
+    loop.create_task(task)
     loop.run_forever()

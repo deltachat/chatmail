@@ -339,4 +339,3 @@ def test_send_rate_limiter():
         else:
             assert i == SendRateLimiter.MAX_USER_SEND_PER_MINUTE + 1
             break
-

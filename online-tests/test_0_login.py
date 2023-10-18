@@ -46,10 +46,11 @@ def test_exceed_rate_limit(cmsetup, gencreds, mailgen):
         print("Sending mail", str(i))
         try:
             user1.smtp.sendmail(user1.addr, [user2.addr], mail)
-        except smtplib.SMTPSenderRefused as e:
+        except smtplib.SMTPException as e:
             if i < 80:
                 pytest.fail(f"rate limit was exceeded too early with msg {i}")
-            assert e.smtp_code == 450
-            assert b'4.7.1 Error: too much mail from' in e.smtp_error
+            outcome = e.recipients[user2.addr]
+            assert outcome[0] == 450
+            assert b'4.7.1: Too much mail from' in outcome[1]
             return
     pytest.fail("Rate limit was not exceeded")

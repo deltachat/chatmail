@@ -3,6 +3,7 @@ import asyncio
 import logging
 from email.parser import BytesParser
 from email import policy
+from email.utils import parseaddr
 
 from aiosmtpd.lmtp import LMTP
 from aiosmtpd.controller import UnixSocketController
@@ -42,50 +43,14 @@ class ExampleHandler:
         return "250 OK"
 
     async def handle_DATA(self, server, session, envelope):
-        logging.info("Processing DATA message from %s", envelope.mail_from)
-
-        valid_recipients = []
-
-        message = BytesParser(policy=policy.default).parsebytes(envelope.content)
-        mail_encrypted = check_encrypted(message)
-
-        res = []
-        for recipient in envelope.rcpt_tos:
-            my_local_domain = envelope.mail_from.split("@")
-            if len(my_local_domain) != 2:
-                res += [f"500 Invalid from address <{envelope.mail_from}>"]
-                continue
-
-            if envelope.mail_from == recipient:
-                # Always allow sending emails to self.
-                valid_recipients += [recipient]
-                res += ["250 OK"]
-                continue
-
-            recipient_local_domain = recipient.split("@")
-            if len(recipient_local_domain) != 2:
-                res += [f"500 Invalid address <{recipient}>"]
-                continue
-
-            is_outgoing = recipient_local_domain[1] != my_local_domain[1]
-
-            if (
-                is_outgoing
-                and not mail_encrypted
-                and message.get("secure-join") != "vc-request"
-                and message.get("secure-join") != "vg-request"
-            ):
-                res += ["500 Outgoing mail must be encrypted"]
-                continue
-
-            valid_recipients += [recipient]
-            res += ["250 OK"]
-
+        valid_recipients, res = lmtp_handle_DATA(envelope)
         # Reinject the mail back into Postfix.
         if valid_recipients:
             logging.info("Reinjecting the mail")
             client = SMTPClient("localhost", "10026")
             client.sendmail(envelope.mail_from, valid_recipients, envelope.content)
+        else:
+            logging.info("no valid recipients, ignoring mail")
 
         return "\r\n".join(res)
 
@@ -95,6 +60,55 @@ async def asyncmain(loop):
         ExampleHandler(), unix_socket="/var/spool/postfix/private/filtermail"
     )
     controller.start()
+
+
+def lmtp_handle_DATA(envelope):
+    """the central filtering function for e-mails."""
+    logging.info(f"Processing DATA message from {envelope.mail_from}")
+
+    message = BytesParser(policy=policy.default).parsebytes(envelope.content)
+    mail_encrypted = check_encrypted(message)
+
+    valid_recipients = []
+    res = []
+    for recipient in envelope.rcpt_tos:
+        my_local_domain = envelope.mail_from.split("@")
+        if len(my_local_domain) != 2:
+            res += [f"500 Invalid from address <{envelope.mail_from}>"]
+            continue
+
+        _, from_addr = parseaddr(message.get("from").strip().lower())
+        logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from}")
+        if envelope.mail_from != from_addr:
+            res += [f"500 Invalid FROM <{envelope.mail_from}>"]
+            continue
+
+        if envelope.mail_from == recipient:
+            # Always allow sending emails to self.
+            valid_recipients += [recipient]
+            res += ["250 OK"]
+            continue
+
+        recipient_local_domain = recipient.split("@")
+        if len(recipient_local_domain) != 2:
+            res += [f"500 Invalid address <{recipient}>"]
+            continue
+
+        is_outgoing = recipient_local_domain[1] != my_local_domain[1]
+
+        if (
+            is_outgoing
+            and not mail_encrypted
+            and message.get("secure-join") != "vc-request"
+            and message.get("secure-join") != "vg-request"
+        ):
+            res += ["500 Outgoing mail must be encrypted"]
+            continue
+
+        valid_recipients += [recipient]
+        res += ["250 OK"]
+
+    return valid_recipients, res
 
 
 def main():

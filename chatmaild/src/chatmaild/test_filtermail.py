@@ -1,6 +1,43 @@
-from .filtermail import check_encrypted
+from .filtermail import check_encrypted, lmtp_handle_DATA
 from email.parser import BytesParser
 from email import policy
+
+
+def test_reject_forged_from():
+    def makemail(from_addr):
+        return BytesParser(policy=policy.default).parsebytes(
+            "\r\n".join(
+                [
+                    f"From: <{from_addr}",
+                    "To: <barbaz@c3.testrun.org>",
+                    "Date: Sun, 15 Oct 2023 16:41:44 +0000",
+                    "Message-ID: <Mr.3gckbNy5bch.uK3Hd2Ws6-w@c2.testrun.org>",
+                    "References: <Mr.3gckbNy5bch.uK3Hd2Ws6-w@c2.testrun.org>",
+                    "Chat-Version: 1.0",
+                    "MIME-Version: 1.0",
+                    "Content-Type: text/plain; charset=utf-8; format=flowed; delsp=no",
+                    "",
+                    "Hi!",
+                    "",
+                    "",
+                ]
+            ).encode()
+        )
+
+    class envelope:
+        mail_from = "bob@c3.testrun.org"
+        rcpt_tos = ["somebody@c3.testrun.org"]
+
+    envelope.content = makemail(envelope.mail_from).as_bytes()
+
+    valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
+    assert valid_recipients == envelope.rcpt_tos
+    assert len(res) == 1 and "250" in res[0]
+
+    envelope.content = makemail("forged@c3.testrun.org").as_bytes()
+    valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
+    assert not valid_recipients
+    assert len(res) == 1 and "500" in res[0]
 
 
 def test_filtermail():

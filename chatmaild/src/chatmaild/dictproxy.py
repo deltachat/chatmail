@@ -31,7 +31,9 @@ def encrypt_password(password: str):
 
 def create_user(db, user, password):
     if os.path.exists(NOCREATE_FILE):
-        logging.warning(f"Didn't create account: {NOCREATE_FILE} exists. Delete the file to enable account creation.")
+        logging.warning(
+            f"Didn't create account: {NOCREATE_FILE} exists. Delete the file to enable account creation."
+        )
         return
     with db.write_transaction() as conn:
         conn.create_user(user, password)

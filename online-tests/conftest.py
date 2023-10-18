@@ -199,3 +199,13 @@ class Remote:
         while 1:
             line = self.popen.stdout.readline()
             yield line.decode().strip().lower()
+
+
+@pytest.fixture
+def mailgen(request):
+    class Mailgen:
+        def get_encrypted(self, from_addr, to_addr):
+            data = request.fspath.dirpath("mailgen/encrypted.eml").read()
+            return data.format(from_addr=from_addr, to_addr=to_addr)
+
+    return Mailgen()

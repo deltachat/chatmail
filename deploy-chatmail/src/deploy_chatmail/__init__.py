@@ -173,6 +173,33 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     return need_restart
 
 
+def _configure_nginx(domain: str, debug: bool = False) -> bool:
+    """Configures nginx HTTP server."""
+    need_restart = False
+
+    main_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("nginx.conf.j2"),
+        dest="/etc/nginx/nginx.conf",
+        user="root",
+        group="root",
+        mode="644",
+        config={"domain_name": domain},
+    )
+    need_restart |= main_config.changed
+
+    autoconfig = files.template(
+        src=importlib.resources.files(__package__).joinpath("autoconfig.xml.j2"),
+        dest="/var/www/html/.well-known/autoconfig/mail/config-v1.1.xml",
+        user="root",
+        group="root",
+        mode="644",
+        config={"domain_name": domain},
+    )
+    need_restart |= autoconfig.changed
+
+    return need_restart
+
+
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
     """Deploy a chat-mail instance.
 
@@ -194,7 +221,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     )
 
     # Deploy acmetool to have TLS certificates.
-    deploy_acmetool(domains=[mail_server])
+    deploy_acmetool(nginx_hook=True, domains=[mail_server])
 
     apt.packages(
         name="Install Postfix",
@@ -214,11 +241,17 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         ],
     )
 
+    apt.packages(
+        name="Install nginx",
+        packages=["nginx"],
+    )
+
     _install_chatmaild()
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
+    nginx_need_restart = _configure_nginx(mail_domain)
 
     systemd.service(
         name="Start and enable OpenDKIM",
@@ -242,6 +275,14 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         running=True,
         enabled=True,
         restarted=dovecot_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable nginx",
+        service="nginx.service",
+        running=True,
+        enabled=True,
+        restarted=nginx_need_restart,
     )
 
     # This file is used by auth proxy.

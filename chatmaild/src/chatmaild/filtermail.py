@@ -77,9 +77,9 @@ def lmtp_handle_DATA(envelope):
             res += [f"500 Invalid from address <{envelope.mail_from}>"]
             continue
 
-        _, from_addr = parseaddr(message.get("from").strip().lower())
+        _, from_addr = parseaddr(message.get("from").strip())
         logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from}")
-        if envelope.mail_from != from_addr:
+        if envelope.mail_from.lower() != from_addr.lower():
             res += [f"500 Invalid FROM <{from_addr}> for <{envelope.mail_from}>"]
             continue
 
@@ -108,6 +108,8 @@ def lmtp_handle_DATA(envelope):
         valid_recipients += [recipient]
         res += ["250 OK"]
 
+    assert len(envelope.rcpt_tos) == len(res)
+    assert len(valid_recipients) <= len(res)
     return valid_recipients, res
 
 

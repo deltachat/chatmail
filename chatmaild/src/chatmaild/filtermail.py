@@ -34,6 +34,11 @@ def check_encrypted(message):
     return True
 
 
+class SMTPController(Controller):
+    def factory(self):
+        return SMTP(self.handler, **self.SMTP_kwargs)
+
+
 class BeforeQueueHandler:
     def __init__(self):
         self.send_rate_limiter = SendRateLimiter()
@@ -61,20 +66,8 @@ class BeforeQueueHandler:
         return "250 OK"
 
 
-class SendRateLimiter:
-    MAX_USER_SEND_PER_MINUTE = 80
-
-    def __init__(self):
-        self.addr2timestamps = {}
-
-    def is_sending_allowed(self, mail_from):
-        last = self.addr2timestamps.setdefault(mail_from, [])
-        now = time.time()
-        last[:] = [ts for ts in last if ts >= (now - 60)]
-        if len(last) <= self.MAX_USER_SEND_PER_MINUTE:
-            last.append(now)
-            return True
-        return False
+async def asyncmain_beforequeue(port):
+    Controller(BeforeQueueHandler(), hostname="127.0.0.1", port=port).start()
 
 
 def check_DATA(envelope):
@@ -106,13 +99,20 @@ def check_DATA(envelope):
                 return f"500 Invalid unencrypted mail to <{recipient}>"
 
 
-class SMTPController(Controller):
-    def factory(self):
-        return SMTP(self.handler, **self.SMTP_kwargs)
+class SendRateLimiter:
+    MAX_USER_SEND_PER_MINUTE = 80
 
+    def __init__(self):
+        self.addr2timestamps = {}
 
-async def asyncmain_beforequeue(port):
-    Controller(BeforeQueueHandler(), hostname="127.0.0.1", port=port).start()
+    def is_sending_allowed(self, mail_from):
+        last = self.addr2timestamps.setdefault(mail_from, [])
+        now = time.time()
+        last[:] = [ts for ts in last if ts >= (now - 60)]
+        if len(last) <= self.MAX_USER_SEND_PER_MINUTE:
+            last.append(now)
+            return True
+        return False
 
 
 def main():

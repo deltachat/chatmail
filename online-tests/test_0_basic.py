@@ -19,42 +19,29 @@ def test_use_two_chatmailservers(cmfactory, maildomain2):
     assert domain1 != domain2
 
 
-def test_reject_internal_forged_from(smtp, gencreds, mailgen, lp, imap):
-    lp.sec("create forged user account")
-    forged_user, password = gencreds()
-    smtp.connect()
-    smtp.login(forged_user, password)
-
-    lp.sec("create TO user account")
-    to_user, password = gencreds()
-    smtp.connect()
-    smtp.login(to_user, password)
-
-    lp.sec("create account")
-    login_user, login_password = gencreds()
-    smtp.connect()
-    smtp.login(login_user, login_password)
+def test_reject_internal_forged_from(cmsetup, mailgen, lp, remote):
+    user1, user2, user3 = cmsetup.gen_users(3)
 
     lp.sec("send encrypted message with forged from")
-    print("envelope_from", login_user)
-    print("logged in as", login_user)
-
-    print("injected mime message")
-    msg = mailgen.get_encrypted(from_addr=forged_user, to_addr=to_user)
+    print("envelope_from", user1.addr)
+    print("message to inject:")
+    msg = mailgen.get_encrypted(from_addr=user2.addr, to_addr=user3.addr)
     for line in msg.split("\n")[:4]:
         print(f"   {line}")
 
-    smtp.conn.sendmail(from_addr=login_user, to_addrs=[to_user], msg=msg)
+    remote_log = remote.iter_output("journalctl -t postfix/lmtp")
+    user1.smtp.sendmail(from_addr=user1.addr, to_addrs=[user3.addr], msg=msg)
 
-    imap.connect()
-    imap.login(login_user, login_password)
-    imap.conn.select("Inbox")
+    for line in remote_log:
+        print(line)
+        if "500 invalid from" in line:
+            break
+    else:
+        pytest.fail("remote postfix/filtermail failed to reject message")
 
-    # detect mailer daemon rejection message
-    status, results = imap.conn.fetch("1", "(RFC822)")
-    assert status == "OK"
-    for res in results:
-        message = res[1].decode()
-        if "Invalid FROM" in message and forged_user in message:
+    # also check that the forging-user got a non-delivery notice
+    for flags, bmsg in user1.imap.fetch_all():
+        message = bmsg.decode()
+        if "Invalid FROM" in message and user2.addr in message:
             return
     pytest.fail("forged From did not cause rejection")

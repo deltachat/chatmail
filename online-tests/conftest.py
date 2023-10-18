@@ -75,6 +75,15 @@ class ImapConn:
         print(f"imap-login {user!r} {password!r}")
         self.conn.login(user, password)
 
+    def fetch_all(self):
+        print("imap-fetch all")
+        status, res = self.conn.select()
+        if int(res[0]) == 0:
+            raise ValueError("no messages in imap folder")
+        status, results = self.conn.fetch("1:*", "(RFC822)")
+        assert status == "OK"
+        return results
+
 
 @pytest.fixture
 def smtp(maildomain):
@@ -96,6 +105,11 @@ class SmtpConn:
     def login(self, user, password):
         print(f"smtp-login {user!r} {password!r}")
         self.conn.login(user, password)
+
+    def sendmail(self, from_addr, to_addrs, msg):
+        print(f"smtp-sendmail from={from_addr!r} to_addrs={to_addrs!r}")
+        print(f"smtp-sendmail message size: {len(msg)}")
+        return self.conn.sendmail(from_addr=from_addr, to_addrs=to_addrs, msg=msg)
 
 
 @pytest.fixture(params=["imap", "smtp"])
@@ -198,7 +212,11 @@ class Remote:
         )
         while 1:
             line = self.popen.stdout.readline()
-            yield line.decode().strip().lower()
+            res = line.decode().strip().lower()
+            if res:
+                yield res
+            else:
+                break
 
 
 @pytest.fixture
@@ -209,3 +227,51 @@ def mailgen(request):
             return data.format(from_addr=from_addr, to_addr=to_addr)
 
     return Mailgen()
+
+
+@pytest.fixture
+def cmsetup(maildomain, gencreds):
+    return CMSetup(maildomain, gencreds)
+
+
+class CMSetup:
+    def __init__(self, maildomain, gencreds):
+        self.maildomain = maildomain
+        self.gencreds = gencreds
+
+    def gen_users(self, num):
+        print(f"Creating {num} online users")
+        users = []
+        for i in range(num):
+            addr, password = self.gencreds()
+            user = CMUser(self.maildomain, addr, password)
+            assert user.smtp
+            users.append(user)
+        return users
+
+
+class CMUser:
+    def __init__(self, maildomain, addr, password):
+        self.maildomain = maildomain
+        self.addr = addr
+        self.password = password
+        self._smtp = None
+        self._imap = None
+
+    @property
+    def smtp(self):
+        if not self._smtp:
+            handle = SmtpConn(self.maildomain)
+            handle.connect()
+            handle.login(self.addr, self.password)
+            self._smtp = handle
+        return self._smtp
+
+    @property
+    def imap(self):
+        if not self._imap:
+            imap = ImapConn(self.maildomain)
+            imap.connect()
+            imap.login(self.addr, self.password)
+            self._imap = imap
+        return self._imap

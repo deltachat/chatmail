@@ -41,14 +41,23 @@ class BeforeQueueHandler:
 
     async def handle_MAIL(self, server, session, envelope, address, mail_options):
         logging.info(f"handle_MAIL from {address}")
-        if self.send_rate_limiter.is_sending_allowed(address):
-            envelope.mail_from = address
-            return "250 OK"
-        return f"450 4.7.1: Too much mail from {address}"
+        envelope.mail_from = address
+        if not self.send_rate_limiter.is_sending_allowed(address):
+            return f"450 4.7.1: Too much mail from {address}"
+
+        parts = envelope.mail_from.split("@")
+        if len(parts) != 2:
+            return f"500 Invalid from address <{envelope.mail_from!r}>"
+
+        return "250 OK"
 
     async def handle_DATA(self, server, session, envelope):
-        logging.info("handle_DATA before-queue: re-injecting the mail")
-        client = SMTPClient("localhost", "10026")
+        logging.info("handle_DATA before-queue")
+        error = check_DATA(envelope)
+        if error:
+            return error
+        logging.info("re-injecting the mail that passed checks")
+        client = SMTPClient("localhost", "10025")
         client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
         return "250 OK"
 
@@ -69,87 +78,38 @@ class SendRateLimiter:
         return False
 
 
-class AfterQueueHandler:
-    async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
-        envelope.rcpt_tos.append(address)
-        return "250 OK"
-
-    async def handle_DATA(self, server, session, envelope):
-        valid_recipients, res = lmtp_handle_DATA(envelope)
-        # Reinject the mail back into Postfix.
-        if valid_recipients:
-            logging.info("afterqueue: re-injecting the mail")
-            client = SMTPClient("localhost", "10027")
-            client.sendmail(envelope.mail_from, valid_recipients, envelope.content)
-        else:
-            logging.info("no valid recipients, ignoring mail")
-
-        return "\r\n".join(res)
-
-
-def lmtp_handle_DATA(envelope):
+def check_DATA(envelope):
     """the central filtering function for e-mails."""
     logging.info(f"Processing DATA message from {envelope.mail_from}")
 
     message = BytesParser(policy=policy.default).parsebytes(envelope.content)
     mail_encrypted = check_encrypted(message)
 
-    valid_recipients = []
-    res = []
+    _, from_addr = parseaddr(message.get("from").strip())
+    logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
+    if envelope.mail_from.lower() != from_addr.lower():
+        return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
+
+    envelope_from_domain = from_addr.split("@").pop()
     for recipient in envelope.rcpt_tos:
-        my_local_domain = envelope.mail_from.split("@")
-        if len(my_local_domain) != 2:
-            res += [f"500 Invalid from address <{envelope.mail_from}>"]
-            continue
-
-        _, from_addr = parseaddr(message.get("from").strip())
-        logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from}")
-        if envelope.mail_from.lower() != from_addr.lower():
-            res += [f"500 Invalid FROM <{from_addr}> for <{envelope.mail_from}>"]
-            continue
-
         if envelope.mail_from == recipient:
             # Always allow sending emails to self.
-            valid_recipients += [recipient]
-            res += ["250 OK"]
             continue
+        res = recipient.split("@")
+        if len(res) != 2:
+            return f"500 Invalid address <{recipient}>"
+        _recipient_addr, recipient_domain = res
 
-        recipient_local_domain = recipient.split("@")
-        if len(recipient_local_domain) != 2:
-            res += [f"500 Invalid address <{recipient}>"]
-            continue
-
-        is_outgoing = recipient_local_domain[1] != my_local_domain[1]
-
-        if (
-            is_outgoing
-            and not mail_encrypted
-            and message.get("secure-join") != "vc-request"
-            and message.get("secure-join") != "vg-request"
-        ):
-            res += ["500 Outgoing mail must be encrypted"]
-            continue
-
-        valid_recipients += [recipient]
-        res += ["250 OK"]
-
-    assert len(envelope.rcpt_tos) == len(res)
-    assert len(valid_recipients) <= len(res)
-    return valid_recipients, res
-
-
-class UnixController(UnixSocketController):
-    def factory(self):
-        return LMTP(self.handler, **self.SMTP_kwargs)
+        is_outgoing = recipient_domain != envelope_from_domain
+        if is_outgoing and not mail_encrypted:
+            is_securejoin = message.get("secure-join") in ["vc-request", "vg-request"]
+            if not is_securejoin:
+                return f"500 Invalid unencrypted mail to <{recipient}>"
 
 
 class SMTPController(Controller):
     def factory(self):
         return SMTP(self.handler, **self.SMTP_kwargs)
-
-
-async def asyncmain_afterqueue(loop, unix_socket_fn):
-    UnixController(AfterQueueHandler(), unix_socket=unix_socket_fn).start()
 
 
 async def asyncmain_beforequeue(loop, port):

@@ -34,26 +34,7 @@ def _install_chatmaild() -> None:
             commands=[f"pip install --break-system-packages {remote_path}"],
         )
 
-        files.put(
-            name="upload doveauth-dictproxy.service",
-            src=importlib.resources.files("chatmaild")
-            .joinpath("doveauth-dictproxy.service")
-            .open("rb"),
-            dest="/etc/systemd/system/doveauth-dictproxy.service",
-            user="root",
-            group="root",
-            mode="644",
-        )
-        systemd.service(
-            name="Setup doveauth-dictproxy service",
-            service="doveauth-dictproxy.service",
-            running=True,
-            enabled=True,
-            restarted=True,
-            daemon_reload=True,
-        )
-
-        for fn in ("filtermail-after", "filtermail-before"):
+        for fn in ("doveauth-dictproxy", "filtermail-before", ):
             files.put(
                 name=f"upload {fn}.service",
                 src=importlib.resources.files("chatmaild")

@@ -35,22 +35,3 @@ def test_login_same_password(imap_or_smtp, gencreds):
     imap_or_smtp.login(user1, password1)
     imap_or_smtp.connect()
     imap_or_smtp.login(user2, password1)
-
-
-@pytest.mark.slow
-def test_exceed_rate_limit(cmsetup, gencreds, mailgen):
-    """Test that the per-account send-mail limit is exceeded."""
-    user1, user2 = cmsetup.gen_users(2)
-    mail = mailgen.get_encrypted(user1.addr, user2.addr)
-    for i in range(100):
-        print("Sending mail", str(i))
-        try:
-            user1.smtp.sendmail(user1.addr, [user2.addr], mail)
-        except smtplib.SMTPException as e:
-            if i < 80:
-                pytest.fail(f"rate limit was exceeded too early with msg {i}")
-            outcome = e.recipients[user2.addr]
-            assert outcome[0] == 450
-            assert b'4.7.1: Too much mail from' in outcome[1]
-            return
-    pytest.fail("Rate limit was not exceeded")

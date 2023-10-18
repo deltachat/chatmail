@@ -77,7 +77,5 @@ scache    unix  -       -       y       -       1       scache
 postlog   unix-dgram n  -       n       -       1       postlogd
 filter    unix -        n       n       -       -       lmtp
 # Local SMTP server for reinjecting filered mail.
-localhost:10026 inet  n       -       n       -       10      smtpd
-        -o content_filter=filter:unix:private/filtermail-afterqueue
-localhost:10027 inet  n       -       n       -       10      smtpd
+localhost:10025 inet  n       -       n       -       10      smtpd
         -o content_filter=

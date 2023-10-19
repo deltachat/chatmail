@@ -1,4 +1,5 @@
 import pytest
+import smtplib
 
 
 def test_login_basic_functioning(imap_or_smtp, gencreds, lp):

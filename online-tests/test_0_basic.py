@@ -20,7 +20,7 @@ def test_use_two_chatmailservers(cmfactory, maildomain2):
 
 
 @pytest.mark.parametrize("forgeaddr", ["internal", "someone@example.org"])
-def test_reject_forged_from(cmsetup, mailgen, lp, remote, forgeaddr):
+def test_reject_forged_from(cmsetup, mailgen, lp, forgeaddr):
     user1, user3 = cmsetup.gen_users(2)
 
     lp.sec("send encrypted message with forged from")
@@ -36,17 +36,25 @@ def test_reject_forged_from(cmsetup, mailgen, lp, remote, forgeaddr):
         print(f"   {line}")
 
     lp.sec("Send forged mail and check remote postfix lmtp processing result")
-    remote_log = remote.iter_output("journalctl -t postfix/lmtp")
-    user1.smtp.sendmail(from_addr=user1.addr, to_addrs=[user3.addr], msg=msg)
-    for line in remote_log:
-        # print(line)
-        if "500 invalid from" in line and user3.addr in line:
-            break
-    else:
-        pytest.fail("remote postfix/filtermail failed to reject message")
+    with pytest.raises(smtplib.SMTPException) as e:
+        user1.smtp.sendmail(from_addr=user1.addr, to_addrs=[user3.addr], msg=msg)
+    assert "500" in str(e.value)
 
-    # check that the logged in user (who sent the forged msg) got a non-delivery notice
-    for message in user1.imap.fetch_all_messages():
-        if "Invalid FROM" in message and addr_to_forge in message:
+
+@pytest.mark.slow
+def test_exceed_rate_limit(cmsetup, gencreds, mailgen):
+    """Test that the per-account send-mail limit is exceeded."""
+    user1, user2 = cmsetup.gen_users(2)
+    mail = mailgen.get_encrypted(user1.addr, user2.addr)
+    for i in range(100):
+        print("Sending mail", str(i))
+        try:
+            user1.smtp.sendmail(user1.addr, [user2.addr], mail)
+        except smtplib.SMTPException as e:
+            if i < 80:
+                pytest.fail(f"rate limit was exceeded too early with msg {i}")
+            outcome = e.recipients[user2.addr]
+            assert outcome[0] == 450
+            assert b'4.7.1: Too much mail from' in outcome[1]
             return
-    pytest.fail(f"forged From={addr_to_forge} did not cause non-delivery notice")
+    pytest.fail("Rate limit was not exceeded")

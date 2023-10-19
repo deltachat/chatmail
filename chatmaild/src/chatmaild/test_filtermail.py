@@ -1,6 +1,7 @@
-from .filtermail import check_encrypted, lmtp_handle_DATA
+from .filtermail import check_encrypted, check_DATA, SendRateLimiter
 from email.parser import BytesParser
 from email import policy
+import pytest
 
 
 def test_reject_forged_from():
@@ -30,15 +31,12 @@ def test_reject_forged_from():
 
     # test that the filter lets good mail through
     envelope.content = makemail(envelope.mail_from).as_bytes()
-    valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
-    assert valid_recipients == envelope.rcpt_tos
-    assert len(res) == 1 and "250" in res[0]
+    assert not check_DATA(envelope=envelope)
 
     # test that the filter rejects forged mail
     envelope.content = makemail("forged@c3.testrun.org").as_bytes()
-    valid_recipients, res = lmtp_handle_DATA(envelope=envelope)
-    assert not valid_recipients
-    assert len(res) == 1 and "500" in res[0]
+    error = check_DATA(envelope=envelope)
+    assert "500" in error
 
 
 def test_filtermail():
@@ -326,3 +324,15 @@ def test_filtermail():
             ]
         ).encode()
     )
+
+
+def test_send_rate_limiter():
+    limiter = SendRateLimiter()
+    for i in range(100):
+        if limiter.is_sending_allowed("some@example.org"):
+            if i <= SendRateLimiter.MAX_USER_SEND_PER_MINUTE:
+                continue
+            pytest.fail("limiter didn't work")
+        else:
+            assert i == SendRateLimiter.MAX_USER_SEND_PER_MINUTE + 1
+            break

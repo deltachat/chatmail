@@ -121,6 +121,6 @@ def main():
     logging.basicConfig(level=logging.INFO)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    task = asyncmain_beforequeue(port=int(args[1]))
+    task = asyncmain_beforequeue(port=int(args[0]))
     loop.create_task(task)
     loop.run_forever()

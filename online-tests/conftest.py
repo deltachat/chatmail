@@ -1,5 +1,6 @@
 import os
 import io
+import time
 import random
 import subprocess
 import imaplib
@@ -12,6 +13,10 @@ def pytest_addoption(parser):
     parser.addoption(
         "--slow", action="store_true", default=False, help="also run slow tests"
     )
+
+
+def pytest_configure(config):
+    config._benchresults = {}
 
 
 def pytest_runtest_setup(item):
@@ -52,6 +57,32 @@ def pytest_report_header():
     if domain:
         text = f"chatmail test instance: {domain}"
         return ["-" * len(text), text, "-" * len(text)]
+
+
+@pytest.fixture
+def benchmark(request):
+    def bench(func, num, name=None):
+        if name is None:
+            name = func.__name__
+        durations = []
+        for i in range(num):
+            now = time.time()
+            func()
+            durations.append(time.time()-now)
+        durations.sort()
+        request.config._benchresults[name] = durations
+    return bench
+
+
+def pytest_terminal_summary(terminalreporter):
+    tr = terminalreporter
+    results = tr.config._benchresults
+    tr.section("benchmark results")
+    for name, durations in results.items():
+        overall = sum(durations)
+        median = sorted(durations)[len(durations) // 2]
+        tr.write_line(f"{name: <30} {median:2.4f} seconds")
+
 
 
 @pytest.fixture

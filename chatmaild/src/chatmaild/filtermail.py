@@ -7,7 +7,7 @@ from email.parser import BytesParser
 from email import policy
 from email.utils import parseaddr
 
-from aiosmtpd.lmtp import SMTP
+from aiosmtpd.smtp import SMTP
 from aiosmtpd.controller import Controller
 from smtplib import SMTP as SMTPClient
 

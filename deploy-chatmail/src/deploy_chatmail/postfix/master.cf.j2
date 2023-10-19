@@ -77,4 +77,4 @@ postlog   unix-dgram n  -       n       -       1       postlogd
 filter    unix -        n       n       -       -       lmtp
 # Local SMTP server for reinjecting filered mail.
 localhost:10025 inet  n       -       n       -       10      smtpd
-        -o content_filter=
+  -o syslog_name=postfix/reinject

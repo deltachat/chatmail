@@ -1,23 +1,30 @@
-def test_tls_serialized_connect(benchmark, imap_or_smtp):
-    def connect():
-        imap_or_smtp.connect()
+def test_tls_imap(benchmark, imap):
+    def imap_connect():
+        imap.connect()
 
-    benchmark(connect)
+    benchmark(imap_connect, 10)
 
 
-def test_login(benchmark, imap_or_smtp, gencreds):
-    cls = imap_or_smtp.__class__
-    conns = []
-    for i in range(20):
-        conn = cls(imap_or_smtp.host)
-        conn.connect()
-        conns.append(conn)
+def test_login_imap(benchmark, imap, gencreds):
+    def imap_connect_and_login():
+        imap.connect()
+        imap.login(*gencreds())
 
-    def login():
-        conn = conns.pop()
-        conn.login(*gencreds())
+    benchmark(imap_connect_and_login, 10)
 
-    benchmark(login)
+
+def test_tls_smtp(benchmark, smtp):
+    def smtp_connect():
+        smtp.connect()
+
+    benchmark(smtp_connect, 10)
+
+def test_login_smtp(benchmark, smtp, gencreds):
+    def smtp_connect_and_login():
+        smtp.connect()
+        smtp.login(*gencreds())
+
+    benchmark(smtp_connect_and_login, 10)
 
 
 def test_send_and_receive_10(benchmark, cmfactory, lp):
@@ -31,4 +38,4 @@ def test_send_and_receive_10(benchmark, cmfactory, lp):
         for i in range(10):
             ac2.wait_next_incoming_message()
 
-    benchmark(send_10_receive_all)
+    benchmark(send_10_receive_all, 1)

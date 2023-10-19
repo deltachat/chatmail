@@ -42,7 +42,6 @@ class SMTPController(Controller):
 class BeforeQueueHandler:
     def __init__(self):
         self.send_rate_limiter = SendRateLimiter()
-        self.smtp = SMTPClient("localhost", "10025")
 
     async def handle_MAIL(self, server, session, envelope, address, mail_options):
         logging.info(f"handle_MAIL from {address}")
@@ -62,7 +61,8 @@ class BeforeQueueHandler:
         if error:
             return error
         logging.info("re-injecting the mail that passed checks")
-        self.smtp.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
+        client = SMTPClient("localhost", "10025")
+        client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
         return "250 OK"
 
 

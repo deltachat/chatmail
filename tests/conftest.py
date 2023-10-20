@@ -287,10 +287,10 @@ class Remote:
 
 
 @pytest.fixture
-def get_mail_data(request, gencreds):
+def maildata(request, gencreds):
     datadir = conftestdir.joinpath("mail-data")
 
-    def get_mail_data(name, parsed=True, from_addr=None, to_addr=None):
+    def maildata(name, parsed=True, from_addr=None, to_addr=None):
         if from_addr is None:
             from_addr = gencreds()[0]
         if to_addr is None:
@@ -299,7 +299,7 @@ def get_mail_data(request, gencreds):
         text = data.format(from_addr=from_addr, to_addr=to_addr)
         return BytesParser(policy=policy.default).parsebytes(text.encode())
 
-    return get_mail_data
+    return maildata
 
 
 @pytest.fixture

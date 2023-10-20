@@ -55,6 +55,6 @@ def test_exceed_rate_limit(cmsetup, gencreds, mailgen):
                 pytest.fail(f"rate limit was exceeded too early with msg {i}")
             outcome = e.recipients[user2.addr]
             assert outcome[0] == 450
-            assert b'4.7.1: Too much mail from' in outcome[1]
+            assert b"4.7.1: Too much mail from" in outcome[1]
             return
     pytest.fail("Rate limit was not exceeded")

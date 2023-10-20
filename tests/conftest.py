@@ -6,6 +6,8 @@ import subprocess
 import imaplib
 import smtplib
 import itertools
+from email.parser import BytesParser
+from email import policy
 from pathlib import Path
 from math import ceil
 import pytest
@@ -90,7 +92,7 @@ def pytest_terminal_summary(terminalreporter):
         return
 
     tr.section("benchmark results")
-    float_names = 'median min max'.split()
+    float_names = "median min max".split()
     width = max(map(len, float_names))
 
     def fcol(parts):
@@ -285,13 +287,19 @@ class Remote:
 
 
 @pytest.fixture
-def mailgen(request):
+def mailgen(request, gencreds):
     datadir = conftestdir.joinpath("mail-data")
 
     class Mailgen:
-        def get_encrypted(self, from_addr, to_addr):
-            data = datadir.joinpath("encrypted.eml").read_text()
-            return data.format(from_addr=from_addr, to_addr=to_addr)
+        def get_mail_data(self, name, parsed=True, from_addr=None):
+            if from_addr is None:
+                from_addr = gencreds()[0]
+            to_addr = gencreds()[0]
+            data = datadir.joinpath(name).read_text()
+            text = data.format(from_addr=from_addr, to_addr=to_addr)
+            if parsed:
+                return BytesParser(policy=policy.default).parsebytes(text.encode())
+            return text
 
     return Mailgen()
 

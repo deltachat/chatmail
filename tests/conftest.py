@@ -287,21 +287,19 @@ class Remote:
 
 
 @pytest.fixture
-def mailgen(request, gencreds):
+def get_mail_data(request, gencreds):
     datadir = conftestdir.joinpath("mail-data")
 
-    class Mailgen:
-        def get_mail_data(self, name, parsed=True, from_addr=None):
-            if from_addr is None:
-                from_addr = gencreds()[0]
+    def get_mail_data(name, parsed=True, from_addr=None, to_addr=None):
+        if from_addr is None:
+            from_addr = gencreds()[0]
+        if to_addr is None:
             to_addr = gencreds()[0]
-            data = datadir.joinpath(name).read_text()
-            text = data.format(from_addr=from_addr, to_addr=to_addr)
-            if parsed:
-                return BytesParser(policy=policy.default).parsebytes(text.encode())
-            return text
+        data = datadir.joinpath(name).read_text()
+        text = data.format(from_addr=from_addr, to_addr=to_addr)
+        return BytesParser(policy=policy.default).parsebytes(text.encode())
 
-    return Mailgen()
+    return get_mail_data
 
 
 @pytest.fixture

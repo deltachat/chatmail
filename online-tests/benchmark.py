@@ -30,7 +30,6 @@ def test_login_smtp(benchmark, smtp, gencreds):
 
 class TestDC:
     def test_autoconfigure(self, benchmark, cmfactory):
-
         def autoconfig_and_idle_ready():
             cmfactory.get_online_accounts(1)
 

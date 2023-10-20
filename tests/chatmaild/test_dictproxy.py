@@ -14,10 +14,8 @@ def db(tmpdir):
     return Database(db_path)
 
 
-def test_basic(db):
-    chatmaild.dictproxy.NOCREATE_FILE = "/tmp/nocreate"
-    if os.path.exists(chatmaild.dictproxy.NOCREATE_FILE):
-        os.remove(chatmaild.dictproxy.NOCREATE_FILE)
+def test_basic(db, tmpdir, monkeypatch):
+    monkeypatch.setattr(chatmaild.dictproxy, "NOCREATE_FILE", tmpdir.join("nocreate").strpath)
     lookup_passdb(db, "link2xt@c1.testrun.org", "asdf")
     data = get_user_data(db, "link2xt@c1.testrun.org")
     assert data
@@ -32,14 +30,12 @@ def test_dont_overwrite_password_on_wrong_login(db):
     assert res["password"] == res2["password"]
 
 
-def test_nocreate_file(db):
-    chatmaild.dictproxy.NOCREATE_FILE = "/tmp/nocreate"
-    with open(chatmaild.dictproxy.NOCREATE_FILE, "w+") as f:
-        f.write("")
-    assert os.path.exists(chatmaild.dictproxy.NOCREATE_FILE)
+def test_nocreate_file(db, tmpdir, monkeypatch):
+    nocreate = tmpdir.join("nocreate")
+    monkeypatch.setattr(chatmaild.dictproxy, "NOCREATE_FILE", str(nocreate))
+    nocreate.write("")
     lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
     assert not get_user_data(db, "newuser1@something.org")
-    os.remove(chatmaild.dictproxy.NOCREATE_FILE)
 
 
 def test_db_version(db):

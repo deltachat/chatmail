@@ -83,9 +83,8 @@ def pytest_terminal_summary(terminalreporter):
     tr.write_line(headers)
     tr.write_line("-" * len(headers))
     for name, durations in results.items():
-        overall = sum(durations)
         median = sorted(durations)[len(durations) // 2]
-        median = f'{median:2.4f}'
+        median = f"{median:2.4f}"
         tr.write_line(f"{name: <30} {median: >6}")
 
 

@@ -1,4 +1,4 @@
-from .filtermail import check_encrypted, check_DATA, SendRateLimiter
+from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter
 from email.parser import BytesParser
 from email import policy
 import pytest

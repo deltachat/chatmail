@@ -20,7 +20,7 @@ def test_use_two_chatmailservers(cmfactory, maildomain2):
 
 
 @pytest.mark.parametrize("forgeaddr", ["internal", "someone@example.org"])
-def test_reject_forged_from(cmsetup, get_mail_data, lp, forgeaddr):
+def test_reject_forged_from(cmsetup, maildata, lp, forgeaddr):
     user1, user3 = cmsetup.gen_users(2)
 
     lp.sec("send encrypted message with forged from")
@@ -31,7 +31,7 @@ def test_reject_forged_from(cmsetup, get_mail_data, lp, forgeaddr):
         addr_to_forge = "someone@example.org"
 
     print("message to inject:")
-    msg = get_mail_data("encrypted.eml", from_addr=addr_to_forge, to_addr=user3.addr)
+    msg = maildata("encrypted.eml", from_addr=addr_to_forge, to_addr=user3.addr)
     msg = msg.as_string()
     for line in msg.split("\n")[:4]:
         print(f"   {line}")
@@ -43,10 +43,12 @@ def test_reject_forged_from(cmsetup, get_mail_data, lp, forgeaddr):
 
 
 @pytest.mark.slow
-def test_exceed_rate_limit(cmsetup, gencreds, get_mail_data):
+def test_exceed_rate_limit(cmsetup, gencreds, maildata):
     """Test that the per-account send-mail limit is exceeded."""
     user1, user2 = cmsetup.gen_users(2)
-    mail = get_mail_data("encrypted", from_addr=user1.addr, to_addr=user2.addr)
+    mail = maildata(
+        "encrypted.eml", from_addr=user1.addr, to_addr=user2.addr
+    ).as_string()
     for i in range(100):
         print("Sending mail", str(i))
         try:

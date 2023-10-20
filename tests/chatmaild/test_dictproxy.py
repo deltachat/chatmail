@@ -4,14 +4,7 @@ import pytest
 
 import chatmaild.dictproxy
 from chatmaild.dictproxy import get_user_data, lookup_passdb
-from chatmaild.database import Database, DBError
-
-
-@pytest.fixture()
-def db(tmpdir):
-    db_path = tmpdir / "passdb.sqlite"
-    print("database path:", db_path)
-    return Database(db_path)
+from chatmaild.database import DBError
 
 
 def test_basic(db, tmpdir, monkeypatch):

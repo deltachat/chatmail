@@ -79,6 +79,9 @@ def benchmark(request):
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     results = tr.config._benchresults
+    if not results:
+        return
+
     tr.section("benchmark results")
     float_names = 'median min max'.split()
     width = max(map(len, float_names))

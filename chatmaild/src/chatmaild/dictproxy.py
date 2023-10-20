@@ -2,13 +2,13 @@ import logging
 import os
 import sys
 import json
+import crypt
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
     ThreadingMixIn,
 )
 import pwd
-import subprocess
 
 from .database import Database
 
@@ -16,17 +16,9 @@ NOCREATE_FILE = "/etc/chatmail-nocreate"
 
 
 def encrypt_password(password: str):
-    password = password.encode("ascii")
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    process = subprocess.Popen(
-        ["doveadm", "pw", "-s", "SHA512-CRYPT"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-    stdout_data, _stderr_data = process.communicate(
-        input=password + b"\n" + password + b"\n"
-    )
-    return stdout_data.decode("ascii").strip()
+    passhash = crypt.crypt(password, crypt.METHOD_SHA512)
+    return "{SHA512-CRYPT}" + passhash
 
 
 def create_user(db, user, password):

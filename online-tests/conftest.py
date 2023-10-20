@@ -18,6 +18,9 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config._benchresults = {}
+    config.addinivalue_line(
+        "markers", "slow: mark test to require --slow option to run"
+    )
 
 
 def pytest_runtest_setup(item):

@@ -3,8 +3,8 @@ import os
 import pytest
 
 import chatmaild.dictproxy
-from .dictproxy import get_user_data, lookup_passdb
-from .database import Database, DBError
+from chatmaild.dictproxy import get_user_data, lookup_passdb
+from chatmaild.database import Database, DBError
 
 
 @pytest.fixture()

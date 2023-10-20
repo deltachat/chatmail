@@ -6,6 +6,7 @@ import subprocess
 import imaplib
 import smtplib
 import itertools
+from math import ceil
 import pytest
 
 
@@ -79,13 +80,24 @@ def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     results = tr.config._benchresults
     tr.section("benchmark results")
-    headers = f"{'benchmark name': <30} {'median': >6}"
+    float_names = 'median min max'.split()
+    width = max(map(len, float_names))
+
+    def fcol(parts):
+        return " ".join(part.rjust(width) for part in parts)
+
+    headers = f"{'benchmark name': <30} " + fcol(float_names)
     tr.write_line(headers)
     tr.write_line("-" * len(headers))
     for name, durations in results.items():
-        median = sorted(durations)[len(durations) // 2]
-        median = f"{median:2.4f}"
-        tr.write_line(f"{name: <30} {median: >6}")
+        measures = [
+            sorted(durations)[len(durations) // 2],
+            min(durations),
+            max(durations),
+        ]
+        line = f"{name: <30} "
+        line += fcol(f"{float: 2.2f}" for float in measures)
+        tr.write_line(line)
 
 
 @pytest.fixture

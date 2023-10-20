@@ -45,7 +45,7 @@ class TestDC:
             msg.chat.send_text("pong")
             ac1.wait_next_incoming_message()
 
-        benchmark(ping_pong, 3)
+        benchmark(ping_pong, 5)
 
     def test_send_10_receive_10(self, benchmark, cmfactory, lp):
         ac1, ac2 = cmfactory.get_online_accounts(2)
@@ -57,4 +57,4 @@ class TestDC:
             for i in range(10):
                 ac2.wait_next_incoming_message()
 
-        benchmark(send_10_receive_10, 1)
+        benchmark(send_10_receive_10, 5)

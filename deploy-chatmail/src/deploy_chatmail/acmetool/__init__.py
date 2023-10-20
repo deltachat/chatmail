@@ -1,6 +1,6 @@
 import importlib.resources
 
-from pyinfra.operations import apt, files, systemd, server
+from pyinfra.operations import apt, files, server
 
 
 def deploy_acmetool(nginx_hook=False, email="", domains=[]):

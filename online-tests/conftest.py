@@ -79,10 +79,14 @@ def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     results = tr.config._benchresults
     tr.section("benchmark results")
+    headers = f"{'benchmark name': <30} {'median': >6}"
+    tr.write_line(headers)
+    tr.write_line("-" * len(headers))
     for name, durations in results.items():
         overall = sum(durations)
         median = sorted(durations)[len(durations) // 2]
-        tr.write_line(f"{name: <30} {median:2.4f} seconds")
+        median = f'{median:2.4f}'
+        tr.write_line(f"{name: <30} {median: >6}")
 
 
 @pytest.fixture

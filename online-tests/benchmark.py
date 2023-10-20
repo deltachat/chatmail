@@ -28,29 +28,34 @@ def test_login_smtp(benchmark, smtp, gencreds):
     benchmark(smtp_connect_and_login, 10)
 
 
-def test_send_and_receive_10(benchmark, cmfactory, lp):
-    """send many messages between two accounts"""
-    ac1, ac2 = cmfactory.get_online_accounts(2)
-    chat = cmfactory.get_accepted_chat(ac1, ac2)
+class TestDC:
+    def test_autoconfigure(self, benchmark, cmfactory):
 
-    def send_10_receive_all():
-        for i in range(10):
-            chat.send_text(f"hello {i}")
-        for i in range(10):
-            ac2.wait_next_incoming_message()
+        def autoconfig_and_idle_ready():
+            cmfactory.get_online_accounts(1)
 
-    benchmark(send_10_receive_all, 1)
+        benchmark(autoconfig_and_idle_ready, 5)
 
+    def test_ping_pong(self, benchmark, cmfactory):
+        ac1, ac2 = cmfactory.get_online_accounts(2)
+        chat = cmfactory.get_accepted_chat(ac1, ac2)
 
-def test_ping_pong(benchmark, cmfactory, lp):
-    """send many messages between two accounts"""
-    ac1, ac2 = cmfactory.get_online_accounts(2)
-    chat = cmfactory.get_accepted_chat(ac1, ac2)
+        def ping_pong():
+            chat.send_text("ping")
+            msg = ac2.wait_next_incoming_message()
+            msg.chat.send_text("pong")
+            ac1.wait_next_incoming_message()
 
-    def ping_pong():
-        chat.send_text("ping")
-        msg = ac2.wait_next_incoming_message()
-        msg.chat.send_text("pong")
-        ac1.wait_next_incoming_message()
+        benchmark(ping_pong, 3)
 
-    benchmark(ping_pong, 5)
+    def test_send_10_receive_10(self, benchmark, cmfactory, lp):
+        ac1, ac2 = cmfactory.get_online_accounts(2)
+        chat = cmfactory.get_accepted_chat(ac1, ac2)
+
+        def send_10_receive_10():
+            for i in range(10):
+                chat.send_text(f"hello {i}")
+            for i in range(10):
+                ac2.wait_next_incoming_message()
+
+        benchmark(send_10_receive_10, 1)

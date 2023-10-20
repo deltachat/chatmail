@@ -68,9 +68,10 @@ def benchmark(request):
         for i in range(num):
             now = time.time()
             func()
-            durations.append(time.time()-now)
+            durations.append(time.time() - now)
         durations.sort()
         request.config._benchresults[name] = durations
+
     return bench
 
 
@@ -82,7 +83,6 @@ def pytest_terminal_summary(terminalreporter):
         overall = sum(durations)
         median = sorted(durations)[len(durations) // 2]
         tr.write_line(f"{name: <30} {median:2.4f} seconds")
-
 
 
 @pytest.fixture

@@ -11,4 +11,3 @@ conn.login(f"imapcapa", "pass")
 status, res = conn.capability()
 for capa in sorted(res[0].decode().split()):
     print(capa)
-

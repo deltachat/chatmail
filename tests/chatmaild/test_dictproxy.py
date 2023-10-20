@@ -3,32 +3,38 @@ import os
 import pytest
 
 import chatmaild.dictproxy
-from chatmaild.dictproxy import get_user_data, lookup_passdb
+from chatmaild.dictproxy import DictProxy
 from chatmaild.database import DBError
 
 
-def test_basic(db, tmpdir, monkeypatch):
-    monkeypatch.setattr(chatmaild.dictproxy, "NOCREATE_FILE", tmpdir.join("nocreate").strpath)
-    lookup_passdb(db, "link2xt@c1.testrun.org", "asdf")
-    data = get_user_data(db, "link2xt@c1.testrun.org")
-    assert data
+@pytest.fixture
+def dictproxy(db, maildomain):
+    return DictProxy(db, maildomain)
 
 
-def test_dont_overwrite_password_on_wrong_login(db):
+def test_basic(dictproxy, tmpdir, monkeypatch):
+    monkeypatch.setattr(
+        chatmaild.dictproxy, "NOCREATE_FILE", tmpdir.join("nocreate").strpath
+    )
+    dictproxy.lookup_passdb("link2xt@c1.testrun.org", "asdf")
+    assert dictproxy.get_user_data("link2xt@c1.testrun.org")
+
+
+def test_dont_overwrite_password_on_wrong_login(dictproxy):
     """Test that logging in with a different password doesn't create a new user"""
-    res = lookup_passdb(db, "newuser1@something.org", "kajdlkajsldk12l3kj1983")
+    res = dictproxy.lookup_passdb("newuser1@something.org", "kajdlkajsldk12l3kj1983")
     assert res["password"]
-    res2 = lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
+    res2 = dictproxy.lookup_passdb("newuser1@something.org", "kajdlqweqwe")
     # this function always returns a password hash, which is actually compared by dovecot.
     assert res["password"] == res2["password"]
 
 
-def test_nocreate_file(db, tmpdir, monkeypatch):
+def test_nocreate_file(dictproxy, tmpdir, monkeypatch):
     nocreate = tmpdir.join("nocreate")
     monkeypatch.setattr(chatmaild.dictproxy, "NOCREATE_FILE", str(nocreate))
     nocreate.write("")
-    lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
-    assert not get_user_data(db, "newuser1@something.org")
+    dictproxy.lookup_passdb("newuser1@something.org", "kajdlqweqwe")
+    assert not dictproxy.get_user_data("newuser1@something.org")
 
 
 def test_db_version(db):

@@ -5,7 +5,7 @@ import imaplib
 
 domain = os.environ.get("CHATMAIL_DOMAIN", "c3.testrun.org")
 
-NUM_CONNECTIONS=10
+NUM_CONNECTIONS = 10
 
 conns = []
 
@@ -16,7 +16,7 @@ for i in range(NUM_CONNECTIONS):
     conns.append(conn)
 
 tlsdone = time.time()
-duration = tlsdone-start
+duration = tlsdone - start
 print(f"{duration}: TLS connections opening TLS connections")
 
 for i, conn in enumerate(conns):

@@ -1,4 +1,4 @@
-from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter
+from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter, check_mdn
 import pytest
 
 
@@ -41,8 +41,33 @@ def test_filtermail_encryption_detection(maildata):
     assert not check_encrypted(msg)
 
 
-def test_filtermail_mdn_is_not_encrypted(maildata):
-    assert not check_encrypted(maildata("mdn.eml"))
+def test_filtermail_is_mdn(maildata, gencreds):
+    from_addr = gencreds()[0]
+    to_addr = gencreds()[0] + ".other"
+    msg = maildata("mdn.eml", from_addr, to_addr)
+
+    class env:
+        mail_from = from_addr
+        rcpt_tos = [to_addr]
+        content = msg.as_bytes()
+
+    assert check_mdn(msg, env)
+    print(msg.as_string())
+    assert not check_DATA(env)
+
+
+def test_filtermail_to_multiple_recipients_no_mdn(maildata, gencreds):
+    from_addr = gencreds()[0]
+    to_addr = gencreds()[0] + ".other"
+    thirdaddr = gencreds()[0]
+    msg = maildata("mdn.eml", from_addr, to_addr)
+
+    class env:
+        mail_from = from_addr
+        rcpt_tos = [to_addr, thirdaddr]
+        content = msg.as_bytes()
+
+    assert not check_mdn(msg, env)
 
 
 def test_send_rate_limiter():

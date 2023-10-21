@@ -34,6 +34,41 @@ def check_encrypted(message):
     return True
 
 
+def check_mdn(message, envelope):
+    if len(envelope.rcpt_tos) != 1:
+        return False
+
+    for name in ["auto-submitted", "chat-version"]:
+        if not message.get(name):
+            return False
+
+    if message.get_content_type() != "multipart/report":
+        return False
+
+    body = message.get_body()
+    if body.get_content_type() != "text/plain":
+        return False
+
+    if list(body.iter_attachments()) or list(body.iter_parts()):
+        return False
+
+    # even with all mime-structural checks an attacker
+    # could try to abuse the subject or body to contain links or other
+    # annoyance -- we only check for http links for now
+    # and reasonable sizes
+
+    subject = message.get("subject")
+    if "http" in subject or len(subject) > 50:
+        return False  # actually could serve as a flag for malicious attempt
+
+    text = body.get_payload()
+    # how long the read-receipt can become?
+    if len(text) > 500 or "http" in text:
+        return False
+
+    return True
+
+
 class SMTPController(Controller):
     def factory(self):
         return SMTP(self.handler, **self.SMTP_kwargs)
@@ -81,6 +116,9 @@ def check_DATA(envelope):
     logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
     if envelope.mail_from.lower() != from_addr.lower():
         return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
+
+    if not mail_encrypted and check_mdn(message, envelope):
+        return
 
     envelope_from_domain = from_addr.split("@").pop()
     for recipient in envelope.rcpt_tos:

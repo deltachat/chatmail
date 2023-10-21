@@ -20,3 +20,12 @@ jobs:
         working-directory: deploy-chatmail
         run: pipx run tox
 
+  scripts:
+    name: chatmail script invocations 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: run init.sh 
+        run: ./scripts/init.sh 
+      - name: run test.sh 
+        run: ./scripts/test.sh 

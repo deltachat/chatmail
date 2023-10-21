@@ -290,7 +290,7 @@ class Remote:
 def maildata(request, gencreds):
     datadir = conftestdir.joinpath("mail-data")
 
-    def maildata(name, parsed=True, from_addr=None, to_addr=None):
+    def maildata(name, from_addr=None, to_addr=None):
         if from_addr is None:
             from_addr = gencreds()[0]
         if to_addr is None:

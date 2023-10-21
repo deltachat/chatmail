@@ -5,14 +5,18 @@ on:
   push:
 
 jobs:
-  lint:
-    name: Lint
+  tox:
+    name: chatmail tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Lint chatmaild
+      - name: run chatmaild tests 
         working-directory: chatmaild
         run: pipx run tox
-      - name: Lint deploy-chatmail
+      - name: run deploy-chatmail offline tests 
         working-directory: deploy-chatmail
         run: pipx run tox
+      - name: run deploy-chatmail offline tests 
+        working-directory: deploy-chatmail
+        run: pipx run tox
+

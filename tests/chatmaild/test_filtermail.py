@@ -2,6 +2,12 @@ from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter
 import pytest
 
 
+@pytest.fixture
+def maildomain():
+    # let's not depend on a real chatmail instance for the offline tests below
+    return "chatmail.example.org"
+
+
 def test_reject_forged_from(maildata, gencreds):
     class env:
         mail_from = gencreds()[0]

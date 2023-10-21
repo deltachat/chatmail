@@ -20,7 +20,7 @@ addopts = "-v -ra --strict-markers"
 legacy_tox_ini = """
 [tox]
 isolated_build = true
-envlist = lint
+envlist = lint,py
 
 [testenv:lint]
 skipdist = True
@@ -31,4 +31,10 @@ deps =
 commands =
   black --quiet --check --diff src/
   ruff src/
+
+[testenv]
+passenv = CHATMAIL_DOMAIN
+deps = pytest 
+       pdbpp 
+commands = pytest -v -rsXx {posargs: ../tests/chatmaild}
 """

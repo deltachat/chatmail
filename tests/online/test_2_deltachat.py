@@ -1,3 +1,4 @@
+import time
 import random
 import pytest
 
@@ -81,3 +82,29 @@ class TestEndToEndDeltaChat:
         ch = ac2.qr_setup_contact(qr)
         assert ch.id >= 10
         ac1._evtracker.wait_securejoin_inviter_progress(1000)
+
+    def test_read_receipts_between_instances(self, cmfactory, lp, maildomain2):
+        ac1 = cmfactory.new_online_configuring_account(cache=False)
+        cmfactory.switch_maildomain(maildomain2)
+        ac2 = cmfactory.new_online_configuring_account(cache=False)
+        cmfactory.bring_accounts_online()
+
+        lp.sec("setup encrypted comms between ac1 and ac2 on different instances")
+        qr = ac1.get_setup_contact_qr()
+        ch = ac2.qr_setup_contact(qr)
+        msg = ac2.wait_next_incoming_message()
+        assert "verified" in msg.text
+
+        lp.sec("ac1 sends a message and ac2 marks it as seen")
+        chat = ac1.create_chat(ac2)
+        msg = chat.send_text("hi")
+        m = ac2.wait_next_incoming_message()
+        m.mark_seen()
+        # we can only indirectly wait for mark-seen to cause an smtp-error
+        lp.sec("try to wait for markseen to complete and check error states")
+        deadline = time.time() + 3.1
+        while time.time() < deadline:
+            msgs = m.chat.get_messages()
+            for msg in msgs:
+                assert "error" not in m.get_message_info()
+            time.sleep(1)

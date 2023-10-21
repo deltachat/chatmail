@@ -1,3 +1,11 @@
 #!/bin/bash
-chatmaild/venv/bin/pytest chatmaild/ $@
-online-tests/venv/bin/pytest online-tests/ -vrx --durations=5 $@
+
+pushd chatmaild
+tox
+popd 
+
+pushd deploy-chatmail
+tox
+popd 
+
+venv/bin/pytest tests/online -vrx --durations=5 $@

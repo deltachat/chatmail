@@ -54,17 +54,10 @@ def check_mdn(message, envelope):
 
     # even with all mime-structural checks an attacker
     # could try to abuse the subject or body to contain links or other
-    # annoyance -- we only check for http links for now
-    # and reasonable sizes
-
-    subject = message.get("subject")
-    if "http" in subject or len(subject) > 50:
-        return False  # actually could serve as a flag for malicious attempt
-
-    text = body.get_payload()
-    # how long the read-receipt can become?
-    if len(text) > 500 or "http" in text:
-        return False
+    # annoyance -- we skip on checking subject/body for now as Delta Chat
+    # should evolve to create E2E-encrypted read receipts anyway.
+    # and then MDNs are just encrypted mail and can pass the border
+    # to other instances.
 
     return True
 

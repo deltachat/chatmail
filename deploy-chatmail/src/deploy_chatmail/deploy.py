@@ -6,7 +6,7 @@ from deploy_chatmail import deploy_chatmail
 def main():
     mail_domain = os.getenv("CHATMAIL_DOMAIN")
     mail_server = os.getenv("CHATMAIL_SERVER", mail_domain)
-    dkim_selector = os.getenv("CHATMAIL_DKIM_SELECTOR", "2023")
+    dkim_selector = os.getenv("CHATMAIL_DKIM_SELECTOR", "dkim")
 
     assert mail_domain
     assert mail_server

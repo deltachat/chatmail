@@ -10,14 +10,17 @@ comprised of a minimal setup of the battle-tested
 
     scripts/init.sh 
 
-2. set environment variable to the chatmail domain you want to setup:
+2. setup a domain with `A` and `AAAA` records for your chatmail server
+
+3. set environment variable to the chatmail domain you want to setup:
 
     export CHATMAIL_DOMAIN=c1.testrun.org   # replace with your host
 
-3. run the deploy of the chat mail instance: 
+4. run the deploy of the chat mail instance: 
 
     scripts/deploy.sh 
 
+5. run `scripts/generate-dns-zone.sh` and create the generated DNS records at your DNS provider
 
 ## Running tests and benchmarks (offline and online) 
 

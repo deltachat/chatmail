@@ -4,8 +4,8 @@ Chat Mail pyinfra deploy.
 import importlib.resources
 from pathlib import Path
 
-from pyinfra import host, logger
-from pyinfra.operations import apt, files, server, systemd, python
+from pyinfra import host
+from pyinfra.operations import apt, files, server, systemd
 from pyinfra.facts.files import File
 from .acmetool import deploy_acmetool
 
@@ -70,6 +70,36 @@ def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
         mode="644",
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
+    need_restart |= main_config.changed
+
+    files.directory(
+        name="Add opendkim directory to /etc",
+        path="/etc/opendkim",
+        user="opendkim",
+        group="opendkim",
+        mode="750",
+        present=True,
+    )
+
+    keytable = files.template(
+        src=importlib.resources.files(__package__).joinpath("opendkim/KeyTable"),
+        dest="/etc/dkimkeys/KeyTable",
+        user="opendkim",
+        group="opendkim",
+        mode="644",
+        config={"domain_name": domain, "opendkim_selector": dkim_selector},
+    )
+    need_restart |= keytable.changed
+
+    signing_table = files.template(
+        src=importlib.resources.files(__package__).joinpath("opendkim/SigningTable"),
+        dest="/etc/dkimkeys/SigningTable",
+        user="opendkim",
+        group="opendkim",
+        mode="644",
+        config={"domain_name": domain, "opendkim_selector": dkim_selector},
+    )
+    need_restart |= signing_table.changed
 
     files.directory(
         name="Add opendkim socket directory to /var/spool/postfix",
@@ -89,8 +119,6 @@ def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
             _sudo=True,
             _sudo_user="opendkim",
         )
-
-    need_restart |= main_config.changed
 
     return need_restart
 
@@ -292,14 +320,3 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         enabled=True,
         restarted=journald_conf,
     )
-
-    def callback():
-        result = server.shell(
-            commands=[
-                f"""sed 's/\tIN/ 600 IN/;s/\t(//;s/\"$//;s/^\t  \"//g; s/ ).*//' """
-                f"""/etc/dkimkeys/{dkim_selector}.txt | tr --delete '\n'"""
-            ]
-        )
-        logger.info(f"Add this TXT entry into DNS zone: {result.stdout}")
-
-    python.call(name="Print TXT entry for DKIM", function=callback)

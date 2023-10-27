@@ -23,6 +23,11 @@ def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
     with pytest.raises(imap_or_smtp.AuthError):
         imap_or_smtp.login(user, password + "wrong")
 
+    lp.sec(f"creating users with a short password is not allowed")
+    user, _password = gencreds()
+    with pytest.raises(imap_or_smtp.AuthError):
+        imap_or_smtp.login(user, "admin")
+
 
 def test_login_same_password(imap_or_smtp, gencreds):
     """Test two different users logging in with the same password

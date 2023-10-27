@@ -18,7 +18,7 @@ def test_basic(db):
     chatmaild.dictproxy.NOCREATE_FILE = "/tmp/nocreate"
     if os.path.exists(chatmaild.dictproxy.NOCREATE_FILE):
         os.remove(chatmaild.dictproxy.NOCREATE_FILE)
-    lookup_passdb(db, "link2xt@c1.testrun.org", "asdf")
+    lookup_passdb(db, "link2xt@c1.testrun.org", "Pieg9aeToe3eghuthe5u")
     data = get_user_data(db, "link2xt@c1.testrun.org")
     assert data
 
@@ -37,7 +37,7 @@ def test_nocreate_file(db):
     with open(chatmaild.dictproxy.NOCREATE_FILE, "w+") as f:
         f.write("")
     assert os.path.exists(chatmaild.dictproxy.NOCREATE_FILE)
-    lookup_passdb(db, "newuser1@something.org", "kajdlqweqwe")
+    lookup_passdb(db, "newuser1@something.org", "zequ0Aimuchoodaechik")
     assert not get_user_data(db, "newuser1@something.org")
     os.remove(chatmaild.dictproxy.NOCREATE_FILE)
 

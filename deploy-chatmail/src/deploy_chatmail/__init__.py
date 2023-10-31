@@ -183,6 +183,21 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
         mode="644",
     )
 
+    # as per https://doc.dovecot.org/configuration_manual/os/
+    # it is recommended to set the following two inotify limits
+    server.sysctl(
+        name="Change the fs.inotify.max_user_instances",
+        key="fs.inotify.max_user_instances",
+        value=65535,
+        persist=True,
+    )
+    server.sysctl(
+        name="Change the fs.inotify.max_user_watches",
+        key="fs.inotify.max_user_watches",
+        value=65535,
+        persist=True,
+    )
+
     return need_restart
 
 

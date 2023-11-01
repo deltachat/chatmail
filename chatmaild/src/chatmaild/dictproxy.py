@@ -21,19 +21,32 @@ def encrypt_password(password: str):
     return "{SHA512-CRYPT}" + passhash
 
 
-def check_password(password) -> bool:
-    """Check password policy"""
-    if len(password) < 10:
+def is_allowed_to_create(user, cleartext_password) -> bool:
+    """Return True if user and password are admissable."""
+    if os.path.exists(NOCREATE_FILE):
+        logging.warning(f"blocked account creation because {NOCREATE_FILE!r} exists.")
         return False
+
+    if len(cleartext_password) < 10:
+        logging.warning("Password needs to be at least 10 characters long")
+        return False
+
+    parts = user.split("@")
+    if len(parts) != 2:
+        logging.warning(f"user {user!r} is not a proper e-mail address")
+        return False
+    localpart, domain = parts
+
+    if domain == "nine.testrun.org":
+        # nine.testrun.org policy, username has to be exactly nine chars
+        if len(localpart) != 9:
+            logging.warning(f"localpart {localpart!r} has not exactly nine chars")
+            return False
+
     return True
 
 
 def create_user(db, user, encrypted_password):
-    if os.path.exists(NOCREATE_FILE):
-        logging.warning(
-            f"Didn't create account: {NOCREATE_FILE} exists. Delete the file to enable account creation."
-        )
-        return
     with db.write_transaction() as conn:
         conn.create_user(user, encrypted_password)
     return dict(
@@ -57,13 +70,13 @@ def lookup_userdb(db, user):
     return get_user_data(db, user)
 
 
-def lookup_passdb(db, user, password):
+def lookup_passdb(db, user, cleartext_password):
     userdata = get_user_data(db, user)
     if not userdata:
-        if not check_password(password):
-            logging.warning("Attempt to create an account with a weak password.")
+        if not is_allowed_to_create(user, cleartext_password):
             return
-        return create_user(db, user, encrypt_password(password))
+        encrypted_password = encrypt_password(cleartext_password)
+        userdata = create_user(db=db, user=user, encrypted_password=encrypted_password)
     userdata["password"] = userdata["password"].strip()
     return userdata
 
@@ -87,7 +100,7 @@ def handle_dovecot_request(msg, db, mail_domain):
                     reply_command = "N"
             elif type == "passdb":
                 if user.endswith(f"@{mail_domain}"):
-                    res = lookup_passdb(db, user, password=args[0])
+                    res = lookup_passdb(db, user, cleartext_password=args[0])
                 if res:
                     reply_command = "O"
                 else:

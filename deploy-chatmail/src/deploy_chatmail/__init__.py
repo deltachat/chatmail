@@ -277,6 +277,12 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     nginx_need_restart = _configure_nginx(mail_domain)
 
+    # deploy web pages and info if we have them
+    pkg_root = importlib.resources.files(__package__)
+    www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
+    if www_path.is_dir():
+        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+
     systemd.service(
         name="Start and enable OpenDKIM",
         service="opendkim.service",

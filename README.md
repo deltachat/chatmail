@@ -1,26 +1,61 @@
-# Chat Mail server configuration
+# Chatmail instances optimized for Delta Chat apps 
 
-This repository setups a ready-to-go chatmail instance
+This repository helps to setup a ready-to-use chatmail instance
 comprised of a minimal setup of the battle-tested 
-[postfix smtp server](https://www.postfix.org) and [dovecot imap server](https://www.dovecot.org).
+[postfix smtp](https://www.postfix.org) and [dovecot imap](https://www.dovecot.org) services. 
 
-## Getting started 
+The setup is designed and optimized for providing chatmail accounts 
+for use by [Delta Chat apps](https://delta.chat).
 
-1. prepare your local system:
+Chatmail accounts are automatically created by a first login, 
+after which the initially specified password is required for using them. 
+
+## Getting Started deploying your own chatmail instance
+
+1. Prepare your local (presumably Linux) system:
 
     scripts/init.sh 
 
-2. setup a domain with `A` and `AAAA` records for your chatmail server
+2. Setup a domain with `A` and `AAAA` records for your chatmail server.
 
-3. set environment variable to the chatmail domain you want to setup:
+3. Set environment variable to the chatmail domain you want to setup:
 
     export CHATMAIL_DOMAIN=c1.testrun.org   # replace with your host
 
-4. run the deploy of the chat mail instance: 
+4. Deploy the chat mail instance to your chatmail server: 
 
     scripts/deploy.sh 
 
-5. run `scripts/generate-dns-zone.sh` and create the generated DNS records at your DNS provider
+   This script uses `pyinfra` and `ssh` to setup packages and configure
+   the chatmail instance on your remote server. 
+
+5. Run `scripts/generate-dns-zone.sh` and 
+   transfer the generated DNS records at your DNS provider
+
+6. Start a Delta Chat app and create a new account 
+   by typing an e-mail address with an arbitrary username 
+   and `@<your-chatmail-domain>` appended. 
+   Use an at least 10-character random password. 
+
+
+### Ports
+
+Postfix listens on ports 25 (smtp) and 587 (submission) and 465 (submissions).
+Dovecot listens on ports 143(imap) and 993 (imaps).
+
+Delta Chat will, however, discover all ports and configurations 
+automatically by reading the `autoconfig.xml` file from the chatmail instance. 
+
+
+## Emergency Commands to disable automatic account creation 
+
+If you need to stop account creation,
+e.g. because some script is wildly creating accounts, run:
+
+    touch /tmp/nocreate
+
+While this file is present, account creation will be blocked. 
+
 
 ## Running tests and benchmarks (offline and online) 
 
@@ -35,28 +70,26 @@ comprised of a minimal setup of the battle-tested
 
     scripts/bench.sh 
 
-## Running tests (offline and online) 
 
-```
-## Dovecot/Postfix configuration
+## Development Background for chatmail instances 
 
-### Ports
+This repository drives the development of "chatmail instances", 
+comprised of minimal setups of 
 
-Postfix listens on ports 25 (smtp) and 587 (submission) and 465 (submissions).
-Dovecot listens on ports 143(imap) and 993 (imaps).
+- [postfix smtp server](https://www.postfix.org) 
+- [dovecot imap server](https://www.dovecot.org) 
 
-## DNS
+as well as two custom services that are integrated with these two: 
 
-For DKIM you must add a DNS entry as found in /etc/opendkim/selector.txt on your chatmail instance.
-The above `scripts/deploy.sh` prints out the DKIM selector and DNS entry you
-need to setup with your DNS provider. 
+- `chatmaild/src/chatmaild/dictproxy.py` implements 
+  create-on-login account creation semantics and is used
+  by Dovecot during login authentication and by Postfix
+  which in turn uses Dovecot SASL to authenticate users
+  to send mails for them. 
 
-## Emergency Commands
+- `chatmaild/src/chatmaild/filtermail.py` prevents 
+  unencrypted e-mail from leaving the chatmail instance
+  and is integrated into postfix's outbound mail pipelines. 
 
-If you need to stop account creation,
-e.g. because some script is wildly creating accounts,
-just run `touch /tmp/nocreate`.
-You can remove the file
-as soon as the attacker was banned
-by different means.
+
 

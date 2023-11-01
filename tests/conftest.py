@@ -195,8 +195,8 @@ def gencreds(maildomain):
             num = next(count)
             alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
             user = "".join(random.choices(alphanumeric, k=10))
-            user = f"ac{num}_{user}"
-            password = "".join(random.choices(alphanumeric, k=10))
+            user = f"ac{num}_{user}"[:9]
+            password = "".join(random.choices(alphanumeric, k=12))
             yield f"{user}@{domain}", f"{password}"
 
     return lambda domain=None: next(gen(domain))

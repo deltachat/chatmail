@@ -52,7 +52,7 @@ automatically by reading the `autoconfig.xml` file from the chatmail instance.
 If you need to stop account creation,
 e.g. because some script is wildly creating accounts, run:
 
-    touch /tmp/nocreate
+    touch /etc/chatmail-nocreate
 
 While this file is present, account creation will be blocked. 
 

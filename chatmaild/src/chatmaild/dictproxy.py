@@ -50,7 +50,7 @@ def create_user(db, user, encrypted_password):
     with db.write_transaction() as conn:
         conn.create_user(user, encrypted_password)
     return dict(
-        home=f"/home/vmail/{user}",
+        home=f"/home/vmail/mail/nine.testrun.org/{user}",
         uid="vmail",
         gid="vmail",
         password=encrypted_password,
@@ -63,6 +63,7 @@ def get_user_data(db, user):
     if result:
         result["uid"] = "vmail"
         result["gid"] = "vmail"
+        result["home"] = f"/home/vmail/mail/nine.testrun.org/{user}"
     return result
 
 

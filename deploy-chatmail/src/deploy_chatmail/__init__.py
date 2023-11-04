@@ -202,7 +202,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     need_restart = False
 
     main_config = files.template(
-        src=importlib.resources.files(__package__).joinpath("nginx.conf.j2"),
+        src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),
         dest="/etc/nginx/nginx.conf",
         user="root",
         group="root",
@@ -212,7 +212,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     need_restart |= main_config.changed
 
     autoconfig = files.template(
-        src=importlib.resources.files(__package__).joinpath("autoconfig.xml.j2"),
+        src=importlib.resources.files(__package__).joinpath("nginx/autoconfig.xml.j2"),
         dest="/var/www/html/.well-known/autoconfig/mail/config-v1.1.xml",
         user="root",
         group="root",

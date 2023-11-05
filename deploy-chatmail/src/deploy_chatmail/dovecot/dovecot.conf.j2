@@ -142,3 +142,18 @@ ssl_key = </var/lib/acme/live/{{ config.hostname }}/privkey
 ssl_dh = </usr/share/dovecot/dh.pem
 ssl_min_protocol = TLSv1.2
 ssl_prefer_server_ciphers = yes
+
+service postlogin {
+  executable = script-login -d rawlog
+  unix_listener postlogin {
+ }  
+} 
+service imap {
+  executable = imap postlogin 
+} 
+  
+protocol imap { 
+  #rawlog_dir = /tmp/rawlog/%u
+  # if you want to put files into user's homedir, use this, do not use ~
+  rawlog_dir = %h 
+} 

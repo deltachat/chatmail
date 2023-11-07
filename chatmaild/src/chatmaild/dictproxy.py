@@ -82,7 +82,6 @@ def lookup_passdb(db, user, cleartext_password):
 
 
 def handle_dovecot_request(msg, db, mail_domain):
-    print(f"received msg: {msg!r}", file=sys.stderr)
     short_command = msg[0]
     if short_command == "L":  # LOOKUP
         parts = msg[1:].split("\t")
@@ -105,7 +104,6 @@ def handle_dovecot_request(msg, db, mail_domain):
                     reply_command = "O"
                 else:
                     reply_command = "N"
-        print(f"res: {res!r}", file=sys.stderr)
         json_res = json.dumps(res) if res else ""
         return f"{reply_command}{json_res}\n"
     return None
@@ -130,7 +128,6 @@ def main():
                     break
                 res = handle_dovecot_request(msg, db, mail_domain)
                 if res:
-                    print(f"sending result: {res!r}", file=sys.stderr)
                     self.wfile.write(res.encode("ascii"))
                     self.wfile.flush()
 

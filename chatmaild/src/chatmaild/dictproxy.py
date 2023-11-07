@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import sys
 import json
 import crypt
@@ -46,17 +47,6 @@ def is_allowed_to_create(user, cleartext_password) -> bool:
     return True
 
 
-def create_user(db, user, encrypted_password):
-    with db.write_transaction() as conn:
-        conn.create_user(user, encrypted_password)
-    return dict(
-        home=f"/home/vmail/{user}",
-        uid="vmail",
-        gid="vmail",
-        password=encrypted_password,
-    )
-
-
 def get_user_data(db, user):
     with db.read_connection() as conn:
         result = conn.get_user(user)
@@ -71,14 +61,30 @@ def lookup_userdb(db, user):
 
 
 def lookup_passdb(db, user, cleartext_password):
-    userdata = get_user_data(db, user)
-    if not userdata:
+    with db.write_transaction() as conn:
+        userdata = conn.get_user(user)
+        if userdata:
+            # Update last login time.
+            conn.execute(
+                "UPDATE users SET last_login=? WHERE addr=?", (int(time.time()), user)
+            )
+
+            userdata["uid"] = "vmail"
+            userdata["gid"] = "vmail"
+            return userdata
         if not is_allowed_to_create(user, cleartext_password):
             return
+
         encrypted_password = encrypt_password(cleartext_password)
-        userdata = create_user(db=db, user=user, encrypted_password=encrypted_password)
-    userdata["password"] = userdata["password"].strip()
-    return userdata
+        q = """INSERT INTO users (addr, password, last_login)
+               VALUES (?, ?, ?)"""
+        conn.execute(q, (user, encrypted_password, int(time.time())))
+        return dict(
+            home=f"/home/vmail/{user}",
+            uid="vmail",
+            gid="vmail",
+            password=encrypted_password,
+        )
 
 
 def handle_dovecot_request(msg, db, mail_domain):

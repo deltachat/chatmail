@@ -33,13 +33,6 @@ class Connection:
     def cursor(self):
         return self._sqlconn.cursor()
 
-    def create_user(self, addr: str, password: str):
-        """Create a row in the users table."""
-        self.execute("PRAGMA foreign_keys=on")
-        q = """INSERT INTO users (addr, password, last_login)
-               VALUES (?, ?, ?)"""
-        self.execute(q, (addr, password, int(time.time())))
-
     def get_user(self, addr: str) -> {}:
         """Get a row from the users table."""
         q = "SELECT addr, password, last_login from users WHERE addr = ?"

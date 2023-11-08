@@ -114,8 +114,9 @@ def pytest_terminal_summary(terminalreporter):
         line += fcol(f"{float: 2.2f}" for float in measures)
         tr.write_line(line)
         vmedian, vmin, vmax = measures
-        for line in reportfunc(vmin=vmin, vmedian=vmedian, vmax=vmax):
-            summary_lines.append(line)
+        if reportfunc:
+            for line in reportfunc(vmin=vmin, vmedian=vmedian, vmax=vmax):
+                summary_lines.append(line)
 
     if summary_lines:
         tr.write_line("")

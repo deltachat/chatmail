@@ -9,8 +9,9 @@ import itertools
 from email.parser import BytesParser
 from email import policy
 from pathlib import Path
-from math import ceil
 import pytest
+
+from chatmaild.database import Database
 
 
 conftestdir = Path(__file__).parent
@@ -71,7 +72,7 @@ def pytest_report_header():
 
 @pytest.fixture
 def benchmark(request):
-    def bench(func, num, name=None):
+    def bench(func, num, name=None, reportfunc=None):
         if name is None:
             name = func.__name__
         durations = []
@@ -80,7 +81,7 @@ def benchmark(request):
             func()
             durations.append(time.time() - now)
         durations.sort()
-        request.config._benchresults[name] = durations
+        request.config._benchresults[name] = (reportfunc, durations)
 
     return bench
 
@@ -101,7 +102,9 @@ def pytest_terminal_summary(terminalreporter):
     headers = f"{'benchmark name': <30} " + fcol(float_names)
     tr.write_line(headers)
     tr.write_line("-" * len(headers))
-    for name, durations in results.items():
+    summary_lines = []
+
+    for name, (reportfunc, durations) in results.items():
         measures = [
             sorted(durations)[len(durations) // 2],
             min(durations),
@@ -110,11 +113,29 @@ def pytest_terminal_summary(terminalreporter):
         line = f"{name: <30} "
         line += fcol(f"{float: 2.2f}" for float in measures)
         tr.write_line(line)
+        vmedian, vmin, vmax = measures
+        for line in reportfunc(vmin=vmin, vmedian=vmedian, vmax=vmax):
+            summary_lines.append(line)
 
+    if summary_lines:
+        tr.write_line("")
+        tr.section("benchmark summary measures")
+        for line in summary_lines:
+            tr.write_line(line)
 
 @pytest.fixture
 def imap(maildomain):
     return ImapConn(maildomain)
+
+
+@pytest.fixture
+def make_imap_connection(maildomain):
+    def make_imap_connection():
+        conn = ImapConn(maildomain)
+        conn.connect()
+        return conn
+
+    return make_imap_connection
 
 
 class ImapConn:
@@ -155,6 +176,16 @@ class ImapConn:
 @pytest.fixture
 def smtp(maildomain):
     return SmtpConn(maildomain)
+
+
+@pytest.fixture
+def make_smtp_connection(maildomain):
+    def make_smtp_connection():
+        conn = SmtpConn(maildomain)
+        conn.connect()
+        return conn
+
+    return make_smtp_connection
 
 
 class SmtpConn:
@@ -200,6 +231,14 @@ def gencreds(maildomain):
             yield f"{user}@{domain}", f"{password}"
 
     return lambda domain=None: next(gen(domain))
+
+
+@pytest.fixture()
+def db(tmpdir):
+    db_path = tmpdir / "passdb.sqlite"
+    print("database path:", db_path)
+    return Database(db_path)
+
 
 
 #
@@ -272,7 +311,7 @@ class Remote:
         self.sshdomain = sshdomain
 
     def iter_output(self, logcmd=""):
-        getjournal = f"journalctl -f" if not logcmd else logcmd
+        getjournal = "journalctl -f" if not logcmd else logcmd
         self.popen = subprocess.Popen(
             ["ssh", f"root@{self.sshdomain}", getjournal],
             stdout=subprocess.PIPE,

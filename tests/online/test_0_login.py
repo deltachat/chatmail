@@ -1,5 +1,6 @@
 import pytest
-import smtplib
+import threading
+import queue
 
 
 def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
@@ -23,7 +24,7 @@ def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
     with pytest.raises(imap_or_smtp.AuthError):
         imap_or_smtp.login(user, password + "wrong")
 
-    lp.sec(f"creating users with a short password is not allowed")
+    lp.sec("creating users with a short password is not allowed")
     user, _password = gencreds()
     with pytest.raises(imap_or_smtp.AuthError):
         imap_or_smtp.login(user, "admin")
@@ -40,3 +41,30 @@ def test_login_same_password(imap_or_smtp, gencreds):
     imap_or_smtp.login(user1, password1)
     imap_or_smtp.connect()
     imap_or_smtp.login(user2, password1)
+
+
+def test_concurrent_logins_same_account(
+    make_imap_connection, make_smtp_connection, gencreds
+):
+    """Test concurrent smtp and imap logins
+    and check remote server succeeds on each connection.
+    """
+    user1, password1 = gencreds()
+    login_results = queue.Queue()
+
+    def login_smtp_imap(smtp, imap):
+        try:
+            imap.login(user1, password1)
+        except Exception:
+            login_results.put(False)
+        else:
+            login_results.put(True)
+
+    conns = [(make_smtp_connection(), make_imap_connection()) for i in range(10)]
+
+    for args in conns:
+        thread = threading.Thread(target=login_smtp_imap, args=args, daemon=True)
+        thread.start()
+
+    for _ in conns:
+        assert login_results.get()

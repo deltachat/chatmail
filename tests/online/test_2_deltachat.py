@@ -91,7 +91,7 @@ class TestEndToEndDeltaChat:
 
         lp.sec("setup encrypted comms between ac1 and ac2 on different instances")
         qr = ac1.get_setup_contact_qr()
-        ch = ac2.qr_setup_contact(qr)
+        ac2.qr_setup_contact(qr)
         msg = ac2.wait_next_incoming_message()
         assert "verified" in msg.text
 

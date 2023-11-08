@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-venv/bin/pytest online-tests/benchmark.py -vrx 
+venv/bin/pytest tests/online/benchmark.py -vrx

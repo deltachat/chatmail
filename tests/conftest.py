@@ -124,6 +124,7 @@ def pytest_terminal_summary(terminalreporter):
         for line in summary_lines:
             tr.write_line(line)
 
+
 @pytest.fixture
 def imap(maildomain):
     return ImapConn(maildomain)
@@ -239,7 +240,6 @@ def db(tmpdir):
     db_path = tmpdir / "passdb.sqlite"
     print("database path:", db_path)
     return Database(db_path)
-
 
 
 #

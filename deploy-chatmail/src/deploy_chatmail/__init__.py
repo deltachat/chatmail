@@ -333,7 +333,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
-    nginx_need_restart = _configure_nginx(mail_domain)
+    nginx_need_restart = _configure_nginx(mail_domain, mail_server)
     mta_sts_need_restart = _install_mta_sts_daemon()
 
     # deploy web pages and info if we have them

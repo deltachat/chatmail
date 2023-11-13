@@ -138,7 +138,9 @@ def _install_mta_sts_daemon() -> bool:
 
     config = files.put(
         name="upload postfix-mta-sts-resolver config",
-        src=importlib.resources.files(__package__).joinpath("postfix/mta-sts-daemon.yml"),
+        src=importlib.resources.files(__package__).joinpath(
+            "postfix/mta-sts-daemon.yml"
+        ),
         dest="/etc/mta-sts-daemon.yml",
         user="root",
         group="root",
@@ -148,13 +150,17 @@ def _install_mta_sts_daemon() -> bool:
 
     server.shell(
         name="install postfix-mta-sts-resolver with pip",
-        commands=["python3 -m venv /var/lib/postfix-mta-sts-resolver",
-                  "/var/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver"],
+        commands=[
+            "python3 -m venv /var/lib/postfix-mta-sts-resolver",
+            "/var/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver",
+        ],
     )
 
     systemd_unit = files.put(
         name="upload mta-sts-daemon systemd unit",
-        src=importlib.resources.files(__package__).joinpath("postfix/mta-sts-daemon.service"),
+        src=importlib.resources.files(__package__).joinpath(
+            "postfix/mta-sts-daemon.service"
+        ),
         dest="/etc/systemd/system/mta-sts-daemon.service",
         user="root",
         group="root",

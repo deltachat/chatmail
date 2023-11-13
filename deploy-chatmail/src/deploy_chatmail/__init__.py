@@ -133,6 +133,38 @@ def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
     return need_restart
 
 
+def _install_mta_sts_daemon() -> bool:
+    need_restart = False
+
+    config = files.put(
+        name="upload postfix-mta-sts-resolver config",
+        src=importlib.resources.files(__package__).joinpath("postfix/mta-sts-daemon.yml"),
+        dest="/etc/mta-sts-daemon.yml",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= config.changed
+
+    server.shell(
+        name="install postfix-mta-sts-resolver with pip",
+        commands=["python3 -m venv /var/lib/postfix-mta-sts-resolver",
+                  "/var/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver"],
+    )
+
+    systemd_unit = files.put(
+        name="upload mta-sts-daemon systemd unit",
+        src=importlib.resources.files(__package__).joinpath("postfix/mta-sts-daemon.service"),
+        dest="/etc/systemd/system/mta-sts-daemon.service",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= systemd_unit.changed
+
+    return need_restart
+
+
 def _configure_postfix(domain: str, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
@@ -296,6 +328,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     nginx_need_restart = _configure_nginx(mail_domain, mail_server)
+    mta_sts_need_restart = _install_mta_sts_daemon()
 
     # deploy web pages and info if we have them
     pkg_root = importlib.resources.files(__package__)
@@ -309,6 +342,15 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         running=True,
         enabled=True,
         restarted=opendkim_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable MTA-STS daemon",
+        service="mta-sts-daemon.service",
+        daemon_reload=True,
+        running=True,
+        enabled=True,
+        restarted=mta_sts_need_restart,
     )
 
     systemd.service(

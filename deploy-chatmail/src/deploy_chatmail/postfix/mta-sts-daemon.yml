@@ -1,0 +1,13 @@
+host: 127.0.0.1
+port: 8461
+reuse_port: true
+shutdown_timeout: 20
+cache:
+  type: internal
+  options:
+    cache_size: 10000
+proactive_policy_fetching:
+  enabled: true
+default_zone:
+  strict_testing: false
+  timeout: 4

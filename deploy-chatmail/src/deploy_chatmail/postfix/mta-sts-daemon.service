@@ -1,0 +1,10 @@
+[Unit]
+Description=Postfix MTA-STS resolver daemon
+
+[Service]
+ExecStart=/var/lib/postfix-mta-sts-resolver/bin/mta-sts-daemon
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

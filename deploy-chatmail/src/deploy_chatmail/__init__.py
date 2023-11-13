@@ -25,8 +25,8 @@ def _install_chatmaild() -> None:
         )
 
         apt.packages(
-            name="apt install python3-aiosmtpd",
-            packages=["python3-aiosmtpd", "python3-pip"],
+            name="apt install python3-aiosmtpd python3-pip python3-venv",
+            packages=["python3-aiosmtpd", "python3-pip", "python3-venv"],
         )
 
         # --no-deps because aiosmtplib is installed with `apt`.

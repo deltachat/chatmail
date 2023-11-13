@@ -16,10 +16,10 @@ _submission._tcp.$CHATMAIL_SERVER.  SRV 0 1 587 $CHATMAIL_SERVER.
 _submissions._tcp.$CHATMAIL_SERVER. SRV 0 1 465 $CHATMAIL_SERVER.
 _imap._tcp.$CHATMAIL_SERVER.        SRV 0 1 143 $CHATMAIL_SERVER.
 _imaps._tcp.$CHATMAIL_SERVER.       SRV 0 1 993 $CHATMAIL_SERVER.
-$CHATMAIL_DOMAIN. IN CAA 128 issue "letsencrypt.org; accounturi=$ACME_ACCOUNT_URL"
+$CHATMAIL_DOMAIN. IN CAA 128 issue "letsencrypt.org;accounturi=$ACME_ACCOUNT_URL"
 _mta-sts.$CHATMAIL_DOMAIN. IN TXT "v=STSv1; id=$(date -u '+%Y%m%d%H%M')"
 _mta-sts.$CHATMAIL_SERVER. IN CNAME $CHATMAIL_SERVER.
-_smtp._tls.$CHATMAIL_SERVER. IN TXT "v=TLSRPTv1; rua=mailto:$EMAIL"
+_smtp._tls.$CHATMAIL_SERVER. IN TXT "v=TLSRPTv1;rua=mailto:$EMAIL"
 EOF
 if [ "$CHATMAIL_DOMAIN" != "$CHATMAIL_SERVER" ]; then
 cat <<EOF

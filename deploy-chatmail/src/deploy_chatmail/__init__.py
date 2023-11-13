@@ -207,7 +207,7 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(domain: str, debug: bool = False) -> bool:
+def _configure_nginx(domain: str, mail_server: str) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
@@ -230,6 +230,16 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         config={"domain_name": domain},
     )
     need_restart |= autoconfig.changed
+
+    mta_sts_config = files.template(
+        src=importlib.resources.files(__package__).joinpath("nginx/mta-sts.txt.j2"),
+        dest="/var/www/html/.well-known/mta-sts.txt",
+        user="root",
+        group="root",
+        mode="644",
+        config={"mail_server": mail_server},
+    )
+    need_restart |= mta_sts_config.changed
 
     return need_restart
 

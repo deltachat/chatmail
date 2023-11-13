@@ -245,7 +245,7 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(domain: str, debug: bool = False) -> bool:
+def _configure_nginx(domain: str, mail_server: str) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
@@ -275,7 +275,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"mail_server": mail_server},
     )
     need_restart |= mta_sts_config.changed
 

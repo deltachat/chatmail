@@ -15,6 +15,6 @@ _submission._tcp.$CHATMAIL_DOMAIN.  SRV 0 1 587 $CHATMAIL_DOMAIN.
 _submissions._tcp.$CHATMAIL_DOMAIN. SRV 0 1 465 $CHATMAIL_DOMAIN.
 _imap._tcp.$CHATMAIL_DOMAIN.        SRV 0 1 143 $CHATMAIL_DOMAIN.
 _imaps._tcp.$CHATMAIL_DOMAIN.       SRV 0 1 993 $CHATMAIL_DOMAIN.
-$CHATMAIL_DOMAIN. IN CAA 0 issue "letsencrypt.org; accounturi=$ACME_ACCOUNT_URL"
+$CHATMAIL_DOMAIN. IN CAA 128 issue "letsencrypt.org; accounturi=$ACME_ACCOUNT_URL"
 EOF
 $SSH opendkim-genzone -F | sed 's/^;.*$//;/^$/d'

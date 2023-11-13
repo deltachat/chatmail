@@ -297,7 +297,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     )
 
     # Deploy acmetool to have TLS certificates.
-    deploy_acmetool(nginx_hook=True, domains=[mail_server])
+    deploy_acmetool(nginx_hook=True, domains=[mail_server, f"mta-sts.{mail_server}"])
 
     apt.packages(
         name="Install Postfix",

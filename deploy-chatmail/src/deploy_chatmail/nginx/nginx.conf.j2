@@ -20,8 +20,6 @@ http {
 
 	ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
 	ssl_prefer_server_ciphers on;
-	ssl_certificate /var/lib/acme/live/{{ config.domain_name }}/fullchain;
-	ssl_certificate_key /var/lib/acme/live/{{ config.domain_name }}/privkey;
 
 	gzip on;
 
@@ -30,12 +28,36 @@ http {
 		listen [::]:80 default_server;
 		listen 443 ssl default_server;
 		listen [::]:443 ssl default_server;
+        ssl_certificate /var/lib/acme/live/{{ config.domain_name }}/fullchain;
+        ssl_certificate_key /var/lib/acme/live/{{ config.domain_name }}/privkey;
 
 		root /var/www/html;
 
 		index index.html index.htm;
 
 		server_name _;
+
+		location / {
+			# First attempt to serve request as file, then
+			# as directory, then fall back to displaying a 404.
+			try_files $uri $uri/ =404;
+		}
+	}
+	server {
+		listen 80;
+		listen [::]:80;
+		listen 443 ssl;
+		listen [::]:443 ssl;
+
+		root /var/www/html;
+
+		index index.html index.htm;
+
+		server_name mta-sts.{{ config.domain_name }};
+
+        ssl_certificate /var/lib/acme/live/mta-sts.{{ config.domain_name }}/fullchain;
+    	ssl_certificate_key /var/lib/acme/live/mta-sts.{{ config.domain_name }}/privkey;
+
 
 		location / {
 			# First attempt to serve request as file, then

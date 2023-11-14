@@ -7,6 +7,7 @@ from pathlib import Path
 from pyinfra import host
 from pyinfra.operations import apt, files, server, systemd
 from pyinfra.facts.files import File
+from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 
 
@@ -34,8 +35,17 @@ def _install_chatmaild() -> None:
             commands=[f"pip install --break-system-packages {remote_path}"],
         )
 
+        # disable legacy doveauth-dictproxy.service
+        if host.get_fact(SystemdEnabled).get("doveauth-dictproxy.service"):
+            systemd.service(
+                name="Disable legacy doveauth-dictproxy.service",
+                service="doveauth-dictproxy.service",
+                running=False,
+                enabled=False,
+            )
+
         for fn in (
-            "doveauth-dictproxy",
+            "doveauth",
             "filtermail",
         ):
             files.put(

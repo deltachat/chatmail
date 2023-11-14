@@ -81,10 +81,11 @@ comprised of minimal setups of
 
 as well as two custom services that are integrated with these two: 
 
-- `chatmaild/src/chatmaild/dictproxy.py` implements 
+- `chatmaild/src/chatmaild/doveauth.py` implements
   create-on-login account creation semantics and is used
   by Dovecot during login authentication and by Postfix
-  which in turn uses Dovecot SASL to authenticate users
+  which in turn uses [Dovecot SASL](https://doc.dovecot.org/configuration_manual/authentication/dict/#complete-example-for-authenticating-via-a-unix-socket)
+  to authenticate users
   to send mails for them. 
 
 - `chatmaild/src/chatmaild/filtermail.py` prevents 

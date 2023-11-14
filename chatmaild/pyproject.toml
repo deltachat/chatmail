@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-doveauth-dictproxy = "chatmaild.dictproxy:main"
+doveauth = "chatmaild.doveauth:main"
 filtermail = "chatmaild.filtermail:main"
 
 [tool.pytest.ini_options]

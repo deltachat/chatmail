@@ -5,8 +5,8 @@ import threading
 import queue
 import traceback
 
-import chatmaild.dictproxy
-from chatmaild.dictproxy import get_user_data, lookup_passdb, handle_dovecot_request
+import chatmaild.doveauth
+from chatmaild.doveauth import get_user_data, lookup_passdb, handle_dovecot_request
 from chatmaild.database import Database, DBError
 
 
@@ -30,7 +30,7 @@ def test_dont_overwrite_password_on_wrong_login(db):
 def test_nocreate_file(db, monkeypatch, tmpdir):
     p = tmpdir.join("nocreate")
     p.write("")
-    monkeypatch.setattr(chatmaild.dictproxy, "NOCREATE_FILE", str(p))
+    monkeypatch.setattr(chatmaild.doveauth, "NOCREATE_FILE", str(p))
     lookup_passdb(db, "newuser1@something.org", "zequ0Aimuchoodaechik")
     assert not get_user_data(db, "newuser1@something.org")
 

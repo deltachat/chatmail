@@ -27,6 +27,9 @@
             background-repeat: no-repeat;
             background-size: 100% 100%;
         }
+        a {
+            color: white;
+        }
         h1, h2, h3 {
             font-size: 16px;
             font-weight: bold;
@@ -37,24 +40,39 @@
     <div class="wrapper">
         <img class="section" src="collage-top.png" />
         <div class="section text">
-            <h1>welcome  to nine.testrun.org</h1>
+            <h1>Dear Delta Chat users,</h1>
             <p>
-                to get an account,
-                invent a word with <i>exactly</i> nine characters
-                and append @nine.testrun.org to it.
-                eg. <b>hellofits@nine.testrun.org</b>
+                welcome to the first public "chat-mail instance",
+                a small and lean e-mail server optimized for Delta Chat.
             </p>
-            <p>
-                if the email address is not yet taken, you'll get that account.
-                the first login sets your password.
-                that's it.
+            <ul>
+                <li>Tap "LOG INTO YOUR E-MAIL ACCOUNT". </li>
+                <li>Address: invent a word with <i>exactly</i> nine characters
+                and append @nine.testrun.org to it.</li>
+                <li>Password: invent at least 10 characters. The first login sets your password.</li>
+            </ul>
+                If the e-mail address is not yet taken, you'll get that account.
             </p>
         </div>
         <img class="section" src="collage-down.png" />
         <div class="section text">
             <h1>faq</h1>
-            <p><i>why are other email providers 1000 times more complicated?</i></p>
-            <p>because they want to for $reasons</p>
+            <h2>Can i chat with someone outside the chat-mail instance?</h2>
+            <p>Yes, if your messages are encrypted.
+            Use <a href="https://staging.delta.chat/746/en/help#howtoe2ee">
+                guaranteed end-to-end encryption via QR code scans</a>
+            to setup contact with users outside of the chat-mail instance</p>
+            <h2>What about current rate limits?</h2>
+            <ul>
+              <li>Sending limit: 60 messages per minute.</li>
+              <li>Message autoremoval: after 40 days.</li>
+            </ul>
+            <h2>Do you intend to keep this chat-mail instance up?</h2>
+            <p>Yes, nine.testrun.org is to run for longer, on a best-effort basis.</p>
+            <h2>Who is running this chat-mail instance?</h2>
+            <p>A small group of devs and sysadmins, reachable via root@.
+            <h2>Why are other email providers 1000 times more complicated?</h2>
+            <p>Because they want or need to for $reasons.</p>
         </div>
     </div>
 </body>

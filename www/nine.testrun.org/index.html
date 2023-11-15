@@ -21,14 +21,14 @@
             padding: 9px;
             font-size: 18px;
             font-family: "Courier New", monospace;
-            color: white;
+            color: black;
             background-position: left top;
             background-image: url(collage-bg.png);
             background-repeat: no-repeat;
             background-size: 100% 100%;
         }
         a {
-            color: white;
+            color: black;
         }
         h1, h2, h3 {
             font-size: 16px;
@@ -39,38 +39,38 @@
 <body>
     <div class="wrapper">
         <img class="section" src="collage-top.png" />
-        <div class="section text">
-            <h1>Dear Delta Chat users,</h1>
+        <div>
+            <h1>Dear Delta Chat users and newcomers,</h1>
             <p>
                 welcome to the first public "chat-mail instance",
-                a small and lean e-mail server optimized for Delta Chat.
-            </p>
+                a small and lean e-mail provider for smooth chatting.
+                Install Delta Chat or add an account:
             <ul>
-                <li>Tap "LOG INTO YOUR E-MAIL ACCOUNT". </li>
+                <li>Tap "LOG INTO YOUR E-MAIL ACCOUNT".</li>
                 <li>Address: invent a word with <i>exactly</i> nine characters
                 and append @nine.testrun.org to it.</li>
                 <li>Password: invent at least 10 characters. The first login sets your password.</li>
             </ul>
                 If the e-mail address is not yet taken, you'll get that account.
             </p>
-        </div>
-        <img class="section" src="collage-down.png" />
-        <div class="section text">
-            <h1>faq</h1>
-            <h2>Can i chat with someone outside the chat-mail instance?</h2>
-            <p>Yes, if your messages are encrypted.
-            Use <a href="https://staging.delta.chat/746/en/help#howtoe2ee">
-                guaranteed end-to-end encryption via QR code scans</a>
-            to setup contact with users outside of the chat-mail instance</p>
-            <h2>What about current rate limits?</h2>
+            <p>
+            <img class="section" src="collage-down.png" />
+
+            <h2>What's behind it, how does it operate?</h2>
+            <p>nine.testrun.org is run
+                by a small group of devs and sysadmins, reachable via root@.
+                They want to keep this instance running at least until end 2024.
+                Current limits:
             <ul>
-              <li>Sending limit: 60 messages per minute.</li>
-              <li>Message autoremoval: after 40 days.</li>
+            <li>Un-encrypted mails can not leave the chat-mail instance.</li>
+            <li>Use <a href="https://delta.chat/en/help#howtoe2ee">
+                guaranteed end-to-end encryption via QR code scans</a>
+                to setup contact with users outside of the chat-mail instance.
+            </li>
+            <li>You may send up to 60 messages per minute.</li>
+            <li>Messages are unconditionally removed 40 days after arrival.</li>
+            <li>Max storage per user is 100MB.</li>
             </ul>
-            <h2>Do you intend to keep this chat-mail instance up?</h2>
-            <p>Yes, nine.testrun.org is to run for longer, on a best-effort basis.</p>
-            <h2>Who is running this chat-mail instance?</h2>
-            <p>A small group of devs and sysadmins, reachable via root@.
             <h2>Why are other email providers 1000 times more complicated?</h2>
             <p>¯\_(ツ)_/¯</p>
         </div>

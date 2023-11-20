@@ -149,7 +149,7 @@ class SendRateLimiter:
 def main():
     args = sys.argv[1:]
     assert len(args) == 1
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     task = asyncmain_beforequeue(port=int(args[0]))

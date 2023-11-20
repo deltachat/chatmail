@@ -1,5 +1,5 @@
 import json
-
+import sys
 import pytest
 import threading
 import queue
@@ -60,27 +60,31 @@ def test_handle_dovecot_request(db):
     assert userdata["password"].startswith("{SHA512-CRYPT}")
 
 
-def test_100_concurrent_lookups(db):
-    num = 100
-    dbs = [Database(db.path) for i in range(num)]
-    print(f"created {num} databases")
+def test_100_concurrent_lookups_different_accounts(db, gencreds):
+    num_threads = 100
+    req_per_thread = 5
     results = queue.Queue()
 
     def lookup(db):
-        try:
-            lookup_passdb(db, "something@c1.testrun.org", "Pieg9aeToe3eghuthe5u")
-        except Exception:
-            results.put(traceback.format_exc())
-        else:
-            results.put(None)
+        for i in range(req_per_thread):
+            addr, password = gencreds()
+            try:
+                lookup_passdb(db, addr, password)
+            except Exception:
+                results.put(traceback.format_exc())
+            else:
+                results.put(None)
 
-    threads = [threading.Thread(target=lookup, args=(db,), daemon=True) for db in dbs]
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=lookup, args=(db,), daemon=True)
+        threads.append(thread)
 
-    print(f"created {num} threads, starting them and waiting for results")
+    print(f"created {num_threads} threads, starting them and waiting for results")
     for thread in threads:
         thread.start()
 
-    for _ in dbs:
+    for i in range(num_threads * req_per_thread):
         res = results.get()
         if res is not None:
             pytest.fail(f"concurrent lookup failed\n{res}")

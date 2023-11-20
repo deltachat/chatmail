@@ -116,7 +116,7 @@ def handle_dovecot_request(msg, db, mail_domain):
 
 
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
-    pass
+    request_queue_size = 100
 
 
 def main():
@@ -128,14 +128,20 @@ def main():
 
     class Handler(StreamRequestHandler):
         def handle(self):
-            while True:
-                msg = self.rfile.readline().strip().decode()
-                if not msg:
-                    break
-                res = handle_dovecot_request(msg, db, mail_domain)
-                if res:
-                    self.wfile.write(res.encode("ascii"))
-                    self.wfile.flush()
+            try:
+                while True:
+                    msg = self.rfile.readline().strip().decode()
+                    if not msg:
+                        break
+                    res = handle_dovecot_request(msg, db, mail_domain)
+                    if res:
+                        self.wfile.write(res.encode("ascii"))
+                        self.wfile.flush()
+                    else:
+                        logging.warn("request had no answer: %r", msg)
+            except Exception:
+                logging.exception()
+                raise
 
     try:
         os.unlink(socket)

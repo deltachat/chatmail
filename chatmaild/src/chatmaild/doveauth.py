@@ -140,7 +140,7 @@ def main():
                     else:
                         logging.warn("request had no answer: %r", msg)
             except Exception:
-                logging.exception()
+                logging.exception("Exception in the handler")
                 raise
 
     try:

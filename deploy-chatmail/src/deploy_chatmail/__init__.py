@@ -245,7 +245,7 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(domain: str, mail_server: str) -> bool:
+def _configure_nginx(domain: str, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
@@ -275,7 +275,7 @@ def _configure_nginx(domain: str, mail_server: str) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"mail_server": mail_server},
+        config={"domain_name": domain},
     )
     need_restart |= mta_sts_config.changed
 
@@ -333,7 +333,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
-    nginx_need_restart = _configure_nginx(mail_domain, mail_server)
+    nginx_need_restart = _configure_nginx(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
 
     # deploy web pages and info if we have them

@@ -26,8 +26,6 @@ http {
 	gzip on;
 
 	server {
-		listen 80 default_server;
-		listen [::]:80 default_server;
 		listen 443 ssl default_server;
 		listen [::]:443 ssl default_server;
 
@@ -43,5 +41,12 @@ http {
 			try_files $uri $uri/ =404;
 		}
 	}
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        server_name _;
+
+        return 301 https://$host$request_uri;
+    }
 }
 

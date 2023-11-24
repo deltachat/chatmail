@@ -46,8 +46,7 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         mode="644",
     )
 
-    for domain in domains:
-        server.shell(
-            name=f"Request certificate for {domain}",
-            commands=[f"acmetool want {domain}"],
-        )
+    server.shell(
+        name=f"Request certificate for: { ', '.join(domains) }",
+        commands=[f"acmetool want { ' '.join(domains)}"],
+    )

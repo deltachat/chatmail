@@ -20,6 +20,8 @@ http {
 
 	ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
 	ssl_prefer_server_ciphers on;
+	ssl_certificate /var/lib/acme/live/{{ config.domain_name }}/fullchain;
+	ssl_certificate_key /var/lib/acme/live/{{ config.domain_name }}/privkey;
 
 	gzip on;
 
@@ -28,8 +30,6 @@ http {
 		listen [::]:80 default_server;
 		listen 443 ssl default_server;
 		listen [::]:443 ssl default_server;
-        ssl_certificate /var/lib/acme/live/{{ config.domain_name }}/fullchain;
-        ssl_certificate_key /var/lib/acme/live/{{ config.domain_name }}/privkey;
 
 		root /var/www/html;
 

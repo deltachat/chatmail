@@ -151,8 +151,8 @@ def _install_mta_sts_daemon() -> bool:
     server.shell(
         name="install postfix-mta-sts-resolver with pip",
         commands=[
-            "python3 -m venv /var/lib/postfix-mta-sts-resolver",
-            "/var/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver",
+            "python3 -m venv /usr/local/lib/postfix-mta-sts-resolver",
+            "/usr/local/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver",
         ],
     )
 

@@ -15,6 +15,9 @@ def gen_qr_png_data(maildomain):
 
 
 def gen_qr(maildomain, url):
+    # taken and modified from
+    # https://github.com/deltachat/mailadm/blob/master/src/mailadm/gen_qr.py
+
     info = f"{maildomain} invite code"
 
     # load QR code

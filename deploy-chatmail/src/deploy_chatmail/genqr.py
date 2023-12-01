@@ -17,13 +17,6 @@ def gen_qr_png_data(maildomain):
 def gen_qr(maildomain, url):
     info = f"{maildomain} invite code"
 
-    steps = (
-        "1. Install https://get.delta.chat\n"
-        "2. On setup screen scan above invite QR code\n"
-        "3. Choose nickname & avatar\n"
-        "+ chat with any e-mail address ...\n"
-    )
-
     # load QR code
     qr = qrcode.QRCode(
         version=1,
@@ -47,11 +40,10 @@ def gen_qr(maildomain, url):
     font_size = 16
     font = ImageFont.truetype(font=ttf_path, size=font_size)
 
-    num_lines = (info + steps).count("\n") + 3
+    num_lines = (info).count("\n") + 1
 
     size = width = 384
     qr_padding = 6
-    text_margin_right = 12
     text_height = font_size * num_lines
     height = size + text_height + qr_padding * 2
 
@@ -69,13 +61,6 @@ def gen_qr(maildomain, url):
 
     draw.multiline_text(
         (info_pos, size - qr_padding // 2), info, font=font, fill="black", align="right"
-    )
-    draw.multiline_text(
-        (text_margin_right, height - text_height + font_size * 1.0),
-        steps,
-        font=font,
-        fill="black",
-        align="left",
     )
 
     # paste QR code

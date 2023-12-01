@@ -4,17 +4,24 @@
 <head>
     <meta charset="utf-8" />
     <title>chatmail instance</title>
-    </style>
 </head>
 <body>
     <h1>Welcome to {{ config.mail_domain }}!</h1>
-    <h2>Tap or Scan this invite code to setup an account for Delta Chat app</h2>
+    <h2>Getting started</h2>
+    <ol>
+        <li>Install <a href="https://get.delta.chat">https://get.delta.chat</a></li>
+        <li>Scan or Tap on the invite QR code</li>
+        <li>Choose Nickname and Avatar</li>
+        <li>Use QR code invites and scans to setup end-to-end encrypted communication
+        with any e-mail address</li>
+    </ol>
     <a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
         <img class="section" src="qrcode.png" />
     </a>
-    <h2>Properties / Constraints</h2>
+
+    <h2>Constraints</h2>
     <ul>
-    <li>Un-encrypted mails can not leave the chat-mail domain.</li>
+    <li>You can not send un-encrypted mails to anyone outside {{config.mail_domain }} </li>
     <li>Use <a href="https://delta.chat/en/help#howtoe2ee">
         guaranteed end-to-end encryption via QR code scans</a>
         to setup contact with users outside of the chat-mail instance.

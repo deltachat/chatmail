@@ -156,7 +156,8 @@ def _install_mta_sts_daemon() -> bool:
         name="install postfix-mta-sts-resolver with pip",
         commands=[
             "python3 -m venv /usr/local/lib/postfix-mta-sts-resolver",
-            "/usr/local/lib/postfix-mta-sts-resolver/bin/pip install postfix-mta-sts-resolver",
+            "/usr/local/lib/postfix-mta-sts-resolver/bin/pip "
+            "install postfix-mta-sts-resolver",
         ],
     )
 
@@ -294,18 +295,20 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     )
 
     files.put(
-        name=f"Upload cgi newemail.py script",
-        src=importlib.resources.files("chatmaild").joinpath(f"newemail.py").open("rb"),
+        name="Upload cgi newemail.py script",
+        src=importlib.resources.files("chatmaild").joinpath("newemail.py").open("rb"),
         dest=f"{cgi_dir}/newemail.py",
         user="root",
         group="root",
         mode="755",
     )
 
+    qr_data = gen_qr_png_data(domain)
+
     files.put(
-        name=f"Upload QR code for account creation",
-        src=gen_qr_png_data(domain),
-        dest=f"/var/www/html/qrcode.png",
+        name="Upload QR code for account creation",
+        src=qr_data,
+        dest="/var/www/html/qrcode.png",
         user="root",
         group="root",
         mode="644",
@@ -376,10 +379,17 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     # deploy web pages and info if we have them
     pkg_root = importlib.resources.files(__package__)
     www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
-    if not www_path.is_dir():
-        www_path = pkg_root.joinpath(f"../../../www/default").resolve()
-
-    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+    if www_path.is_dir():
+        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+    else:
+        files.template(
+            src=importlib.resources.files(__package__).joinpath("nginx/index.html.j2"),
+            dest="/var/www/html/index.html",
+            user="root",
+            group="root",
+            mode="644",
+            config={"mail_domain": mail_domain},
+        )
 
     systemd.service(
         name="Start and enable OpenDKIM",

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,10 +7,11 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to Chatmail!</h1>
-    <h2>Scan this invite QR code from any Delta Chat app</h2>
-    <img class="section" src="qrcode.png" />
-
+    <h1>Welcome to {{ config.mail_domain }}!</h1>
+    <h2>Tap or Scan this invite code to setup an account for Delta Chat app</h2>
+    <a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
+        <img class="section" src="qrcode.png" />
+    </a>
     <h2>Properties / Constraints</h2>
     <ul>
     <li>Un-encrypted mails can not leave the chat-mail domain.</li>

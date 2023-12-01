@@ -1,0 +1,10 @@
+[Unit]
+Description=HTTP endpoint for creating chatmail accounts
+
+[Service]
+ExecStart=/usr/local/bin/gunicorn --timeout 60 -b :3691 -w 1 chatmaild.web:main
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

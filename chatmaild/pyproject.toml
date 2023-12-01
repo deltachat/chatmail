@@ -8,10 +8,12 @@ version = "0.1"
 dependencies = [
   "aiosmtpd",
   "flask",
+  "gunicorn",
 ]
 
 [project.scripts]
 doveauth = "chatmaild.doveauth:main"
+doveauth-http = "chatmaild.web:main"
 filtermail = "chatmaild.filtermail:main"
 
 [tool.pytest.ini_options]

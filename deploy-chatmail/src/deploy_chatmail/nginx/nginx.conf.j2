@@ -42,6 +42,10 @@ http {
 			# as directory, then fall back to displaying a 404.
 			try_files $uri $uri/ =404;
 		}
+
+        location /new_email {
+            proxy_pass http://localhost:3691/;
+        }
 	}
 }
 

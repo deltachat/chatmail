@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 import time
+import os
 
 from database import Database
 from util import gen_password, get_valid_email_addr, encrypt_password
@@ -37,3 +38,11 @@ def create_app_from_db(db):
         )
 
     return app
+
+
+def main():
+    """(debugging-only!) serve http account creation Web API on localhost"""
+    db_path = os.getenv("CHATMAIL_DATABASE", "/home/vmail/passdb.sqlite")
+    app = create_app_from_db_path(db_path)
+    if __name__ == "__main__":
+        app.run(debug=True, host="localhost", port=3691)

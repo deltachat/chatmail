@@ -46,6 +46,7 @@ def _install_chatmaild() -> None:
 
         for fn in (
             "doveauth",
+            "doveauth-http",
             "filtermail",
         ):
             files.put(

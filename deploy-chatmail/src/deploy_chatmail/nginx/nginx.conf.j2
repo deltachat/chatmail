@@ -40,6 +40,21 @@ http {
 			# as directory, then fall back to displaying a 404.
 			try_files $uri $uri/ =404;
 		}
+
+		location /cgi-bin/ { 
+			# Set the root to /usr/lib (inside this location this means that we are
+			# giving access to the files under /usr/lib/cgi-bin)
+			root  /usr/lib;
+
+			# Fastcgi socket
+			fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+
+			# Fastcgi parameters, include the standard ones
+			include /etc/nginx/fastcgi_params;
+
+			# Adjust non standard parameters (SCRIPT_FILENAME)
+			# fastcgi_param SCRIPT_FILENAME  /usr/lib$fastcgi_script_name;
+        }
 	}
     server {
         listen 80 default_server;
@@ -48,5 +63,8 @@ http {
 
         return 301 https://$host$request_uri;
     }
+
+
+
 }
 

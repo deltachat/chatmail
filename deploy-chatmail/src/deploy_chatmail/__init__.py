@@ -10,6 +10,8 @@ from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 
+from .genqr import gen_qr_png_data
+
 
 def _install_chatmaild() -> None:
     chatmaild_filename = "chatmaild-0.1.tar.gz"
@@ -43,6 +45,8 @@ def _install_chatmaild() -> None:
                 running=False,
                 enabled=False,
             )
+
+        # install systemd units
 
         for fn in (
             "doveauth",
@@ -279,6 +283,34 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     )
     need_restart |= mta_sts_config.changed
 
+    # install CGI newemail script
+    #
+    cgi_dir = "/usr/lib/cgi-bin"
+    files.directory(
+        name=f"Ensure {cgi_dir} exists",
+        path=cgi_dir,
+        user="root",
+        group="root",
+    )
+
+    files.put(
+        name=f"Upload cgi newemail.py script",
+        src=importlib.resources.files("chatmaild").joinpath(f"newemail.py").open("rb"),
+        dest=f"{cgi_dir}/newemail.py",
+        user="root",
+        group="root",
+        mode="755",
+    )
+
+    files.put(
+        name=f"Upload QR code for account creation",
+        src=gen_qr_png_data(domain),
+        dest=f"/var/www/html/qrcode.png",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
     return need_restart
 
 
@@ -328,19 +360,26 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         packages=["nginx"],
     )
 
+    apt.packages(
+        name="Install fcgiwrap",
+        packages=["fcgiwrap"],
+    )
+
     _install_chatmaild()
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
-    nginx_need_restart = _configure_nginx(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
+    nginx_need_restart = _configure_nginx(mail_domain)
 
     # deploy web pages and info if we have them
     pkg_root = importlib.resources.files(__package__)
     www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
-    if www_path.is_dir():
-        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+    if not www_path.is_dir():
+        www_path = pkg_root.joinpath(f"../../../www/default").resolve()
+
+    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
 
     systemd.service(
         name="Start and enable OpenDKIM",

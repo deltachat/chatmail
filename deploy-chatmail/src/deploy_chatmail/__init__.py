@@ -382,8 +382,9 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     if www_path.is_dir():
         files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
     else:
+        index_path = www_path.parent.joinpath("default/index.html.j2")
         files.template(
-            src=importlib.resources.files(__package__).joinpath("nginx/index.html.j2"),
+            src=index_path,
             dest="/var/www/html/index.html",
             user="root",
             group="root",

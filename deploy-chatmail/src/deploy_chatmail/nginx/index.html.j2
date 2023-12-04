@@ -12,8 +12,9 @@
         <li>Install <a href="https://get.delta.chat">https://get.delta.chat</a></li>
         <li>Scan or Tap on the invite QR code</li>
         <li>Choose Nickname and Avatar</li>
-        <li>Use QR code invites and scans to setup end-to-end encrypted communication
-        with any Delta Chat user</li>
+        <li>Setup contact with others using <a href="https://delta.chat/en/help#howtoe2ee">
+            guaranteed end-to-end encryption via QR code scans</a>
+        </li>
     </ol>
     <a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
         <img class="section" src="qrcode.png" />
@@ -21,14 +22,10 @@
 
     <h2>Constraints</h2>
     <ul>
-    <li>You can not send un-encrypted mails to anyone outside {{config.mail_domain }} </li>
-    <li>Use <a href="https://delta.chat/en/help#howtoe2ee">
-        guaranteed end-to-end encryption via QR code scans</a>
-        to setup contact with users outside of the chat-mail instance.
-    </li>
-    <li>You may send up to 60 messages per minute.</li>
-    <li>Messages are unconditionally removed 40 days after arrival.</li>
-    <li>Max storage per user is 100MB.</li>
+    <li>You can only send encrypted mails to anyone outside {{config.mail_domain }} </li>
+    <li>You may send up to 60 messages per minute</li>
+    <li>Messages are unconditionally removed 40 days after arrival</li>
+    <li>Max storage per user is 100MB</li>
     </ul>
 </body>
 </html>

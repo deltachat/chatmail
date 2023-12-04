@@ -32,10 +32,17 @@ after which the initially specified password is required for using them.
 5. Run `scripts/generate-dns-zone.sh` and 
    transfer the generated DNS records at your DNS provider
 
-6. Start a Delta Chat app and create a new account 
-   by typing an e-mail address with an arbitrary username 
-   and `@<your-chatmail-domain>` appended. 
-   Use an at least 10-character random password. 
+
+### Home page and getting started for users 
+
+- The `deploy.sh` script deploys a default `index.html` 
+  along with a QR code that users can click to 
+  create accounts on the chatmail provider. 
+
+- Start a Delta Chat app and create a new account 
+  by typing an e-mail address with an arbitrary username 
+  and `@<your-chatmail-domain>` appended. 
+  Use an at least 10-character random password. 
 
 
 ### Ports

@@ -22,27 +22,27 @@ after which the initially specified password is required for using them.
 
     export CHATMAIL_DOMAIN=c1.testrun.org   # replace with your host
 
-4. Deploy the chat mail instance to your chatmail server: 
+4. Fill in privacy contact data into the `chatmail.ini` file
+
+5. Deploy the chat mail instance to your chatmail server: 
 
     scripts/deploy.sh 
 
    This script uses `pyinfra` and `ssh` to setup packages and configure
    the chatmail instance on your remote server. 
 
-5. Run `scripts/generate-dns-zone.sh` and 
+6. Run `scripts/generate-dns-zone.sh` and 
    transfer the generated DNS records at your DNS provider
 
 
 ### Home page and getting started for users 
 
-- The `deploy.sh` script deploys a default `index.html` 
-  along with a QR code that users can click to 
-  create accounts on the chatmail provider. 
+The `deploy.sh` script deploys 
 
-- Start a Delta Chat app and create a new account 
-  by typing an e-mail address with an arbitrary username 
-  and `@<your-chatmail-domain>` appended. 
-  Use an at least 10-character random password. 
+- a default `index.html` along with a QR code that users can click to 
+  create accounts on your chatmail provider. 
+
+- a default `privacy-policy.html` that is linked from the home page. 
 
 
 ### Ports

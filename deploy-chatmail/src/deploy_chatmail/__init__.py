@@ -13,6 +13,7 @@ from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 import markdown
+from jinja2 import Template
 
 
 from .genqr import gen_qr_png_data
@@ -325,9 +326,9 @@ def get_ini_settings(mail_domain, inipath):
     return settings
 
 
-def make_privacy_html_j2(privacy_source):
-    assert privacy_source.exists(), privacy_source
-    template_content = open(privacy_source).read()
+def build_html_from_markdown(source):
+    assert source.exists(), source
+    template_content = open(source).read()
     html = markdown.markdown(template_content)
     html = (
         textwrap.dedent(
@@ -348,43 +349,33 @@ def make_privacy_html_j2(privacy_source):
             """\
         <footer>
         <a href="index.html">Home</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
         </footer>
         </body>"""
         )
     )
 
-    target_path = privacy_source.with_suffix(".html.j2")
+    target_path = source.with_name(source.stem + ".html.j2")
     with open(target_path, "w") as f:
         f.write(html)
     print(f"wrote {target_path}")
+    return target_path
 
 
-def _install_webpages(mail_domain):
-    pkg_root = importlib.resources.files(__package__)
-    chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
-    config = get_ini_settings(mail_domain, chatmail_ini)
-
-    www_path = pkg_root.joinpath(f"../../../www/default").resolve()
-    privacy_source = www_path.joinpath("privacy-policy.md")
-    make_privacy_html_j2(privacy_source)
-
+def build_webpages(www_path, config):
+    mail_domain = config["mail_domain"]
     qr_data = gen_qr_png_data(mail_domain).read()
     www_path.joinpath(f"qr-chatmail-invite-{mail_domain}.png").write_bytes(qr_data)
 
-    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
-
     for path in www_path.iterdir():
+        if path.suffix == ".md":
+            path = build_html_from_markdown(path)
+
         if path.suffix == ".j2":
-            target = "/var/www/html/" + path.name[:-3]
-            files.template(
-                name=f"copying templated file: {path.name}",
-                src=path,
-                dest=target,
-                user="root",
-                group="root",
-                mode="644",
-                config=config,
-            )
+            target = path.with_name(path.name[:-3])
+            template = Template(path.read_text())
+            with target.open("w") as f:
+                f.write(template.render(config=config))
 
 
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
@@ -437,7 +428,14 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         name="Install fcgiwrap",
         packages=["fcgiwrap"],
     )
-    _install_webpages(mail_domain)
+
+    pkg_root = importlib.resources.files(__package__)
+    chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
+    config = get_ini_settings(mail_domain, chatmail_ini)
+    www_path = pkg_root.joinpath(f"../../../www/default").resolve()
+
+    build_webpages(www_path, config)
+    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
 
     _install_chatmaild()
     debug = False

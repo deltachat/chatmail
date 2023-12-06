@@ -1,12 +1,13 @@
 import textwrap
 
-from deploy_chatmail import make_privacy_html_j2, get_ini_settings
+from deploy_chatmail import build_html_from_markdown, get_ini_settings
 
 
-def test_privacy(tmp_path):
+def test_markdown(tmp_path):
     path = tmp_path.joinpath("privacy.md")
     path.write_text("# privacy policy")
-    output = make_privacy_html_j2(path)
+    build_html_from_markdown(path)
+    output = path.with_name("privacy.html.j2")
     assert output.exists()
     print(output.read_text())
 
@@ -34,3 +35,5 @@ def test_get_settings(tmp_path):
     assert d["privacy_mail"] == "privacy@example.org"
     assert d["privacy_pdo"] == "address-line3"
     assert d["mail_domain"] == "x.testrun.org"
+
+

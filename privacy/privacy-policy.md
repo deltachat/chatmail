@@ -1,4 +1,4 @@
-# {{ config.maildomain }} mail services - Privacy Policy
+# {{ config.privacy_domain }} mail services - Privacy Policy
 
 We want to show you in a fair and transparent way
 what personal data is processed by us -
@@ -71,7 +71,7 @@ Creating an account happens in one of two ways on our mail servers:
   and then the account is created.
 
 - by letting Delta Chat otherwise create an account 
-  and register it with a {{ config.maildomain }} mail server. 
+  and register it with a {{ config.privacy_domain }} mail server. 
 
 In either case, we process the newly created email address.
 No phone numbers,

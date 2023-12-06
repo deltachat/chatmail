@@ -3,6 +3,19 @@ import os
 from pathlib import Path
 import markdown
 
+def get_privacy_settings(inipath):
+    parser = configparser.ConfigParser()
+    parser.read(inipath)
+    inipath = inipath.relative_to(os.getcwd())
+    privacy_settings = {
+        key: value.strip() for (key, value) in parser["privacy"].items()
+    }
+    privacy_domain = privacy_settings["privacy_domain"]
+    if privacy_domain != "testrun.org" and not privacy_domain.endswith(".testrun.org"):
+        for value in privacy_settings.values():
+            value = value.lower()
+            if "merlinux" in value or "schmieder" in value or "@testrun.org" in value:
+                raise SystemExit(f"please set your own privacy contacts/addresses in {inipath}")
 
 def main():
     basedir = Path(__name__).parent.resolve()
@@ -12,11 +25,7 @@ def main():
     assert os.path.exists(template), template
     assert os.path.exists(inipath), inipath
 
-    parser = configparser.ConfigParser()
-    parser.read(inipath)
-    privacy_settings = {
-        key: value.strip() for (key, value) in parser["privacy"].items()
-    }
+    privacy_settings = get_privacy_settings(inipath)
     template_content = open(template).read()
     html = markdown.markdown(template_content)
 

@@ -4,12 +4,10 @@ echo -----------------------------------------
 echo deploying to $CHATMAIL_DOMAIN 
 echo -----------------------------------------
 
-echo WARNING: in five seconds deploy to $CHATMAIL_DOMAIN starts
-sleep 5
+#echo WARNING: in five seconds deploy to $CHATMAIL_DOMAIN starts
+#sleep 5
 
 venv/bin/python3 -m build -n --sdist chatmaild --outdir dist
-
-(cd privacy && ../venv/bin/python3 make_privacy_policy.py) 
 
 venv/bin/pyinfra --ssh-user root "$CHATMAIL_DOMAIN" \
     deploy-chatmail/src/deploy_chatmail/deploy.py

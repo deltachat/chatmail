@@ -2,6 +2,9 @@
 Chat Mail pyinfra deploy.
 """
 import importlib.resources
+import configparser
+import textwrap
+import os
 from pathlib import Path
 
 from pyinfra import host
@@ -9,6 +12,8 @@ from pyinfra.operations import apt, files, server, systemd
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
+import markdown
+
 
 from .genqr import gen_qr_png_data
 
@@ -316,6 +321,94 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
+def get_ini_settings(mail_domain, inipath):
+    parser = configparser.ConfigParser()
+    parser.read(inipath)
+    settings = {key: value.strip() for (key, value) in parser["config"].items()}
+    if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
+        for value in settings.values():
+            value = value.lower()
+            if "merlinux" in value or "schmieder" in value or "@testrun.org" in value:
+                raise ValueError(
+                    f"please set your own privacy contacts/addresses in {inipath}"
+                )
+    settings["mail_domain"] = mail_domain
+    return settings
+
+
+def make_privacy_html_j2(privacy_source):
+    assert privacy_source.exists(), privacy_source
+    template_content = open(privacy_source).read()
+    html = markdown.markdown(template_content)
+    html = (
+        textwrap.dedent(
+            f"""\
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <title>{{ config.mail_domain }} privacy policy</title>
+            <link rel="stylesheet" href="./water.css">
+        </head>
+        <body>
+    """
+        )
+        + html
+        + "\n"
+        + textwrap.dedent(
+            """\
+        <footer>
+        <a href="index.html">Home</a>
+        </footer>
+        </body>"""
+        )
+    )
+
+    target_path = privacy_source.with_name("privacy-policy.html.j2")
+    with open(target_path, "w") as f:
+        f.write(html)
+    print(f"wrote {target_path}")
+    return target_path
+
+
+def _install_webpages(mail_domain):
+    pkg_root = importlib.resources.files(__package__)
+    chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
+    config = get_ini_settings(mail_domain, chatmail_ini)
+
+    www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
+    if www_path.is_dir():
+        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+    else:
+        index_path = www_path.parent.joinpath("default/index.html.j2")
+        files.template(
+            src=index_path,
+            dest="/var/www/html/index.html",
+            user="root",
+            group="root",
+            mode="644",
+            config=config,
+        )
+
+    privacy_source = www_path.parent.joinpath("default/privacy-policy.md")
+    build_path = make_privacy_html_j2(privacy_source)
+    files.template(
+        src=build_path,
+        dest="/var/www/html/privacy-policy.html",
+        user="root",
+        group="root",
+        mode="644",
+        config=config,
+    )
+    files.put(
+        src=privacy_source.with_name("water.css"),
+        dest="/var/www/html/water.css",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
+
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
     """Deploy a chat-mail instance.
 
@@ -375,21 +468,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
 
-    # deploy web pages and info if we have them
-    pkg_root = importlib.resources.files(__package__)
-    www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
-    if www_path.is_dir():
-        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
-    else:
-        index_path = www_path.parent.joinpath("default/index.html.j2")
-        files.template(
-            src=index_path,
-            dest="/var/www/html/index.html",
-            user="root",
-            group="root",
-            mode="644",
-            config={"mail_domain": mail_domain},
-        )
+    _install_webpages(mail_domain)
 
     systemd.service(
         name="Start and enable OpenDKIM",

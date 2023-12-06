@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.swp
+www/default/privacy-policy.html.j2
 
 # C extensions
 *.so

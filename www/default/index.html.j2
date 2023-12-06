@@ -4,13 +4,14 @@
 <head>
     <meta charset="utf-8" />
     <title>chatmail instance</title>
+    <link rel="stylesheet" href="./water.css">
 </head>
 <body>
     <h1>Welcome to {{ config.mail_domain }}!</h1>
     <h2>Getting started</h2>
     <ol>
         <li>Install <a href="https://get.delta.chat">https://get.delta.chat</a></li>
-        <li>Scan or Tap on the invite QR code</li>
+        <li>Scan or Tap on the invite QR code shown below</li>
         <li>Choose Nickname and Avatar</li>
         <li>Setup contact with others using <a href="https://delta.chat/en/help#howtoe2ee">
             guaranteed end-to-end encryption via QR code scans</a>
@@ -19,6 +20,7 @@
     <a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
         <img class="section" src="qrcode.png" />
     </a>
+    <br/>
 
     <h2>Constraints</h2>
     <ul>
@@ -27,5 +29,9 @@
     <li>Messages are unconditionally removed 40 days after arrival</li>
     <li>Max storage per user is 100MB</li>
     </ul>
+
+    <footer>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    </footer>
 </body>
 </html>

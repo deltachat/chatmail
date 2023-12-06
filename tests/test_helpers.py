@@ -1,12 +1,12 @@
 import textwrap
 
-from deploy_chatmail import build_html_from_markdown, get_ini_settings
+from deploy_chatmail import build_htmlj2_from_markdown, get_ini_settings
 
 
 def test_markdown(tmp_path):
     path = tmp_path.joinpath("privacy.md")
     path.write_text("# privacy policy")
-    build_html_from_markdown(path)
+    build_htmlj2_from_markdown(path)
     output = path.with_name("privacy.html.j2")
     assert output.exists()
     print(output.read_text())

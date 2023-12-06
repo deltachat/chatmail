@@ -28,8 +28,7 @@ after which the initially specified password is required for using them.
 
     scripts/deploy.sh 
 
-   This script uses `pyinfra` and `ssh` to setup packages and configure
-   the chatmail instance on your remote server. 
+   This script remotely sets up packages and configures the chatmail provider. 
 
 6. Run `scripts/generate-dns-zone.sh` and 
    transfer the generated DNS records at your DNS provider

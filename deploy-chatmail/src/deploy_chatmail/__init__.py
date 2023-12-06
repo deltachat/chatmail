@@ -4,7 +4,6 @@ Chat Mail pyinfra deploy.
 import importlib.resources
 import configparser
 import textwrap
-import os
 from pathlib import Path
 
 from pyinfra import host
@@ -326,9 +325,14 @@ def get_ini_settings(mail_domain, inipath):
     return settings
 
 
-def build_html_from_markdown(source):
+def build_htmlj2_from_markdown(source):
     assert source.exists(), source
     template_content = open(source).read()
+    if source.stem == "privacy":
+        title = "{{ config.mail_domain }} privacy policy"
+    elif source.stem == "index":
+        title = "{{ config.mail_domain }} home"
+
     html = markdown.markdown(template_content)
     html = (
         textwrap.dedent(
@@ -337,7 +341,7 @@ def build_html_from_markdown(source):
         <html>
         <head>
             <meta charset="utf-8" />
-            <title>{{ config.mail_domain }} privacy policy</title>
+            <title>{title}</title>
             <link rel="stylesheet" href="./water.css">
         </head>
         <body>
@@ -348,8 +352,9 @@ def build_html_from_markdown(source):
         + textwrap.dedent(
             """\
         <footer>
-        <a href="index.html">Home</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="index.html">home</a> |
+        <a href="privacy.html">privacy</a> |
+        <a href="https://github.com/deltachat/chatmail">public developments</a>
         </footer>
         </body>"""
         )
@@ -369,7 +374,7 @@ def build_webpages(www_path, config):
 
     for path in www_path.iterdir():
         if path.suffix == ".md":
-            path = build_html_from_markdown(path)
+            path = build_htmlj2_from_markdown(path)
 
         if path.suffix == ".j2":
             target = path.with_name(path.name[:-3])
@@ -432,7 +437,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     pkg_root = importlib.resources.files(__package__)
     chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
     config = get_ini_settings(mail_domain, chatmail_ini)
-    www_path = pkg_root.joinpath(f"../../../www/default").resolve()
+    www_path = pkg_root.joinpath("../../../www/default").resolve()
 
     build_webpages(www_path, config)
     files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
@@ -444,7 +449,6 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
-
 
     systemd.service(
         name="Start and enable OpenDKIM",

@@ -3,10 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.swp
-www/default/privacy.html.j2
-www/default/privacy.html
-www/default/index.html
-www/default/index.html.j2
+www/privacy.html*
+www/index.html*
+www/info.html*
 *qr-*.png
 
 

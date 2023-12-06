@@ -1,3 +1,5 @@
+<img width="800px" src="collage-privacy.png"/>
+
 # {{ config.mail_domain }} mail services - Privacy Policy
 
 We want to show you in a fair and transparent way

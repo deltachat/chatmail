@@ -329,9 +329,11 @@ def build_htmlj2_from_markdown(source):
     assert source.exists(), source
     template_content = open(source).read()
     if source.stem == "privacy":
-        title = "{{ config.mail_domain }} privacy policy"
+        title = "privacy {{ config.mail_domain }}"
     elif source.stem == "index":
-        title = "{{ config.mail_domain }} home"
+        title = "home {{ config.mail_domain }}"
+    elif source.stem == "info":
+        title = "info {{ config.mail_domain }}"
 
     html = markdown.markdown(template_content)
     html = (
@@ -353,8 +355,9 @@ def build_htmlj2_from_markdown(source):
             """\
         <footer>
         <a href="index.html">home</a> |
+        <a href="info.html">more info</a> |
         <a href="privacy.html">privacy</a> |
-        <a href="https://github.com/deltachat/chatmail">public developments</a>
+        <a href="https://github.com/deltachat/chatmail">-> chatmail development repo</a>
         </footer>
         </body>"""
         )
@@ -437,7 +440,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     pkg_root = importlib.resources.files(__package__)
     chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
     config = get_ini_settings(mail_domain, chatmail_ini)
-    www_path = pkg_root.joinpath("../../../www/default").resolve()
+    www_path = pkg_root.joinpath("../../../www").resolve()
 
     build_webpages(www_path, config)
     files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])

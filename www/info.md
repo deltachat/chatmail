@@ -1,27 +1,13 @@
 
-<img width="800px" src="collage-top.png"/>
+<img width="800px" src="collage-info.png"/>
 
-## Dear [Delta Chat](https://get.delta.chat) users and newcomers, 
-
-welcome to the experimental `{{config.mail_domain}}` chatmail provider!
-
-👉 **Tap** or scan this QR code to get a random `@{{config.mail_domain}}` e-mail address
-
-<a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
-    <img width=300 style="float: none;" src="qr-chatmail-invite-{{config.mail_domain}}.png" /></a>
-
-👤 **Choose** your Avatar and Name
-
-💬 **Start** chatting with any Delta Chat friends using [QR invite codes](https://delta.chat/en/help#howtoe2ee)
-
-🎉 That's it.  Welcome to interoperable, instant and [privacy-preserving](privacy.html) messaging :) 
-
-
-## Useful to know
+## More information 
 
 ### Inventing your own chatmail address instead of using a random one
 
-You may tap `LOG INTO YOUR E-MAIL ACCOUNT` and fill the two fields like this: 
+In the Delta Chat account setup 
+you may tap `LOG INTO YOUR E-MAIL ACCOUNT` 
+and fill the two fields like this: 
 
 - `Address`: invent a word with *exactly* nine characters 
    and append `@{{config.mail_domain}}` to it. 

@@ -1,3 +1,6 @@
+
+<img width="800px" src="www/collage-top.png"/>
+
 # Chatmail instances optimized for Delta Chat apps 
 
 This repository helps to setup a ready-to-use chatmail instance

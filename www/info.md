@@ -3,7 +3,7 @@
 
 ## More information 
 
-### Inventing your own chatmail address instead of using a random one
+### Choosing a chatmail address instead of using a random one
 
 In the Delta Chat account setup 
 you may tap `LOG INTO YOUR E-MAIL ACCOUNT` 

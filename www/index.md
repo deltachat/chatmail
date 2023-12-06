@@ -1,7 +1,7 @@
 
 <img width="800px" src="collage-top.png"/>
 
-## Dear [Delta Chat](https://get.delta.chat) users and newcomers, welcome to `{{config.mail_domain}}`!
+## Dear [Delta Chat](https://get.delta.chat) users and newcomers, 
 
 👉 **Tap** or scan this QR code to get a random `@{{config.mail_domain}}` e-mail address
 
@@ -12,5 +12,7 @@
 
 💬 **Start** chatting with any Delta Chat contacts using [QR invite codes](https://delta.chat/en/help#howtoe2ee)
 
-🎉 That's it. Welcome to instant, interoperable and [privacy-preserving](privacy.html) messaging :) 
+🎉 Welcome to instant, interoperable and [privacy-preserving](privacy.html) messaging :) 
+
+**Note: this is an experimental service.**
 

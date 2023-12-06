@@ -307,17 +307,6 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="755",
     )
 
-    qr_data = gen_qr_png_data(domain)
-
-    files.put(
-        name="Upload QR code for account creation",
-        src=qr_data,
-        dest="/var/www/html/qrcode.png",
-        user="root",
-        group="root",
-        mode="644",
-    )
-
     return need_restart
 
 
@@ -364,11 +353,10 @@ def make_privacy_html_j2(privacy_source):
         )
     )
 
-    target_path = privacy_source.with_name("privacy-policy.html.j2")
+    target_path = privacy_source.with_suffix(".html.j2")
     with open(target_path, "w") as f:
         f.write(html)
     print(f"wrote {target_path}")
-    return target_path
 
 
 def _install_webpages(mail_domain):
@@ -376,37 +364,27 @@ def _install_webpages(mail_domain):
     chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
     config = get_ini_settings(mail_domain, chatmail_ini)
 
-    www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
-    if www_path.is_dir():
-        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
-    else:
-        index_path = www_path.parent.joinpath("default/index.html.j2")
-        files.template(
-            src=index_path,
-            dest="/var/www/html/index.html",
-            user="root",
-            group="root",
-            mode="644",
-            config=config,
-        )
+    www_path = pkg_root.joinpath(f"../../../www/default").resolve()
+    privacy_source = www_path.joinpath("privacy-policy.md")
+    make_privacy_html_j2(privacy_source)
 
-    privacy_source = www_path.parent.joinpath("default/privacy-policy.md")
-    build_path = make_privacy_html_j2(privacy_source)
-    files.template(
-        src=build_path,
-        dest="/var/www/html/privacy-policy.html",
-        user="root",
-        group="root",
-        mode="644",
-        config=config,
-    )
-    files.put(
-        src=privacy_source.with_name("water.css"),
-        dest="/var/www/html/water.css",
-        user="root",
-        group="root",
-        mode="644",
-    )
+    qr_data = gen_qr_png_data(mail_domain).read()
+    www_path.joinpath(f"qr-chatmail-invite-{mail_domain}.png").write_bytes(qr_data)
+
+    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+
+    for path in www_path.iterdir():
+        if path.suffix == ".j2":
+            target = "/var/www/html/" + path.name[:-3]
+            files.template(
+                name=f"copying templated file: {path.name}",
+                src=path,
+                dest=target,
+                user="root",
+                group="root",
+                mode="644",
+                config=config,
+            )
 
 
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
@@ -459,6 +437,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         name="Install fcgiwrap",
         packages=["fcgiwrap"],
     )
+    _install_webpages(mail_domain)
 
     _install_chatmaild()
     debug = False
@@ -468,7 +447,6 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
 
-    _install_webpages(mail_domain)
 
     systemd.service(
         name="Start and enable OpenDKIM",

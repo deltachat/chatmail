@@ -1,4 +1,4 @@
-# testrun.org mail services - Privacy Policy
+# {{ config.maildomain }} mail services - Privacy Policy
 
 We want to show you in a fair and transparent way
 what personal data is processed by us -
@@ -25,15 +25,15 @@ please contact us.
 
 Responsible for the processing of your personal data is:
 ```
-{privacy_postal}
+{{ config.privacy_postal }}
 ```
 
-E-mail: {privacy_mail}
+E-mail: {{ config.privacy_mail }}
 
 We have appointed a data protection officer:
 
 ```
-{privacy_pdo}
+{{ config.privacy_pdo }}
 ```
 
 ## 2. Processing when using chat e-mail services
@@ -71,7 +71,7 @@ Creating an account happens in one of two ways on our mail servers:
   and then the account is created.
 
 - by letting Delta Chat otherwise create an account 
-  and register it with a testrun mail server. 
+  and register it with a {{ config.maildomain }} mail server. 
 
 In either case, we process the newly created email address.
 No phone numbers,
@@ -278,7 +278,7 @@ The supervisory authority responsible for our place of business
 is the State Commissioner for Data Protection and Freedom of Information of Baden-Württemberg in 70173 Stuttgart.  
 
 If you have any questions or complaints, please feel free to contact us by email:  
-{privacy_mail}
+{{ config.privacy_mail }}
 
 
 ### 5.1 Right to object
@@ -295,7 +295,7 @@ which will be implemented by us
 without specifying a particular situation.
 
 If you wish to exercise your right of objection,
-simply send an e-mail to: {privacy_mail}
+simply send an e-mail to: {{ config.privacy_mail }}
 
 ### 5.2 Right to withdraw
 
@@ -313,7 +313,7 @@ does not affect the lawfulness of the processing
 carried out on the basis of the consent until the withdrawal.
 
 If you wish to make use of your right of withdrawal,
-simply send an e-mail to: {privacy_mail}
+simply send an e-mail to: {{ config.privacy_mail }}
 
 ## 6. Up-to-dateness and modification of this data protection declaration
 

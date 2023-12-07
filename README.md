@@ -68,6 +68,10 @@ The `scripts/webdev.sh` script supports live development of the chatmail web pre
 
 - Starts a browser window automatically where you can "refresh" as needed. 
 
+Note that this script is not needed for running `scripts/deploy.sh" 
+which deploys the whole chatmail setup remotely. 
+The code that generates the web pages is identical
+which means that `webdev.sh` gives a pretty good preview. 
 
 ### Ports
 

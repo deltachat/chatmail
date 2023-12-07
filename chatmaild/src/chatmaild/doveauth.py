@@ -28,8 +28,8 @@ def is_allowed_to_create(user, cleartext_password) -> bool:
         logging.warning(f"blocked account creation because {NOCREATE_FILE!r} exists.")
         return False
 
-    if len(cleartext_password) < 10:
-        logging.warning("Password needs to be at least 10 characters long")
+    if len(cleartext_password) < 9:
+        logging.warning("Password needs to be at least 9 characters long")
         return False
 
     parts = user.split("@")

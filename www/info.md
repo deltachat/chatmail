@@ -12,7 +12,7 @@ and fill the two fields like this:
 - `Address`: invent a word with *exactly* nine characters 
    and append `@{{config.mail_domain}}` to it. 
 
-- `Password`: invent at least 10 characters. 
+- `Password`: invent at least 9 characters. 
 
 If the e-mail address is not yet taken, you'll get that account. 
 The first login sets your password. 

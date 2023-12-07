@@ -58,10 +58,11 @@ def build_webpages(src_dir, build_dir, config):
 
 
 def main():
+    chatmail_domain = "example.testrun.org"
     path = importlib.resources.files(__package__)
     reporoot = path.joinpath("../../../").resolve()
     inipath = reporoot.joinpath("chatmail.ini")
-    config = get_ini_settings("example.testrun.org", inipath)
+    config = get_ini_settings(chatmail_domain, inipath)
     www_path = reporoot.joinpath("www")
     src_path = www_path.joinpath("src")
     stats = snapshot_dir_stats(src_path)

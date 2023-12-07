@@ -34,6 +34,14 @@ def check_encrypted(message):
     return True
 
 
+def check_passthrough(recipient):
+    """Check whether a recipient is configured as passthrough."""
+    passthroughlist = ["privacy@testrun.org"]
+    if recipient in passthroughlist:
+        return True
+    return False
+
+
 def check_mdn(message, envelope):
     if len(envelope.rcpt_tos) != 1:
         return False
@@ -117,6 +125,9 @@ def check_DATA(envelope):
     for recipient in envelope.rcpt_tos:
         if envelope.mail_from == recipient:
             # Always allow sending emails to self.
+            continue
+        if check_passthrough(recipient):
+            # Always allow recipients marked as passthrough in chatmail.ini
             continue
         res = recipient.split("@")
         if len(res) != 2:

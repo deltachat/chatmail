@@ -60,11 +60,13 @@ The `scripts/webdev.sh` script supports live development of the chatmail web pre
     scripts/webdev.sh
 ```
 
-this will continously regenerate all markdown files from 
-the `www/build` from the `www/src` directory, and use
-the `www/src/page-layout.html` file for producing html documents. 
+- uses the `www/src/page-layout.html` file for producing html documents
+  from `www/src/*.md` files. 
 
-Moreover, it will start a browser window automatically. 
+- continously builds the web presence reading files from `www/src` directory
+  and generating html files and copying assets to the `www/build` directory. 
+
+- Starts a browser window automatically where you can "refresh" as needed. 
 
 
 ### Ports

@@ -1,29 +1,23 @@
 <img width="800px" src="collage-privacy.png"/>
 
-# {{ config.mail_domain }} mail services - Privacy Policy
+# Privacy Policy for {{ config.mail_domain }} 
 
 We want to show you in a fair and transparent way
-what personal data is processed by us -
-we try to keep it to a minimum,
+what personal data is processed by us.
+We follow a strict privacy-by-design approach
+and try to avoid processing your data in the first place,
 but as you may know,
 the internet, 
-and in particular sending e-mail messages to contacts, 
+and in particular sending e-mail messages,
 does not work without data.
-We follow a strict privacy-by-design approach
-and try to avoid processing your data in the first place.
 Still,
 it's only fair that you know at all times
 what personal data is processed
 when you use our service.
 
-The following information also serves to provide you with information about this
-and how we protect your personal data from
-manipulation, loss, destruction or misuse.
+If you have any remaining questions about data protection, please contact us. 
 
-If you have any further questions about data protection,
-please contact us. 
-
-## 1. Name and contact information of the data controller
+## 1. Name and contact information 
 
 Responsible for the processing of your personal data is:
 ```
@@ -40,8 +34,7 @@ We have appointed a data protection officer:
 
 ## 2. Processing when using chat e-mail services
 
-We provide e-mail services optimized for the use from Delta Chat apps 
-(see https://delta.chat for more information) 
+We provide e-mail services optimized for the use from [Delta Chat](https://delta.chat) apps 
 and process only the data necessary
 for the setup and technical execution of the e-mail dispatch.
 The purpose of the processing is to
@@ -277,7 +270,7 @@ you can contact the supervisory authority of your usual place of residence
 or workplace
 or our registered office for this purpose.
 The supervisory authority responsible for our place of business
-is the State Commissioner for Data Protection and Freedom of Information of Baden-Württemberg in 70173 Stuttgart.  
+is the `{{ config.privacy_supervisor }}`.
 
 If you have any questions or complaints, please feel free to contact us by email:  
 {{ config.privacy_mail }}
@@ -317,10 +310,10 @@ carried out on the basis of the consent until the withdrawal.
 If you wish to make use of your right of withdrawal,
 simply send an e-mail to: {{ config.privacy_mail }}
 
-## 6. Up-to-dateness and modification of this data protection declaration
+## 6. Validity of this privacy policy 
 
 This data protection declaration is valid
-as of *November 2023*.
+as of *December 2023*.
 Due to the further development of our service and offers
 or due to changed legal or official requirements,
 it may become necessary to revise this data protection declaration from time to time.

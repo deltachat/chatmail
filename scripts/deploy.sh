@@ -4,8 +4,8 @@ echo -----------------------------------------
 echo deploying to $CHATMAIL_DOMAIN 
 echo -----------------------------------------
 
-#echo WARNING: in five seconds deploy to $CHATMAIL_DOMAIN starts
-#sleep 5
+echo WARNING: in five seconds deploy to $CHATMAIL_DOMAIN starts
+sleep 5
 
 venv/bin/python3 -m build -n --sdist chatmaild --outdir dist
 

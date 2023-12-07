@@ -1,5 +1,3 @@
-
-
 from deploy_chatmail.genqr import gen_qr_png_data
 
 

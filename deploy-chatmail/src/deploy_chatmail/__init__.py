@@ -357,7 +357,7 @@ def build_htmlj2_from_markdown(source):
         <a href="index.html">home</a> |
         <a href="info.html">more info</a> |
         <a href="privacy.html">privacy</a> |
-        <a href="https://github.com/deltachat/chatmail">-> chatmail development repo</a>
+        <a href="https://github.com/deltachat/chatmail">-> public development </a>
         </footer>
         </body>"""
         )

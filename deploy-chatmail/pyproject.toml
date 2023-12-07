@@ -7,7 +7,9 @@ name = "deploy-chatmail"
 version = "0.1"
 dependencies = [
   "pyinfra",
+  "pillow",
   "qrcode",
+  "markdown",
 ]
 
 [tool.pytest.ini_options]

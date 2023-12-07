@@ -2,6 +2,8 @@
 Chat Mail pyinfra deploy.
 """
 import importlib.resources
+import configparser
+import textwrap
 from pathlib import Path
 
 from pyinfra import host
@@ -9,6 +11,9 @@ from pyinfra.operations import apt, files, server, systemd
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
+import markdown
+from jinja2 import Template
+
 
 from .genqr import gen_qr_png_data
 
@@ -302,18 +307,83 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="755",
     )
 
-    qr_data = gen_qr_png_data(domain)
+    return need_restart
 
-    files.put(
-        name="Upload QR code for account creation",
-        src=qr_data,
-        dest="/var/www/html/qrcode.png",
-        user="root",
-        group="root",
-        mode="644",
+
+def get_ini_settings(mail_domain, inipath):
+    parser = configparser.ConfigParser()
+    parser.read(inipath)
+    settings = {key: value.strip() for (key, value) in parser["config"].items()}
+    if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
+        for value in settings.values():
+            value = value.lower()
+            if "merlinux" in value or "schmieder" in value or "@testrun.org" in value:
+                raise ValueError(
+                    f"please set your own privacy contacts/addresses in {inipath}"
+                )
+    settings["mail_domain"] = mail_domain
+    return settings
+
+
+def build_htmlj2_from_markdown(source):
+    assert source.exists(), source
+    template_content = open(source).read()
+    if source.stem == "privacy":
+        title = "privacy {{ config.mail_domain }}"
+    elif source.stem == "index":
+        title = "home {{ config.mail_domain }}"
+    elif source.stem == "info":
+        title = "info {{ config.mail_domain }}"
+
+    html = markdown.markdown(template_content)
+    html = (
+        textwrap.dedent(
+            f"""\
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <title>{title}</title>
+            <link rel="stylesheet" href="./water.css">
+        </head>
+        <body>
+    """
+        )
+        + html
+        + "\n"
+        + textwrap.dedent(
+            """\
+        <footer>
+        <a href="index.html">home</a> |
+        <a href="info.html">more info</a> |
+        <a href="privacy.html">privacy</a> |
+        <a href="https://github.com/deltachat/chatmail">-> public development </a>
+        </footer>
+        </body>"""
+        )
     )
 
-    return need_restart
+    target_path = source.with_name(source.stem + ".html.j2")
+    with open(target_path, "w") as f:
+        f.write(html)
+    print(f"wrote {target_path}")
+    return target_path
+
+
+def build_webpages(www_path, config):
+    mail_domain = config["mail_domain"]
+    qr_data = gen_qr_png_data(mail_domain).read()
+    www_path.joinpath(f"qr-chatmail-invite-{mail_domain}.png").write_bytes(qr_data)
+
+    for path in www_path.iterdir():
+        if path.suffix == ".md":
+            path = build_htmlj2_from_markdown(path)
+
+        if path.suffix == ".j2":
+            target = path.with_name(path.name[:-3])
+            template = Template(path.read_text())
+            with target.open("w") as f:
+                f.write(template.render(config=config))
 
 
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
@@ -367,6 +437,14 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         packages=["fcgiwrap"],
     )
 
+    pkg_root = importlib.resources.files(__package__)
+    chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
+    config = get_ini_settings(mail_domain, chatmail_ini)
+    www_path = pkg_root.joinpath("../../../www").resolve()
+
+    build_webpages(www_path, config)
+    files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
+
     _install_chatmaild()
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
@@ -374,22 +452,6 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
-
-    # deploy web pages and info if we have them
-    pkg_root = importlib.resources.files(__package__)
-    www_path = pkg_root.joinpath(f"../../../www/{mail_domain}").resolve()
-    if www_path.is_dir():
-        files.rsync(f"{www_path}/", "/var/www/html", flags=["-avz"])
-    else:
-        index_path = www_path.parent.joinpath("default/index.html.j2")
-        files.template(
-            src=index_path,
-            dest="/var/www/html/index.html",
-            user="root",
-            group="root",
-            mode="644",
-            config={"mail_domain": mail_domain},
-        )
 
     systemd.service(
         name="Start and enable OpenDKIM",

@@ -18,7 +18,8 @@ def gen_qr(maildomain, url):
     # taken and modified from
     # https://github.com/deltachat/mailadm/blob/master/src/mailadm/gen_qr.py
 
-    info = f"{maildomain} invite code"
+    # info = f"{maildomain} invite code"
+    info = ""
 
     # load QR code
     qr = qrcode.QRCode(
@@ -43,7 +44,7 @@ def gen_qr(maildomain, url):
     font_size = 16
     font = ImageFont.truetype(font=ttf_path, size=font_size)
 
-    num_lines = (info).count("\n") + 1
+    num_lines = ((info).count("\n") + 1) if info else 0
 
     size = width = 384
     qr_padding = 6
@@ -51,20 +52,24 @@ def gen_qr(maildomain, url):
     height = size + text_height + qr_padding * 2
 
     image = Image.new("RGBA", (width, height), "white")
-
-    draw = ImageDraw.Draw(image)
-
     qr_final_size = width - (qr_padding * 2)
 
-    # draw text
-    if hasattr(font, "getsize"):
-        info_pos = (width - font.getsize(info.strip())[0]) // 2
-    else:
-        info_pos = (width - font.getbbox(info.strip())[3]) // 2
+    if num_lines:
+        draw = ImageDraw.Draw(image)
 
-    draw.multiline_text(
-        (info_pos, size - qr_padding // 2), info, font=font, fill="black", align="right"
-    )
+        # draw text
+        if hasattr(font, "getsize"):
+            info_pos = (width - font.getsize(info.strip())[0]) // 2
+        else:
+            info_pos = (width - font.getbbox(info.strip())[3]) // 2
+
+        draw.multiline_text(
+            (info_pos, size - qr_padding // 2),
+            info,
+            font=font,
+            fill="black",
+            align="right",
+        )
 
     # paste QR code
     image.paste(

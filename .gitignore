@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.swp
+www/privacy.html*
+www/index.html*
+www/info.html*
+*qr-*.png
+
 
 # C extensions
 *.so

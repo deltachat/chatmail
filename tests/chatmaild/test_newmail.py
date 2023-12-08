@@ -3,6 +3,7 @@ import json
 import chatmaild
 from chatmaild.newemail import create_newemail_dict, print_new_account
 
+
 def test_create_newemail_dict():
     ac1 = create_newemail_dict(domain="example.org")
     assert "@" in ac1["email"]

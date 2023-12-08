@@ -49,10 +49,10 @@ def gen_qr(maildomain, url):
     size = width = 384
     qr_padding = 6
     text_height = font_size * num_lines
-    height = size + text_height + qr_padding * 2
+    height = size + text_height
 
     image = Image.new("RGBA", (width, height), "white")
-    qr_final_size = width - (qr_padding * 2)
+    qr_final_size = width
 
     if num_lines:
         draw = ImageDraw.Draw(image)

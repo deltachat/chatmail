@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chatmaild"
-version = "0.1"
+version = "0.2"
 dependencies = [
   "aiosmtpd",
+  "iniconfig",
 ]
 
 [project.scripts]

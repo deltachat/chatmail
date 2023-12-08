@@ -3,6 +3,7 @@ import io
 import time
 import random
 import subprocess
+import textwrap
 import imaplib
 import smtplib
 import itertools
@@ -402,3 +403,14 @@ class CMUser:
             imap.login(self.addr, self.password)
             self._imap = imap
         return self._imap
+
+
+@pytest.fixture
+def create_ini(tmp_path):
+    def create_ini_func(source):
+        p = tmp_path.joinpath("chatmail.ini")
+        assert not p.exists(), p
+        p.write_text(textwrap.dedent(source))
+        return p
+
+    return create_ini_func

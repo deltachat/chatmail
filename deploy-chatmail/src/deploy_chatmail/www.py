@@ -2,6 +2,7 @@ import importlib.resources
 import webbrowser
 import hashlib
 import time
+import traceback
 
 import markdown
 from jinja2 import Template
@@ -29,6 +30,13 @@ def prepare_template(source):
 
 
 def build_webpages(src_dir, build_dir, config):
+    try:
+        _build_webpages(src_dir, build_dir, config)
+    except Exception:
+        print(traceback.format_exc())
+
+
+def _build_webpages(src_dir, build_dir, config):
     mail_domain = config["mail_domain"]
     assert src_dir.exists(), src_dir
     if not build_dir.exists():
@@ -65,29 +73,35 @@ def main():
     config = get_ini_settings(chatmail_domain, inipath)
     www_path = reporoot.joinpath("www")
     src_path = www_path.joinpath("src")
-    stats = snapshot_dir_stats(src_path)
+    stats = None
     build_dir = www_path.joinpath("build")
     src_dir = www_path.joinpath("src")
-    build_webpages(src_dir, build_dir, config)
     index_path = build_dir.joinpath("index.html")
-    webbrowser.open(str(index_path))
-    print(f"started webbrowser-window for f{index_path}")
 
+    # start web page generation, open a browser and wait for changes
+    build_webpages(src_dir, build_dir, config)
+    webbrowser.open(str(index_path))
+    stats = snapshot_dir_stats(src_path)
+    print(f"\nOpened URL: file://{index_path.resolve()}\n")
     print(f"watching {src_path} directory for changes")
-    count = 0
-    while 1:
+
+    changenum = 0
+    for count in range(0, 1000000):
         newstats = snapshot_dir_stats(src_path)
-        if newstats == stats and count < 60:
+        if newstats == stats and count % 60 != 0:
             count += 1
             time.sleep(1.0)
             continue
+
         for key in newstats:
             if stats[key] != newstats[key]:
                 print(f"*** CHANGED: {key}")
+                changenum += 1
 
         stats = newstats
         build_webpages(src_dir, build_dir, config)
-        print(f"regenerated web pages at: {index_path}")
+        print(f"[{changenum}] regenerated web pages at: {index_path}")
+        print(f"URL: file://{index_path.resolve()}\n\n")
         count = 0
 
 

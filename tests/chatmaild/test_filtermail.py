@@ -1,4 +1,4 @@
-from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter, check_mdn, check_passthrough
+from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter, check_mdn, is_passthrough_recipient
 import pytest
 
 
@@ -87,7 +87,7 @@ def test_excempt_privacy(maildata, gencreds):
     to_addr = "privacy@testrun.org"
     false_to = "privacy@tstrn.org"
     false_to2 = "prvcy@testrun.org"
-    assert check_passthrough(to_addr)
+    assert is_passthrough_recipient(to_addr)
 
     msg = maildata("plain.eml", from_addr, to_addr)
 

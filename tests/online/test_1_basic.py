@@ -54,7 +54,7 @@ def test_exceed_rate_limit(cmsetup, gencreds, maildata):
         try:
             user1.smtp.sendmail(user1.addr, [user2.addr], mail)
         except smtplib.SMTPException as e:
-            if i < 80:
+            if i < 60:
                 pytest.fail(f"rate limit was exceeded too early with msg {i}")
             outcome = e.recipients[user2.addr]
             assert outcome[0] == 450

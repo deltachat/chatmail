@@ -2,7 +2,7 @@
 Description=Chatmail Postfix BeforeQeue filter 
 
 [Service]
-ExecStart={execpath} 10080
+ExecStart={execpath} {config_path}
 Restart=always
 RestartSec=30
 

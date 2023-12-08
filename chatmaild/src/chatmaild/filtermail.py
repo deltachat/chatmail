@@ -11,6 +11,8 @@ from aiosmtpd.smtp import SMTP
 from aiosmtpd.controller import Controller
 from smtplib import SMTP as SMTPClient
 
+from .config import read_config
+
 
 def check_encrypted(message):
     """Check that the message is an OpenPGP-encrypted message."""
@@ -76,13 +78,15 @@ class SMTPController(Controller):
 
 
 class BeforeQueueHandler:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.send_rate_limiter = SendRateLimiter()
 
     async def handle_MAIL(self, server, session, envelope, address, mail_options):
         logging.info(f"handle_MAIL from {address}")
         envelope.mail_from = address
-        if not self.send_rate_limiter.is_sending_allowed(address):
+        max_sent = self.config.max_user_send_per_minute
+        if not self.send_rate_limiter.is_sending_allowed(address, max_sent):
             return f"450 4.7.1: Too much mail from {address}"
 
         parts = envelope.mail_from.split("@")
@@ -97,13 +101,14 @@ class BeforeQueueHandler:
         if error:
             return error
         logging.info("re-injecting the mail that passed checks")
-        client = SMTPClient("localhost", "10025")
+        client = SMTPClient("localhost", self.config.postfix_reinject_port)
         client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
         return "250 OK"
 
 
-async def asyncmain_beforequeue(port):
-    Controller(BeforeQueueHandler(), hostname="127.0.0.1", port=port).start()
+async def asyncmain_beforequeue(config):
+    port = config.filtermail_smtp_port
+    Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
 
 
 def check_DATA(envelope):
@@ -142,16 +147,14 @@ def check_DATA(envelope):
 
 
 class SendRateLimiter:
-    MAX_USER_SEND_PER_MINUTE = 80
-
     def __init__(self):
         self.addr2timestamps = {}
 
-    def is_sending_allowed(self, mail_from):
+    def is_sending_allowed(self, mail_from, max_send_per_minute):
         last = self.addr2timestamps.setdefault(mail_from, [])
         now = time.time()
         last[:] = [ts for ts in last if ts >= (now - 60)]
-        if len(last) <= self.MAX_USER_SEND_PER_MINUTE:
+        if len(last) <= max_send_per_minute:
             last.append(now)
             return True
         return False
@@ -160,9 +163,10 @@ class SendRateLimiter:
 def main():
     args = sys.argv[1:]
     assert len(args) == 1
+    config = read_config(args[0])
     logging.basicConfig(level=logging.WARN)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    task = asyncmain_beforequeue(port=int(args[0]))
+    task = asyncmain_beforequeue(config)
     loop.create_task(task)
     loop.run_forever()

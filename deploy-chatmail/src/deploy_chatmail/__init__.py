@@ -6,7 +6,6 @@ import importlib.resources
 import subprocess
 import shutil
 import io
-import configparser
 from pathlib import Path
 
 from pyinfra import host
@@ -14,6 +13,9 @@ from pyinfra.operations import apt, files, server, systemd, pip
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
+
+import chatmaild.filtermail
+from chatmaild.config import read_config
 
 
 def _build_chatmaild(dist_dir) -> None:
@@ -30,11 +32,24 @@ def _build_chatmaild(dist_dir) -> None:
     return entries[0]
 
 
-def _install_remote_venv_with_chatmaild() -> None:
+def remove_legacy_artifacts():
+    # disable legacy doveauth-dictproxy.service
+    if host.get_fact(SystemdEnabled).get("doveauth-dictproxy.service"):
+        systemd.service(
+            name="Disable legacy doveauth-dictproxy.service",
+            service="doveauth-dictproxy.service",
+            running=False,
+            enabled=False,
+        )
+
+
+def _install_remote_venv_with_chatmaild(config) -> None:
+    remove_legacy_artifacts()
     dist_file = _build_chatmaild(dist_dir=Path("chatmaild/dist"))
     remote_base_dir = "/usr/local/lib/chatmaild"
     remote_dist_file = f"{remote_base_dir}/dist/{dist_file.name}"
     remote_venv_dir = f"{remote_base_dir}/venv"
+    remote_chatmail_inipath = f"{remote_base_dir}/chatmail.ini"
     root_owned = dict(user="root", group="root", mode="644")
 
     apt.packages(
@@ -47,6 +62,13 @@ def _install_remote_venv_with_chatmaild() -> None:
         src=dist_file.open("rb"),
         dest=remote_dist_file,
         create_remote_dir=True,
+        **root_owned,
+    )
+
+    files.put(
+        name=f"Upload {remote_chatmail_inipath}",
+        src=config._getbytefile(),
+        dest=remote_chatmail_inipath,
         **root_owned,
     )
 
@@ -63,24 +85,17 @@ def _install_remote_venv_with_chatmaild() -> None:
         ],
     )
 
-    # disable legacy doveauth-dictproxy.service
-    if host.get_fact(SystemdEnabled).get("doveauth-dictproxy.service"):
-        systemd.service(
-            name="Disable legacy doveauth-dictproxy.service",
-            service="doveauth-dictproxy.service",
-            running=False,
-            enabled=False,
-        )
-
     # install systemd units
-
     for fn in (
         "doveauth",
         "filtermail",
     ):
-        execpath = f"{remote_venv_dir}/bin/{fn}"
+        params = dict(
+            execpath=f"{remote_venv_dir}/bin/{fn}",
+            config_path=remote_chatmail_inipath,
+        )
         source_path = importlib.resources.files("chatmaild").joinpath(f"{fn}.service.f")
-        content = source_path.read_text().format(execpath=execpath).encode()
+        content = source_path.read_text().format(**params).encode()
 
         files.put(
             name=f"Upload {fn}.service",
@@ -201,7 +216,7 @@ def _install_mta_sts_daemon() -> bool:
     return need_restart
 
 
-def _configure_postfix(domain: str, debug: bool = False) -> bool:
+def _configure_postfix(config: chatmaild.config.Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
@@ -211,7 +226,7 @@ def _configure_postfix(domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config=config,
     )
     need_restart |= main_config.changed
 
@@ -222,6 +237,7 @@ def _configure_postfix(domain: str, debug: bool = False) -> bool:
         group="root",
         mode="644",
         debug=debug,
+        config=config,
     )
     need_restart |= master_config.changed
 
@@ -331,19 +347,16 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
-def get_ini_settings(mail_domain, inipath):
-    parser = configparser.ConfigParser()
-    parser.read(inipath)
-    settings = {key: value.strip() for (key, value) in parser["config"].items()}
-    if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
-        for value in settings.values():
-            value = value.lower()
-            if "merlinux" in value or "schmieder" in value or "@testrun.org" in value:
+def check_config(config):
+    mailname = config.mailname
+    if mailname != "testrun.org" and not mailname.endswith(".testrun.org"):
+        blocked_words = "merlinux schmieder testrun.org".split()
+        for value in config.__dict__.values():
+            if any(x in value for x in blocked_words):
                 raise ValueError(
-                    f"please set your own privacy contacts/addresses in {inipath}"
+                    f"please set your own privacy contacts/addresses in {config._inipath}"
                 )
-    settings["mail_domain"] = mail_domain
-    return settings
+    return config
 
 
 def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
@@ -400,7 +413,8 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
 
     pkg_root = importlib.resources.files(__package__)
     chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
-    config = get_ini_settings(mail_domain, chatmail_ini)
+    config = read_config(chatmail_ini, mailname=mail_domain)
+    check_config(config)
     www_path = pkg_root.joinpath("../../../www").resolve()
 
     build_dir = www_path.joinpath("build")
@@ -408,10 +422,10 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     build_webpages(src_dir, build_dir, config)
     files.rsync(f"{build_dir}/", "/var/www/html", flags=["-avz"])
 
-    _install_remote_venv_with_chatmaild()
+    _install_remote_venv_with_chatmaild(config)
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
-    postfix_need_restart = _configure_postfix(mail_domain, debug=debug)
+    postfix_need_restart = _configure_postfix(config, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)

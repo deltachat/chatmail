@@ -1,5 +1,4 @@
 import json
-import sys
 import pytest
 import threading
 import queue
@@ -7,7 +6,7 @@ import traceback
 
 import chatmaild.doveauth
 from chatmaild.doveauth import get_user_data, lookup_passdb, handle_dovecot_request
-from chatmaild.database import Database, DBError
+from chatmaild.database import DBError
 
 
 def test_basic(db):

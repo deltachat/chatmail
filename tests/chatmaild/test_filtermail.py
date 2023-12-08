@@ -1,4 +1,10 @@
-from chatmaild.filtermail import check_encrypted, check_DATA, SendRateLimiter, check_mdn, is_passthrough_recipient
+from chatmaild.filtermail import (
+    check_encrypted,
+    check_DATA,
+    SendRateLimiter,
+    check_mdn,
+    is_passthrough_recipient,
+)
 import pytest
 
 
@@ -73,12 +79,12 @@ def test_filtermail_to_multiple_recipients_no_mdn(maildata, gencreds):
 def test_send_rate_limiter():
     limiter = SendRateLimiter()
     for i in range(100):
-        if limiter.is_sending_allowed("some@example.org"):
-            if i <= SendRateLimiter.MAX_USER_SEND_PER_MINUTE:
+        if limiter.is_sending_allowed("some@example.org", 10):
+            if i <= 10:
                 continue
             pytest.fail("limiter didn't work")
         else:
-            assert i == SendRateLimiter.MAX_USER_SEND_PER_MINUTE + 1
+            assert i == 11
             break
 
 

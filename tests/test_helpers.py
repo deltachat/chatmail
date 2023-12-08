@@ -4,6 +4,7 @@ import importlib.resources
 from deploy_chatmail.www import build_webpages
 from deploy_chatmail import get_ini_settings
 
+
 def create_ini(inipath):
     inipath.write_text(
         textwrap.dedent(
@@ -21,6 +22,7 @@ def create_ini(inipath):
     """
         )
     )
+
 
 def test_build_webpages(tmp_path):
     pkgroot = importlib.resources.files("deploy_chatmail")

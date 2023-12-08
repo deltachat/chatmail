@@ -278,13 +278,13 @@ class ChatmailTestProcess:
 
 
 @pytest.fixture
-def cmfactory(request, gencreds, tmpdir, data, maildomain):
+def cmfactory(request, gencreds, tmpdir, maildomain):
     # cloned from deltachat.testplugin.amfactory
     pytest.importorskip("deltachat")
     from deltachat.testplugin import ACFactory
 
     testproc = ChatmailTestProcess(request.config, maildomain, gencreds)
-    am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
+    am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=None)
 
     # nb. a bit hacky
     # would probably be better if deltachat's test machinery grows native support
@@ -324,6 +324,18 @@ class Remote:
                 yield res
             else:
                 break
+
+
+@pytest.fixture
+def lp(request):
+    class LP:
+        def sec(self, msg):
+            print(f"---- {msg} ----")
+
+        def indent(self, msg):
+            print(f"     {msg}")
+
+    return LP()
 
 
 @pytest.fixture

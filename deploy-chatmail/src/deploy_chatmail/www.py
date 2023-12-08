@@ -71,6 +71,7 @@ def main():
     reporoot = path.joinpath("../../../").resolve()
     inipath = reporoot.joinpath("chatmail.ini")
     config = get_ini_settings(chatmail_domain, inipath)
+    config["webdev"] = True
     www_path = reporoot.joinpath("www")
     src_path = www_path.joinpath("src")
     stats = None

@@ -2,6 +2,9 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    {% if config.webdev %}
+    <meta http-equiv="refresh" content="3">
+    {% endif %}
     <title>{{ config.mail_domain }} {{ pagename }}</title>
     <link rel="stylesheet" href="./water.css">
 </head>

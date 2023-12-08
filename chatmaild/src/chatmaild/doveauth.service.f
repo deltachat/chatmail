@@ -2,7 +2,7 @@
 Description=Dict authentication proxy for dovecot
 
 [Service]
-ExecStart=/usr/local/bin/doveauth /run/dovecot/doveauth.socket vmail /home/vmail/passdb.sqlite
+ExecStart={execpath} /run/dovecot/doveauth.socket vmail /home/vmail/passdb.sqlite
 Restart=always
 RestartSec=30
 

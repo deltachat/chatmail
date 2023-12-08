@@ -1,74 +1,101 @@
 """
 Chat Mail pyinfra deploy.
 """
+import sys
 import importlib.resources
+import subprocess
+import shutil
+import io
 import configparser
 from pathlib import Path
 
 from pyinfra import host
-from pyinfra.operations import apt, files, server, systemd
+from pyinfra.operations import apt, files, server, systemd, pip
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 
 
-def _install_chatmaild() -> None:
-    chatmaild_filename = "chatmaild-0.1.tar.gz"
-    chatmaild_path = importlib.resources.files(__package__).joinpath(
-        f"../../../dist/{chatmaild_filename}"
+def _build_chatmaild(dist_dir) -> None:
+    dist_dir = Path(dist_dir).resolve()
+    if dist_dir.exists():
+        shutil.rmtree(dist_dir)
+    dist_dir.mkdir()
+    subprocess.check_output(
+        [sys.executable, "-m", "build", "-n"]
+        + ["--sdist", "chatmaild", "--outdir", str(dist_dir)]
     )
-    remote_path = f"/tmp/{chatmaild_filename}"
-    if Path(str(chatmaild_path)).exists():
+    entries = list(dist_dir.iterdir())
+    assert len(entries) == 1
+    return entries[0]
+
+
+def _install_remote_venv_with_chatmaild() -> None:
+    dist_file = _build_chatmaild(dist_dir=Path("chatmaild/dist"))
+    remote_base_dir = "/usr/local/lib/chatmaild"
+    remote_dist_file = f"{remote_base_dir}/dist/{dist_file.name}"
+    remote_venv_dir = f"{remote_base_dir}/venv"
+    root_owned = dict(user="root", group="root", mode="644")
+
+    apt.packages(
+        name="apt install python3-virtualenv",
+        packages=["python3-virtualenv"],
+    )
+
+    files.put(
+        name="Upload chatmaild source package",
+        src=dist_file.open("rb"),
+        dest=remote_dist_file,
+        create_remote_dir=True,
+        **root_owned,
+    )
+
+    pip.virtualenv(
+        name=f"chatmaild virtualenv {remote_venv_dir}",
+        path=remote_venv_dir,
+        always_copy=True,
+    )
+
+    server.shell(
+        name=f"forced pip-install {dist_file.name}",
+        commands=[
+            f"{remote_venv_dir}/bin/pip install --force-reinstall {remote_dist_file}"
+        ],
+    )
+
+    # disable legacy doveauth-dictproxy.service
+    if host.get_fact(SystemdEnabled).get("doveauth-dictproxy.service"):
+        systemd.service(
+            name="Disable legacy doveauth-dictproxy.service",
+            service="doveauth-dictproxy.service",
+            running=False,
+            enabled=False,
+        )
+
+    # install systemd units
+
+    for fn in (
+        "doveauth",
+        "filtermail",
+    ):
+        execpath = f"{remote_venv_dir}/bin/{fn}"
+        source_path = importlib.resources.files("chatmaild").joinpath(f"{fn}.service.f")
+        content = source_path.read_text().format(execpath=execpath).encode()
+
         files.put(
-            name="Upload chatmaild source package",
-            src=chatmaild_path.open("rb"),
-            dest=remote_path,
+            name=f"Upload {fn}.service",
+            src=io.BytesIO(content),
+            dest=f"/etc/systemd/system/{fn}.service",
+            **root_owned,
         )
-
-        apt.packages(
-            name="apt install python3-aiosmtpd python3-pip python3-venv",
-            packages=["python3-aiosmtpd", "python3-pip", "python3-venv"],
+        systemd.service(
+            name=f"Setup {fn} service",
+            service=f"{fn}.service",
+            running=True,
+            enabled=True,
+            restarted=True,
+            daemon_reload=True,
         )
-
-        # --no-deps because aiosmtplib is installed with `apt`.
-        server.shell(
-            name="install chatmaild with pip",
-            commands=[f"pip install --break-system-packages {remote_path}"],
-        )
-
-        # disable legacy doveauth-dictproxy.service
-        if host.get_fact(SystemdEnabled).get("doveauth-dictproxy.service"):
-            systemd.service(
-                name="Disable legacy doveauth-dictproxy.service",
-                service="doveauth-dictproxy.service",
-                running=False,
-                enabled=False,
-            )
-
-        # install systemd units
-
-        for fn in (
-            "doveauth",
-            "filtermail",
-        ):
-            files.put(
-                name=f"Upload {fn}.service",
-                src=importlib.resources.files("chatmaild")
-                .joinpath(f"{fn}.service")
-                .open("rb"),
-                dest=f"/etc/systemd/system/{fn}.service",
-                user="root",
-                group="root",
-                mode="644",
-            )
-            systemd.service(
-                name=f"Setup {fn} service",
-                service=f"{fn}.service",
-                running=True,
-                enabled=True,
-                restarted=True,
-                daemon_reload=True,
-            )
 
 
 def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
@@ -381,7 +408,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     build_webpages(src_dir, build_dir, config)
     files.rsync(f"{build_dir}/", "/var/www/html", flags=["-avz"])
 
-    _install_chatmaild()
+    _install_remote_venv_with_chatmaild()
     debug = False
     dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
     postfix_need_restart = _configure_postfix(mail_domain, debug=debug)

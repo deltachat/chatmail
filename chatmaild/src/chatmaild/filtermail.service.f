@@ -2,7 +2,7 @@
 Description=Chatmail Postfix BeforeQeue filter 
 
 [Service]
-ExecStart=/usr/local/bin/filtermail 10080
+ExecStart={execpath} 10080
 Restart=always
 RestartSec=30
 

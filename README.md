@@ -1,5 +1,5 @@
 
-<img width="800px" src="www/collage-top.png"/>
+<img width="800px" src="www/src/collage-top.png"/>
 
 # Chatmail instances optimized for Delta Chat apps 
 

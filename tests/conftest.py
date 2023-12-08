@@ -283,8 +283,10 @@ def cmfactory(request, gencreds, tmpdir, maildomain):
     pytest.importorskip("deltachat")
     from deltachat.testplugin import ACFactory
 
+    data = request.getfixturevalue("data")
+
     testproc = ChatmailTestProcess(request.config, maildomain, gencreds)
-    am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=None)
+    am = ACFactory(request=request, tmpdir=tmpdir, testprocess=testproc, data=data)
 
     # nb. a bit hacky
     # would probably be better if deltachat's test machinery grows native support

@@ -1,5 +1,4 @@
 from chatmaild.config import read_config
-import chatmaild.config
 
 
 def test_read_config_basic(make_config):

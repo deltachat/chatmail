@@ -39,13 +39,6 @@ def pytest_runtest_setup(item):
             pytest.skip("skipping slow test, use --slow to run")
 
 
-@pytest.fixture
-def inipath():
-    dpath = importlib.resources.files("chatmaild")
-    inipath = dpath.joinpath("../../../chatmail.ini").resolve()
-    assert inipath.exists()
-    return inipath
-
 
 @pytest.fixture
 def maildomain():
@@ -415,13 +408,13 @@ class CMUser:
 
 
 @pytest.fixture
-def create_ini(tmp_path, inipath):
-    def create_ini_func(source=None):
-        if source is None:
-            source = inipath.read_text()
-        p = tmp_path.joinpath("chatmail.ini")
-        assert not p.exists(), p
-        p.write_text(textwrap.dedent(source))
-        return p
+def make_config(tmp_path):
+    from deploy_chatmail.cmdeploy import main
+    from chatmaild.config import read_config
+    inipath = tmp_path.joinpath("chatmail.ini")
 
-    return create_ini_func
+    def make_conf(mailname):
+        main(["init", "--config", str(inipath), mailname])
+        return read_config(inipath)
+
+    return make_conf

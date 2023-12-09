@@ -36,7 +36,7 @@ DNS domain name (FQDN), for example `chat.example.org`.
 3. Create chatmail configuration file `chatmail.ini`:
 
    ```
-    cmdeploy genconfig chatmail.ini CHATMAIL_DOMAIN
+    cmdeploy init chatmail.ini CHATMAIL_DOMAIN
    ```
 
 4. Deploy to the remote chatmail server, pointing to the chatmail config file: 

@@ -127,7 +127,10 @@ class BeforeQueueHandler:
 
             is_outgoing = recipient_domain != envelope_from_domain
             if is_outgoing and not mail_encrypted:
-                is_securejoin = message.get("secure-join") in ["vc-request", "vg-request"]
+                is_securejoin = message.get("secure-join") in [
+                    "vc-request",
+                    "vg-request",
+                ]
                 if not is_securejoin:
                     return f"500 Invalid unencrypted mail to <{recipient}>"
 

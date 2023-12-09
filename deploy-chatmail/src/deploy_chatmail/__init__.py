@@ -413,7 +413,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
 
     pkg_root = importlib.resources.files(__package__)
     chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
-    config = read_config(chatmail_ini, mailname=mail_domain)
+    config = read_config(chatmail_ini)
     check_config(config)
     www_path = pkg_root.joinpath("../../../www").resolve()
 

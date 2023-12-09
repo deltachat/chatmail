@@ -4,6 +4,8 @@ along with command line option and subcommand parsing.
 """
 import importlib.resources
 import argparse
+import subprocess
+import os
 from pathlib import Path
 
 import iniconfig
@@ -70,7 +72,16 @@ def get_parser():
 
     install_parser = add_subcommand(subparsers, install_cmd)
     add_config_option(install_parser)
+    install_parser.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="don't actually modify the server",
+    )
+
+    add_subcommand(subparsers, webdev_cmd)
     return parser
+
 
 def write_initial_config(inipath, mailname, out):
     inidir = importlib.resources.files(__package__).joinpath("ini")
@@ -102,20 +113,38 @@ def write_initial_config(inipath, mailname, out):
 def init_cmd(args, out):
     """Initialize chatmail config file."""
     if args.chatmail_ini.exists():
-        out.red(f"Path exists, not modifying: {args.xdcget_ini}")
+        out.red(f"Path exists, not modifying: {args.chatmail_ini}")
         raise SystemExit(1)
     write_initial_config(args.chatmail_ini, args.chatmail_domain, out)
 
 
 def install_cmd(args, out):
-    """Install or update chatmail services on the remote server. """
+    """Install or update chatmail services on the remote server."""
+    import pyinfra
+
     try:
         config = read_config(args.chatmail_ini)
     except Exception as ex:
         out.red(ex)
         raise SystemExit(1)
 
-    XXX
+    popen_args = ["pyinfra"]
+    if args.dry_run:
+        popen_args.append("--dry")
+    popen_args.extend(["--ssh-user", "root", config.mailname])
+    popen_args.append("deploy-chatmail/src/deploy_chatmail/deploy.py")
+
+    out(f"{os.getcwd()} $ {' '.join(popen_args)}")
+    env = os.environ.copy()
+    env["CHATMAIL_DOMAIN"] = config.mailname
+    subprocess.check_call(popen_args, env=env)
+
+
+def webdev_cmd(args, out):
+    """Run web development loop for static local web pages."""
+    from .www import main
+
+    main()
 
 
 def main(args=None):

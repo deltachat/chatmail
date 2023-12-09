@@ -2,14 +2,12 @@
 Provides the `cmdeploy` entry point function,
 along with command line option and subcommand parsing.
 """
-import importlib.resources
 import argparse
 import shutil
 import subprocess
 import os
 from pathlib import Path
 
-import iniconfig
 
 from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
@@ -86,7 +84,6 @@ def get_parser():
     return parser
 
 
-
 def init_cmd(args, out):
     """Initialize chatmail config file."""
     if args.chatmail_ini.exists():
@@ -98,7 +95,6 @@ def init_cmd(args, out):
 
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
-    import pyinfra
 
     try:
         config = read_config(args.chatmail_ini)
@@ -132,8 +128,10 @@ def test_cmd(args, out):
     subprocess.check_call([tox, "-c", "chatmaild"])
     subprocess.check_call([tox, "-c", "deploy-chatmail"])
 
-    pytest_path = shutil.which("tox")
-    subprocess.check_call([pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"])
+    pytest_path = shutil.which("pytest")
+    subprocess.check_call(
+        [pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"]
+    )
 
 
 def main(args=None):

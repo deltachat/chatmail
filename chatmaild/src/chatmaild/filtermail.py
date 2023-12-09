@@ -36,14 +36,6 @@ def check_encrypted(message):
     return True
 
 
-def is_passthrough_recipient(recipient):
-    """Check whether a recipient is configured as passthrough."""
-    passthroughlist = ["privacy@testrun.org"]
-    if recipient in passthroughlist:
-        return True
-    return False
-
-
 def check_mdn(message, envelope):
     if len(envelope.rcpt_tos) != 1:
         return False
@@ -72,9 +64,9 @@ def check_mdn(message, envelope):
     return True
 
 
-class SMTPController(Controller):
-    def factory(self):
-        return SMTP(self.handler, **self.SMTP_kwargs)
+async def asyncmain_beforequeue(config):
+    port = config.filtermail_smtp_port
+    Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
 
 
 class BeforeQueueHandler:
@@ -97,7 +89,7 @@ class BeforeQueueHandler:
 
     async def handle_DATA(self, server, session, envelope):
         logging.info("handle_DATA before-queue")
-        error = check_DATA(envelope)
+        error = self.check_DATA(envelope)
         if error:
             return error
         logging.info("re-injecting the mail that passed checks")
@@ -105,45 +97,39 @@ class BeforeQueueHandler:
         client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
         return "250 OK"
 
+    def check_DATA(self, envelope):
+        """the central filtering function for e-mails."""
+        logging.info(f"Processing DATA message from {envelope.mail_from}")
 
-async def asyncmain_beforequeue(config):
-    port = config.filtermail_smtp_port
-    Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
+        message = BytesParser(policy=policy.default).parsebytes(envelope.content)
+        mail_encrypted = check_encrypted(message)
 
+        _, from_addr = parseaddr(message.get("from").strip())
+        logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
+        if envelope.mail_from.lower() != from_addr.lower():
+            return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
 
-def check_DATA(envelope):
-    """the central filtering function for e-mails."""
-    logging.info(f"Processing DATA message from {envelope.mail_from}")
+        if not mail_encrypted and check_mdn(message, envelope):
+            return
 
-    message = BytesParser(policy=policy.default).parsebytes(envelope.content)
-    mail_encrypted = check_encrypted(message)
+        passthrough_recipients = self.config.passthrough_recipients
+        envelope_from_domain = from_addr.split("@").pop()
+        for recipient in envelope.rcpt_tos:
+            if envelope.mail_from == recipient:
+                # Always allow sending emails to self.
+                continue
+            if recipient in passthrough_recipients:
+                continue
+            res = recipient.split("@")
+            if len(res) != 2:
+                return f"500 Invalid address <{recipient}>"
+            _recipient_addr, recipient_domain = res
 
-    _, from_addr = parseaddr(message.get("from").strip())
-    logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
-    if envelope.mail_from.lower() != from_addr.lower():
-        return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
-
-    if not mail_encrypted and check_mdn(message, envelope):
-        return
-
-    envelope_from_domain = from_addr.split("@").pop()
-    for recipient in envelope.rcpt_tos:
-        if envelope.mail_from == recipient:
-            # Always allow sending emails to self.
-            continue
-        if is_passthrough_recipient(recipient):
-            # Always allow recipients marked as passthrough
-            continue
-        res = recipient.split("@")
-        if len(res) != 2:
-            return f"500 Invalid address <{recipient}>"
-        _recipient_addr, recipient_domain = res
-
-        is_outgoing = recipient_domain != envelope_from_domain
-        if is_outgoing and not mail_encrypted:
-            is_securejoin = message.get("secure-join") in ["vc-request", "vg-request"]
-            if not is_securejoin:
-                return f"500 Invalid unencrypted mail to <{recipient}>"
+            is_outgoing = recipient_domain != envelope_from_domain
+            if is_outgoing and not mail_encrypted:
+                is_securejoin = message.get("secure-join") in ["vc-request", "vg-request"]
+                if not is_securejoin:
+                    return f"500 Invalid unencrypted mail to <{recipient}>"
 
 
 class SendRateLimiter:

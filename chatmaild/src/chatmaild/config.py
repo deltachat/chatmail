@@ -35,6 +35,7 @@ class Config:
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
+        self.passthrough_recipients = params["passthrough_recipients"].split()
 
     def _getbytefile(self):
         return open(self._inipath, "rb")

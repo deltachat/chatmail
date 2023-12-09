@@ -6,6 +6,7 @@ import subprocess
 import textwrap
 import imaplib
 import smtplib
+import importlib.resources
 import itertools
 from email.parser import BytesParser
 from email import policy
@@ -36,6 +37,14 @@ def pytest_runtest_setup(item):
     if markers:
         if not item.config.getoption("--slow"):
             pytest.skip("skipping slow test, use --slow to run")
+
+
+@pytest.fixture
+def inipath():
+    dpath = importlib.resources.files("chatmaild")
+    inipath = dpath.joinpath("../../../chatmail.ini").resolve()
+    assert inipath.exists()
+    return inipath
 
 
 @pytest.fixture
@@ -406,8 +415,10 @@ class CMUser:
 
 
 @pytest.fixture
-def create_ini(tmp_path):
-    def create_ini_func(source):
+def create_ini(tmp_path, inipath):
+    def create_ini_func(source=None):
+        if source is None:
+            source = inipath.read_text()
         p = tmp_path.joinpath("chatmail.ini")
         assert not p.exists(), p
         p.write_text(textwrap.dedent(source))

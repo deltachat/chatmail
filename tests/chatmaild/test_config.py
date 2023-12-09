@@ -13,6 +13,7 @@ def test_read_config_without_mailname(tmp_path, create_ini, monkeypatch):
         max_user_send_per_minute = 40
         filtermail_smtp_port = 9875
         postfix_reinject_port = 9999
+        passthrough_recipients =
     """
     )
     config = read_config(inipath)
@@ -26,6 +27,7 @@ def test_read_config_without_privacy_policy(tmp_path, create_ini):
         max_user_send_per_minute = 40
         filtermail_smtp_port = 9875
         postfix_reinject_port = 9999
+        passthrough_recipients =
 
         [privacy:testrun]
         domain = *.example.org
@@ -36,6 +38,7 @@ def test_read_config_without_privacy_policy(tmp_path, create_ini):
     assert config.max_user_send_per_minute == 40
     assert config.filtermail_smtp_port == 9875
     assert config.postfix_reinject_port == 9999
+    assert config.passthrough_recipients == []
     assert not config.privacy_postal
     assert not config.privacy_mail
     assert not config.privacy_pdo
@@ -49,6 +52,7 @@ def test_read_config(create_ini):
         max_user_send_per_minute = 40
         filtermail_smtp_port = 10080
         postfix_reinject_port = 10025
+        passthrough_recipients = x@example.org y@example.org
 
         [privacy:testrun]
         domain = *.testrun.org
@@ -73,6 +77,7 @@ def test_read_config(create_ini):
     assert config.mailname == "something.testrun.org"
     assert config.filtermail_smtp_port == 10080
     assert config.postfix_reinject_port == 10025
+    assert config.passthrough_recipients == ["x@example.org", "y@example.org"]
     assert config.privacy_postal == "Postal Ltd"
     assert config.privacy_mail == "privacy@merlinux.eu"
     lines = config.privacy_pdo.split("\n")

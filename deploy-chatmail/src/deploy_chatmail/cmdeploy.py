@@ -81,7 +81,16 @@ def get_parser():
 
     add_subcommand(subparsers, test_cmd)
 
+    add_subcommand(subparsers, dns_cmd)
+
     return parser
+
+def get_config_or_bailout(inipath):
+    try:
+        return read_config(inipath)
+    except Exception as ex:
+        out.red(ex)
+        raise SystemExit(1)
 
 
 def init_cmd(args, out):
@@ -96,11 +105,7 @@ def init_cmd(args, out):
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
-    try:
-        config = read_config(args.chatmail_ini)
-    except Exception as ex:
-        out.red(ex)
-        raise SystemExit(1)
+    config = get_config_or_bailout(args.chatmail_ini)
 
     popen_args = ["pyinfra"]
     if args.dry_run:
@@ -132,6 +137,41 @@ def test_cmd(args, out):
     subprocess.check_call(
         [pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"]
     )
+
+
+def dns_cmd(args, out):
+    """generate dns zone file."""
+
+    config = get_config_or_bailout(args.chatmail_ini)
+    SSH = f"ssh root@{config.mailname}"
+    EMAIL = "root@config.mailname"
+
+    def shell_output(arg):
+        return subprocess.check_output(arg, shell=True)
+
+    ACME_ACCOUNT_URL = shell_output(f"{SSH} -- acmetool account-url")
+    import pdb ; pdb.set_trace()
+    """
+set -e
+SSH="ssh root@$CHATMAIL_SSH"
+EMAIL="root@$CHATMAIL_DOMAIN"
+ACME_ACCOUNT_URL="$($SSH -- acmetool account-url)"
+
+cat <<EOF
+$CHATMAIL_DOMAIN. MX 10 $CHATMAIL_DOMAIN.
+$CHATMAIL_DOMAIN. TXT "v=spf1 a:$CHATMAIL_DOMAIN -all"
+_dmarc.$CHATMAIL_DOMAIN. TXT "v=DMARC1;p=reject;rua=mailto:$EMAIL;ruf=mailto:$EMAIL;fo=1;adkim=r;aspf=r"
+_submission._tcp.$CHATMAIL_DOMAIN.  SRV 0 1 587 $CHATMAIL_DOMAIN.
+_submissions._tcp.$CHATMAIL_DOMAIN. SRV 0 1 465 $CHATMAIL_DOMAIN.
+_imap._tcp.$CHATMAIL_DOMAIN.        SRV 0 1 143 $CHATMAIL_DOMAIN.
+_imaps._tcp.$CHATMAIL_DOMAIN.       SRV 0 1 993 $CHATMAIL_DOMAIN.
+$CHATMAIL_DOMAIN. IN CAA 128 issue "letsencrypt.org;accounturi=$ACME_ACCOUNT_URL"
+_mta-sts.$CHATMAIL_DOMAIN. IN TXT "v=STSv1; id=$(date -u '+%Y%m%d%H%M')"
+mta-sts.$CHATMAIL_DOMAIN. IN CNAME $CHATMAIL_DOMAIN.
+_smtp._tls.$CHATMAIL_DOMAIN. IN TXT "v=TLSRPTv1;rua=mailto:$EMAIL"
+EOF
+$SSH opendkim-genzone -F | sed 's/^;.*$//;/^$/d'
+    """
 
 
 def main(args=None):

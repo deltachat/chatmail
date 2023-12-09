@@ -15,26 +15,20 @@ after which the initially specified password is required for using them.
 
 ## Getting Started deploying your own chatmail instance
 
-1. Prepare your local (presumably Linux) system:
+1. Setup a domain with `A` and `AAAA` records for your chatmail server.
 
-    scripts/init.sh 
+2. Prepare your local system for deploying to $CHATMAIL_DOMAIN:
 
-2. Setup a domain with `A` and `AAAA` records for your chatmail server.
+    scripts/init.sh $CHATMAIL_DOMAIN 
 
-3. Set environment variable to the chatmail domain you want to setup:
+3. Edit the generated `chatmail.ini` file 
 
-    export CHATMAIL_DOMAIN=c1.testrun.org   # replace with your host
+4. Deploy chatmail services remotely: 
 
-4. Fill in privacy contact data into the `chatmail.ini` file
+     scripts/deploy.sh chatmail.ini 
 
-5. Deploy the chat mail instance to your chatmail server: 
-
-    scripts/deploy.sh 
-
-   This script remotely sets up packages and configures the chatmail provider. 
-
-6. Run `scripts/generate-dns-zone.sh` and 
-   transfer the generated DNS records at your DNS provider
+5. Run `scripts/generate-dns-zone.sh` and 
+   transfer the generated DNS `chatmail.zone` records to your DNS provider
 
 
 ### Home page and getting started for users 

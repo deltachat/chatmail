@@ -10,6 +10,9 @@ dependencies = [
   "pillow",
   "qrcode",
   "markdown",
+  "pytest",
+  "setuptools>=68",
+  "tox",
 ]
 
 [tool.pytest.ini_options]

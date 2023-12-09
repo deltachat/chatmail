@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,8 +12,12 @@ dependencies = [
   "markdown",
   "pytest",
   "setuptools>=68",
+  "termcolor",
   "tox",
 ]
+
+[project.scripts]
+cmdeploy = "deploy_chatmail.cmdeploy:main"
 
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"

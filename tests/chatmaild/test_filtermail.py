@@ -5,8 +5,6 @@ from chatmaild.filtermail import (
     check_mdn,
 )
 
-from chatmaild.config import read_config
-
 import pytest
 
 
@@ -17,8 +15,8 @@ def maildomain():
 
 
 @pytest.fixture
-def handler(create_ini, maildomain):
-    config = read_config(create_ini(), maildomain)
+def handler(make_config, maildomain):
+    config = make_config(maildomain)
     return BeforeQueueHandler(config)
 
 
@@ -101,9 +99,8 @@ def test_send_rate_limiter():
 def test_excempt_privacy(maildata, gencreds, handler):
     from_addr = gencreds()[0]
     to_addr = "privacy@testrun.org"
-    false_to = "privacy@tstrn.org"
-    false_to2 = "prvcy@testrun.org"
-    assert to_addr in handler.config.passthrough_recipients
+    handler.config.passthrough_recipients = [to_addr]
+    false_to = "privacy@something.org"
 
     msg = maildata("plain.eml", from_addr, to_addr)
 
@@ -117,7 +114,7 @@ def test_excempt_privacy(maildata, gencreds, handler):
 
     class env2:
         mail_from = from_addr
-        rcpt_tos = [to_addr, false_to, false_to2]
+        rcpt_tos = [to_addr, false_to]
         content = msg.as_bytes()
 
     assert "500" in handler.check_DATA(envelope=env2)

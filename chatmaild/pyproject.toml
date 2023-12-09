@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45"]
+requires = ["setuptools>=61", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,6 +9,12 @@ dependencies = [
   "aiosmtpd",
   "iniconfig",
 ]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ['src']
 
 [project.scripts]
 doveauth = "chatmaild.doveauth:main"
@@ -37,7 +43,6 @@ commands =
   ruff src/
 
 [testenv]
-passenv = CHATMAIL_DOMAIN
 deps = pytest 
        pdbpp 
 commands = pytest -v -rsXx {posargs: ../tests/chatmaild}

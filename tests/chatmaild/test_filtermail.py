@@ -1,10 +1,12 @@
 from chatmaild.filtermail import (
     check_encrypted,
-    check_DATA,
+    BeforeQueueHandler,
     SendRateLimiter,
     check_mdn,
-    is_passthrough_recipient,
 )
+
+from chatmaild.config import read_config
+
 import pytest
 
 
@@ -14,18 +16,25 @@ def maildomain():
     return "chatmail.example.org"
 
 
-def test_reject_forged_from(maildata, gencreds):
+@pytest.fixture
+def handler(create_ini, maildomain):
+    config = read_config(create_ini(), maildomain)
+    return BeforeQueueHandler(config)
+
+
+def test_reject_forged_from(maildata, gencreds, handler):
     class env:
         mail_from = gencreds()[0]
         rcpt_tos = [gencreds()[0]]
 
     # test that the filter lets good mail through
     env.content = maildata("plain.eml", from_addr=env.mail_from).as_bytes()
-    assert not check_DATA(envelope=env)
+
+    assert not handler.check_DATA(envelope=env)
 
     # test that the filter rejects forged mail
     env.content = maildata("plain.eml", from_addr="forged@c3.testrun.org").as_bytes()
-    error = check_DATA(envelope=env)
+    error = handler.check_DATA(envelope=env)
     assert "500" in error
 
 
@@ -47,7 +56,7 @@ def test_filtermail_encryption_detection(maildata):
     assert not check_encrypted(msg)
 
 
-def test_filtermail_is_mdn(maildata, gencreds):
+def test_filtermail_is_mdn(maildata, gencreds, handler):
     from_addr = gencreds()[0]
     to_addr = gencreds()[0] + ".other"
     msg = maildata("mdn.eml", from_addr, to_addr)
@@ -59,7 +68,8 @@ def test_filtermail_is_mdn(maildata, gencreds):
 
     assert check_mdn(msg, env)
     print(msg.as_string())
-    assert not check_DATA(env)
+
+    assert not handler.check_DATA(env)
 
 
 def test_filtermail_to_multiple_recipients_no_mdn(maildata, gencreds):
@@ -88,12 +98,12 @@ def test_send_rate_limiter():
             break
 
 
-def test_excempt_privacy(maildata, gencreds):
+def test_excempt_privacy(maildata, gencreds, handler):
     from_addr = gencreds()[0]
     to_addr = "privacy@testrun.org"
     false_to = "privacy@tstrn.org"
     false_to2 = "prvcy@testrun.org"
-    assert is_passthrough_recipient(to_addr)
+    assert to_addr in handler.config.passthrough_recipients
 
     msg = maildata("plain.eml", from_addr, to_addr)
 
@@ -103,11 +113,11 @@ def test_excempt_privacy(maildata, gencreds):
         content = msg.as_bytes()
 
     # assert that None/no error is returned
-    assert not check_DATA(envelope=env)
+    assert not handler.check_DATA(envelope=env)
 
     class env2:
         mail_from = from_addr
         rcpt_tos = [to_addr, false_to, false_to2]
         content = msg.as_bytes()
 
-    assert "500" in check_DATA(envelope=env2)
+    assert "500" in handler.check_DATA(envelope=env2)

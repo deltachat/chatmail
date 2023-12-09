@@ -409,12 +409,11 @@ class CMUser:
 
 @pytest.fixture
 def make_config(tmp_path):
-    from deploy_chatmail.cmdeploy import main
-    from chatmaild.config import read_config
+    from chatmaild.config import read_config, write_initial_config
     inipath = tmp_path.joinpath("chatmail.ini")
 
     def make_conf(mailname):
-        main(["init", "--config", str(inipath), mailname])
+        write_initial_config(inipath, mailname=mailname)
         return read_config(inipath)
 
     return make_conf

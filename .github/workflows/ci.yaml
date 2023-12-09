@@ -25,7 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: run init.sh 
-        run: ./scripts/init.sh 
-      - name: run test.sh 
-        run: ./scripts/test.sh 
+
+      - name: create venv 
+        run: python3 -m venv 
+
+      - name: install packages into venv 
+        run: venv/bin/pip install chatmaild deploy_chatmail 
+
+      - name: run tests 
+      - run: venv/bin/cmdeploy test 

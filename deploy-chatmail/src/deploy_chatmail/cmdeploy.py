@@ -4,6 +4,7 @@ along with command line option and subcommand parsing.
 """
 import importlib.resources
 import argparse
+import shutil
 import subprocess
 import os
 from pathlib import Path
@@ -11,7 +12,7 @@ from pathlib import Path
 import iniconfig
 
 from termcolor import colored
-from chatmaild.config import read_config
+from chatmaild.config import read_config, write_initial_config
 
 
 class Out:
@@ -52,6 +53,7 @@ def add_subcommand(subparsers, func):
     doc = func.__doc__.strip()
     p = subparsers.add_parser(name, description=doc, help=doc)
     p.set_defaults(func=func)
+    add_config_option(p)
     return p
 
 
@@ -63,15 +65,13 @@ def get_parser():
     )
 
     init_parser = add_subcommand(subparsers, init_cmd)
-    add_config_option(init_parser)
     init_parser.add_argument(
         "chatmail_domain",
         action="store",
         help="fully qualified DNS domain name for your chatmail instance",
     )
 
-    install_parser = add_subcommand(subparsers, install_cmd)
-    add_config_option(install_parser)
+    install_parser = add_subcommand(subparsers, run_cmd)
     install_parser.add_argument(
         "--dry-run",
         dest="dry_run",
@@ -80,34 +80,11 @@ def get_parser():
     )
 
     add_subcommand(subparsers, webdev_cmd)
+
+    add_subcommand(subparsers, test_cmd)
+
     return parser
 
-
-def write_initial_config(inipath, mailname, out):
-    inidir = importlib.resources.files(__package__).joinpath("ini")
-    content = inidir.joinpath("chatmail.ini.f").read_text().format(mailname=mailname)
-    if mailname.endswith(".testrun.org"):
-        override_inipath = inidir.joinpath("override-testrun.ini")
-        privacy = iniconfig.IniConfig(override_inipath)["privacy"]
-        lines = []
-        for line in content.split("\n"):
-            for key, value in privacy.items():
-                value_lines = value.strip().split("\n")
-                if not line.startswith(f"{key} =") or not value_lines:
-                    continue
-                if len(value_lines) == 1:
-                    lines.append(f"{key} = {value}")
-                else:
-                    lines.append(f"{key} =")
-                    for vl in value_lines:
-                        lines.append(f"    {vl}")
-                break
-            else:
-                lines.append(line)
-        content = "\n".join(lines)
-
-    inipath.write_text(content)
-    out(f"written {inipath} for chatmail domain {mailname}")
 
 
 def init_cmd(args, out):
@@ -115,11 +92,12 @@ def init_cmd(args, out):
     if args.chatmail_ini.exists():
         out.red(f"Path exists, not modifying: {args.chatmail_ini}")
         raise SystemExit(1)
-    write_initial_config(args.chatmail_ini, args.chatmail_domain, out)
+    write_initial_config(args.chatmail_ini, args.chatmail_domain)
+    out.green(f"created config file for {args.chatmail_domain} in {args.chatmail_ini}")
 
 
-def install_cmd(args, out):
-    """Install or update chatmail services on the remote server."""
+def run_cmd(args, out):
+    """Deploy chatmail services on the remote server."""
     import pyinfra
 
     try:
@@ -145,6 +123,17 @@ def webdev_cmd(args, out):
     from .www import main
 
     main()
+
+
+def test_cmd(args, out):
+    """run Run web development loop for static local web pages."""
+
+    tox = shutil.which("tox")
+    subprocess.check_call([tox, "-c", "chatmaild"])
+    subprocess.check_call([tox, "-c", "deploy-chatmail"])
+
+    pytest_path = shutil.which("tox")
+    subprocess.check_call([pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"])
 
 
 def main(args=None):

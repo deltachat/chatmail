@@ -1,5 +1,3 @@
-from pathlib import Path
-from fnmatch import fnmatch
 import iniconfig
 
 
@@ -23,3 +21,31 @@ class Config:
 
     def _getbytefile(self):
         return open(self._inipath, "rb")
+
+
+def write_initial_config(inipath, mailname):
+    from importlib.resources import files
+
+    inidir = files(__package__).joinpath("ini")
+    content = inidir.joinpath("chatmail.ini.f").read_text().format(mailname=mailname)
+    if mailname.endswith(".testrun.org"):
+        override_inipath = inidir.joinpath("override-testrun.ini")
+        privacy = iniconfig.IniConfig(override_inipath)["privacy"]
+        lines = []
+        for line in content.split("\n"):
+            for key, value in privacy.items():
+                value_lines = value.strip().split("\n")
+                if not line.startswith(f"{key} =") or not value_lines:
+                    continue
+                if len(value_lines) == 1:
+                    lines.append(f"{key} = {value}")
+                else:
+                    lines.append(f"{key} =")
+                    for vl in value_lines:
+                        lines.append(f"    {vl}")
+                break
+            else:
+                lines.append(line)
+        content = "\n".join(lines)
+
+    inipath.write_text(content)

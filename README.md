@@ -36,25 +36,21 @@ DNS domain name (FQDN), for example `chat.example.org`.
 3. Create chatmail configuration file `chatmail.ini`:
 
    ```
-    cmdeploy init chatmail.ini CHATMAIL_DOMAIN
+    cmdeploy init CHATMAIL_DOMAIN
    ```
 
-4. Deploy to the remote chatmail server, pointing to the chatmail config file: 
+4. Deploy to the remote chatmail server:
 
    ```
-    cmdeploy install chatmail.ini 
+    cmdeploy run 
    ```
 
 5. To output a DNS zone file from which you can transfer DNS records 
-   to your DNS provider for your `CHATMAIL_DOMAIN`
+   to your DNS provider:
 
    ```
-    cmdeploy dns chatmail.ini
+    cmdeploy dnszone 
    ```
-
-   to generate a DNS zone file from which you can transfer records to your 
-   DNS provider. 
-
 
 
 ### Refining the web pages 

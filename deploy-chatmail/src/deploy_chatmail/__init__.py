@@ -14,8 +14,7 @@ from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 
-import chatmaild.filtermail
-from chatmaild.config import read_config
+from chatmaild.config import read_config, Config
 
 
 def _build_chatmaild(dist_dir) -> None:
@@ -216,7 +215,7 @@ def _install_mta_sts_daemon() -> bool:
     return need_restart
 
 
-def _configure_postfix(config: chatmaild.config.Config, debug: bool = False) -> bool:
+def _configure_postfix(config: Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 

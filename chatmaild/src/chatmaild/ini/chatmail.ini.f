@@ -1,4 +1,3 @@
-
 [params]
 
 # mail domain (MUST be set to fully qualified chat mail domain)

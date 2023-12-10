@@ -1,9 +1,6 @@
-import textwrap
 import importlib.resources
 
 from deploy_chatmail.www import build_webpages
-from chatmaild.config import read_config
-
 
 
 def test_build_webpages(tmp_path, make_config):
@@ -13,4 +10,4 @@ def test_build_webpages(tmp_path, make_config):
     config = make_config("chat.example.org")
     build_dir = tmp_path.joinpath("build")
     build_webpages(src_dir, build_dir, config)
-    assert len([x for x in build_dir.iterdir() if x.suffix == '.html']) >= 3
+    assert len([x for x in build_dir.iterdir() if x.suffix == ".html"]) >= 3

@@ -3,10 +3,8 @@ import io
 import time
 import random
 import subprocess
-import textwrap
 import imaplib
 import smtplib
-import importlib.resources
 import itertools
 from email.parser import BytesParser
 from email import policy
@@ -14,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from chatmaild.database import Database
+from chatmaild.config import read_config
 
 
 conftestdir = Path(__file__).parent
@@ -39,13 +38,17 @@ def pytest_runtest_setup(item):
             pytest.skip("skipping slow test, use --slow to run")
 
 
+@pytest.fixture
+def chatmail_config(pytestconfig):
+    path = Path("chatmail.ini").resolve()
+    if path.exists():
+        return read_config(path)
+    pytest.skip(f"no chatmail.ini file found in {path}")
+
 
 @pytest.fixture
-def maildomain():
-    domain = os.environ.get("CHATMAIL_DOMAIN")
-    if not domain:
-        pytest.skip("set CHATMAIL_DOMAIN to a ssh-reachable chatmail instance")
-    return domain
+def maildomain(chatmail_config):
+    return chatmail_config.mailname
 
 
 @pytest.fixture
@@ -410,6 +413,7 @@ class CMUser:
 @pytest.fixture
 def make_config(tmp_path):
     from chatmaild.config import read_config, write_initial_config
+
     inipath = tmp_path.joinpath("chatmail.ini")
 
     def make_conf(mailname):

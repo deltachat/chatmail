@@ -121,7 +121,7 @@ def webdev_cmd(args, out, config):
 
 
 def test_cmd(args, out, config):
-    """run Run web development loop for static local web pages."""
+    """Run local and online tests."""
 
     tox = shutil.which("tox")
     subprocess.check_call([tox, "-c", "chatmaild"])

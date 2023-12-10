@@ -51,7 +51,7 @@ def add_subcommand(subparsers, func):
     name = func.__name__
     assert name.endswith("_cmd")
     name = name[:-4]
-    doc = func.__doc__.strip()
+    doc = func.__doc__.strip().strip(".")
     p = subparsers.add_parser(name, description=doc, help=doc)
     p.set_defaults(func=func)
     add_config_option(p)
@@ -80,13 +80,10 @@ def get_parser():
         help="don't actually modify the server",
     )
 
-    add_subcommand(subparsers, webdev_cmd)
-
-    add_subcommand(subparsers, test_cmd)
-
-    add_subcommand(subparsers, bench_cmd)
-
     add_subcommand(subparsers, dns_cmd)
+    add_subcommand(subparsers, bench_cmd)
+    add_subcommand(subparsers, test_cmd)
+    add_subcommand(subparsers, webdev_cmd)
 
     return parser
 
@@ -116,7 +113,7 @@ def run_cmd(args, out, config):
 
 
 def webdev_cmd(args, out, config):
-    """Run web development loop for static local web pages."""
+    """Run local web development loop for static web pages."""
     from .www import main
 
     main()
@@ -153,7 +150,7 @@ def read_dkim_entries(entry):
 
 
 def dns_cmd(args, out, config):
-    """generate dns zone file."""
+    """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     ssh = f"ssh root@{config.mailname}"
 

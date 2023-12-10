@@ -3,9 +3,12 @@ Provides the `cmdeploy` entry point function,
 along with command line option and subcommand parsing.
 """
 import argparse
+import datetime
 import shutil
 import subprocess
+import importlib
 import os
+import sys
 from pathlib import Path
 
 
@@ -16,15 +19,15 @@ from chatmaild.config import read_config, write_initial_config
 class Out:
     """Convenience print output printer providing coloring."""
 
-    def red(self, msg):
-        print(colored(msg, "red"))
+    def red(self, msg, file=sys.stderr):
+        print(colored(msg, "red"), file=file)
 
-    def green(self, msg):
-        print(colored(msg, "green"))
+    def green(self, msg, file=sys.stderr):
+        print(colored(msg, "green"), file=file)
 
-    def __call__(self, msg, red=False, green=False):
+    def __call__(self, msg, red=False, green=False, file=sys.stdout):
         color = "red" if red else ("green" if green else None)
-        print(colored(msg, color))
+        print(colored(msg, color), file=file)
 
 
 description = """\
@@ -36,7 +39,7 @@ deploy it via SSH to your remote location.
 def add_config_option(parser):
     parser.add_argument(
         "--config",
-        dest="chatmail_ini",
+        dest="inipath",
         action="store",
         default=Path("chatmail.ini"),
         type=Path,
@@ -85,27 +88,18 @@ def get_parser():
 
     return parser
 
-def get_config_or_bailout(inipath):
-    try:
-        return read_config(inipath)
-    except Exception as ex:
-        out.red(ex)
-        raise SystemExit(1)
-
 
 def init_cmd(args, out):
     """Initialize chatmail config file."""
-    if args.chatmail_ini.exists():
-        out.red(f"Path exists, not modifying: {args.chatmail_ini}")
+    if args.inipath.exists():
+        out.red(f"Path exists, not modifying: {args.inipath}")
         raise SystemExit(1)
-    write_initial_config(args.chatmail_ini, args.chatmail_domain)
-    out.green(f"created config file for {args.chatmail_domain} in {args.chatmail_ini}")
+    write_initial_config(args.inipath, args.chatmail_domain)
+    out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
 
 
-def run_cmd(args, out):
+def run_cmd(args, out, config):
     """Deploy chatmail services on the remote server."""
-
-    config = get_config_or_bailout(args.chatmail_ini)
 
     popen_args = ["pyinfra"]
     if args.dry_run:
@@ -119,14 +113,14 @@ def run_cmd(args, out):
     subprocess.check_call(popen_args, env=env)
 
 
-def webdev_cmd(args, out):
+def webdev_cmd(args, out, config):
     """Run web development loop for static local web pages."""
     from .www import main
 
     main()
 
 
-def test_cmd(args, out):
+def test_cmd(args, out, config):
     """run Run web development loop for static local web pages."""
 
     tox = shutil.which("tox")
@@ -139,39 +133,43 @@ def test_cmd(args, out):
     )
 
 
-def dns_cmd(args, out):
-    """generate dns zone file."""
+def read_dkim_entries(entry):
+    lines = []
+    for line in entry.split("\n"):
+        if line.startswith(";") or not line.strip():
+            continue
+        line = line.replace("\t", " ")
+        lines.append(line)
+    return "\n".join(lines)
 
-    config = get_config_or_bailout(args.chatmail_ini)
-    SSH = f"ssh root@{config.mailname}"
-    EMAIL = "root@config.mailname"
+
+def dns_cmd(args, out, config):
+    """generate dns zone file."""
+    template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
+    ssh = f"ssh root@{config.mailname}"
 
     def shell_output(arg):
-        return subprocess.check_output(arg, shell=True)
+        return subprocess.check_output(arg, shell=True).decode()
 
-    ACME_ACCOUNT_URL = shell_output(f"{SSH} -- acmetool account-url")
-    import pdb ; pdb.set_trace()
-    """
-set -e
-SSH="ssh root@$CHATMAIL_SSH"
-EMAIL="root@$CHATMAIL_DOMAIN"
-ACME_ACCOUNT_URL="$($SSH -- acmetool account-url)"
+    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
+    acme_account_url = shell_output(f"{ssh} -- acmetool account-url")
+    dkim_entry = read_dkim_entries(shell_output(f"{ssh} -- opendkim-genzone -F"))
 
-cat <<EOF
-$CHATMAIL_DOMAIN. MX 10 $CHATMAIL_DOMAIN.
-$CHATMAIL_DOMAIN. TXT "v=spf1 a:$CHATMAIL_DOMAIN -all"
-_dmarc.$CHATMAIL_DOMAIN. TXT "v=DMARC1;p=reject;rua=mailto:$EMAIL;ruf=mailto:$EMAIL;fo=1;adkim=r;aspf=r"
-_submission._tcp.$CHATMAIL_DOMAIN.  SRV 0 1 587 $CHATMAIL_DOMAIN.
-_submissions._tcp.$CHATMAIL_DOMAIN. SRV 0 1 465 $CHATMAIL_DOMAIN.
-_imap._tcp.$CHATMAIL_DOMAIN.        SRV 0 1 143 $CHATMAIL_DOMAIN.
-_imaps._tcp.$CHATMAIL_DOMAIN.       SRV 0 1 993 $CHATMAIL_DOMAIN.
-$CHATMAIL_DOMAIN. IN CAA 128 issue "letsencrypt.org;accounturi=$ACME_ACCOUNT_URL"
-_mta-sts.$CHATMAIL_DOMAIN. IN TXT "v=STSv1; id=$(date -u '+%Y%m%d%H%M')"
-mta-sts.$CHATMAIL_DOMAIN. IN CNAME $CHATMAIL_DOMAIN.
-_smtp._tls.$CHATMAIL_DOMAIN. IN TXT "v=TLSRPTv1;rua=mailto:$EMAIL"
-EOF
-$SSH opendkim-genzone -F | sed 's/^;.*$//;/^$/d'
-    """
+    out(
+        f"[writing {config.mailname} zone data (using space as separator) to stdout output]",
+        green=True,
+    )
+    print(
+        template.read_text()
+        .format(
+            acme_account_url=acme_account_url,
+            email=f"root@{config.mailname}",
+            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+            chatmail_domain=config.mailname,
+            dkim_entry=dkim_entry,
+        )
+        .strip()
+    )
 
 
 def main(args=None):
@@ -181,7 +179,18 @@ def main(args=None):
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
     out = Out()
-    args.func(args, out)
+    if args.func.__name__ != "init_cmd":
+        if not args.inipath.exists():
+            out.red(f"expecting {args.inipath} to exist, run init first?")
+            raise SystemExit(1)
+        try:
+            config = read_config(args.inipath)
+        except Exception as ex:
+            out.red(ex)
+            raise SystemExit(2)
+        args.func(args, out, config)
+    else:
+        args.func(args, out)
 
 
 if __name__ == "__main__":

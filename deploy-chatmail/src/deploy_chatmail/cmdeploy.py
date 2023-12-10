@@ -72,8 +72,8 @@ def get_parser():
         help="fully qualified DNS domain name for your chatmail instance",
     )
 
-    install_parser = add_subcommand(subparsers, run_cmd)
-    install_parser.add_argument(
+    run_parser = add_subcommand(subparsers, run_cmd)
+    run_parser.add_argument(
         "--dry-run",
         dest="dry_run",
         action="store_true",
@@ -83,6 +83,8 @@ def get_parser():
     add_subcommand(subparsers, webdev_cmd)
 
     add_subcommand(subparsers, test_cmd)
+
+    add_subcommand(subparsers, bench_cmd)
 
     add_subcommand(subparsers, dns_cmd)
 
@@ -133,6 +135,13 @@ def test_cmd(args, out, config):
     )
 
 
+def bench_cmd(args, out, config):
+    """Run benchmarks against an online chatmail instance."""
+    pytest_path = shutil.which("pytest")
+    benchmark = "tests/online/benchmark.py"
+    subprocess.check_call([pytest_path, benchmark, "-vrx"])
+
+
 def read_dkim_entries(entry):
     lines = []
     for line in entry.split("\n"):
@@ -179,18 +188,22 @@ def main(args=None):
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
     out = Out()
+    kwargs = {}
     if args.func.__name__ != "init_cmd":
         if not args.inipath.exists():
             out.red(f"expecting {args.inipath} to exist, run init first?")
             raise SystemExit(1)
         try:
-            config = read_config(args.inipath)
+            kwargs["config"] = read_config(args.inipath)
         except Exception as ex:
             out.red(ex)
-            raise SystemExit(2)
-        args.func(args, out, config)
-    else:
-        args.func(args, out)
+            raise SystemExit(1)
+
+    try:
+        args.func(args, out, **kwargs)
+    except KeyboardInterrupt:
+        out.red("KeyboardInterrupt")
+        sys.exit(130)
 
 
 if __name__ == "__main__":

@@ -49,9 +49,20 @@ DNS domain name (FQDN), for example `chat.example.org`.
    to your DNS provider:
 
    ```
-    cmdeploy dnszone 
+    cmdeploy dns
    ```
 
+6. To check status of your remotely running chatmail service: 
+
+   ```
+    cmdeploy status
+   ```
+
+7. To benchmark your chatmail service: 
+
+   ```
+    cmdeploy bench
+   ```
 
 ### Refining the web pages 
 

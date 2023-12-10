@@ -58,7 +58,13 @@ DNS domain name (FQDN), for example `chat.example.org`.
     cmdeploy status
    ```
 
-7. To benchmark your chatmail service: 
+7. To test your chatmail service: 
+
+   ```
+    cmdeploy test
+   ```
+
+8. To benchmark your chatmail service: 
 
    ```
     cmdeploy bench

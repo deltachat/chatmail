@@ -81,6 +81,7 @@ def get_parser():
     )
 
     add_subcommand(subparsers, dns_cmd)
+    add_subcommand(subparsers, status_cmd)
     add_subcommand(subparsers, bench_cmd)
     add_subcommand(subparsers, test_cmd)
     add_subcommand(subparsers, webdev_cmd)
@@ -110,6 +111,28 @@ def run_cmd(args, out, config):
     env = os.environ.copy()
     env["CHATMAIL_DOMAIN"] = config.mailname
     subprocess.check_call(popen_args, env=env)
+
+
+def status_cmd(args, out, config):
+    """Display status for online chatmail instance."""
+
+    ssh = f"ssh root@{config.mailname}"
+
+    def shell_output(arg):
+        return subprocess.check_output(arg, shell=True).decode()
+
+    out.green(f"chatmail domain: {config.mailname}")
+    if config.privacy_mail:
+        out.green("privacy settings: present")
+    else:
+        out.red("no privacy settings")
+
+    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
+
+    s1 = "systemctl --type=service --state=running"
+    for line in shell_output(f"{ssh} -- {s1}").split("\n"):
+        if line.startswith("  "):
+            print(line)
 
 
 def webdev_cmd(args, out, config):

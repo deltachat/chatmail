@@ -146,13 +146,16 @@ def test_cmd(args, out, config):
     """Run local and online tests."""
 
     tox = shutil.which("tox")
-    subprocess.check_call([tox, "-c", "chatmaild"])
-    subprocess.check_call([tox, "-c", "deploy-chatmail"])
+    proc1 = subprocess.run([tox, "-c", "chatmaild"])
+    proc2 = subprocess.run([tox, "-c", "deploy-chatmail"])
 
     pytest_path = shutil.which("pytest")
-    subprocess.check_call(
+    proc3 = subprocess.run(
         [pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"]
     )
+    if any(x.returncode != 0 for x in (proc1, proc2, proc3)):
+        return 1
+    return 0
 
 
 def bench_cmd(args, out, config):
@@ -220,7 +223,7 @@ def main(args=None):
             raise SystemExit(1)
 
     try:
-        args.func(args, out, **kwargs)
+        sys.exit(args.func(args, out, **kwargs))
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)

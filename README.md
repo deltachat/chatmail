@@ -90,7 +90,7 @@ This starts a local live development cycle for chatmail Web pages:
 
 ### Home page and getting started for users 
 
-`cmdeploy install chatmail.ini` script sets up mail services,
+`cmdeploy run` sets up mail services,
 and also creates default static Web pages and deploys them: 
 
 - a default `index.html` along with a QR code that users can click to 

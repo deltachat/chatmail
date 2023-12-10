@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: run chatmaild tests 
         working-directory: chatmaild
         run: pipx run tox
+
       - name: run deploy-chatmail offline tests 
         working-directory: deploy-chatmail
         run: pipx run tox
@@ -21,19 +23,13 @@ jobs:
         run: pipx run tox
 
   scripts:
-    name: chatmail script invocations 
+    name: cmdeploy invocations 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: create venv 
-        run: python3 -m venv 
+      - name: initenv 
+        run: scripts/initenv.sh
 
-      - name: install packages into venv 
-        run: venv/bin/pip install chatmaild deploy_chatmail 
-
-      - name: initialize
+      - name: initialize with chatmail domain
         run: venv/bin/cmdeploy init chat.example.org  
-
-      - name: initialize a testrun domain
-        run: venv/bin/cmdeploy init c4.testrun.org

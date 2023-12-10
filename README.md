@@ -25,14 +25,12 @@ DNS domain name (FQDN), for example `chat.example.org`.
         ssh root@CHATMAIL_DOMAIN 
    ```
 
-2. Install the `cmdeploy` binary in a Python virtual environment: 
+2. Install the `cmdeploy` command in a virtualenv 
 
    ```
-    python3 -m venv venv 
-    source venv/bin/activate 
-    pip install -e deploy-chatmail -e chatmaild 
+    source scripts/initenv.sh
    ```
-
+  
 3. Create chatmail configuration file `chatmail.ini`:
 
    ```

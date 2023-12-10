@@ -32,5 +32,8 @@ jobs:
       - name: install packages into venv 
         run: venv/bin/pip install chatmaild deploy_chatmail 
 
-      - name: run tests 
-      - run: venv/bin/cmdeploy test 
+      - name: initialize
+        run: venv/bin/cmdeploy init chat.example.org  
+
+      - name: initialize a testrun domain
+        run: venv/bin/cmdeploy init c4.testrun.org

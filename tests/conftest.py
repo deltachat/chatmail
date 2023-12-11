@@ -40,10 +40,16 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture
 def chatmail_config(pytestconfig):
-    path = Path("chatmail.ini").resolve()
-    if path.exists():
-        return read_config(path)
-    pytest.skip(f"no chatmail.ini file found in {path}")
+    current = basedir = Path()
+    while 1:
+        path = current.joinpath("chatmail.ini").resolve()
+        if path.exists():
+            return read_config(path)
+        if current == current.parent:
+            break
+        current = current.parent
+
+    pytest.skip(f"no chatmail.ini file found in {basedir} or parent dirs")
 
 
 @pytest.fixture

@@ -50,16 +50,12 @@ def run_cmd_options(parser):
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
-    popen_args = ["pyinfra"]
-    if args.dry_run:
-        popen_args.append("--dry")
-    popen_args.extend(["--ssh-user", "root", args.config.mailname])
-    popen_args.append("deploy-chatmail/src/deploy_chatmail/deploy.py")
-
-    out(f"{os.getcwd()} $ {' '.join(popen_args)}")
     env = os.environ.copy()
     env["CHATMAIL_DOMAIN"] = args.config.mailname
-    subprocess.check_call(popen_args, env=env)
+    deploypy = "deploy-chatmail/src/deploy_chatmail/deploy.py"
+    pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
+    cmd = f"{pyinf} --ssh-user root {args.config.mailname} {deploypy}"
+    out.check_call(cmd, env=env)
 
 
 def dns_cmd(args, out):
@@ -164,6 +160,10 @@ class Out:
     def shell_output(self, arg):
         self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_output(arg, shell=True).decode()
+
+    def check_call(self, arg, env):
+        self(f"[$ {arg}]", file=sys.stderr)
+        return subprocess.check_call(arg, shell=True, env=env)
 
 
 def add_config_option(parser):

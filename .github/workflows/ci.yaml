@@ -24,15 +24,18 @@ jobs:
       - name: initenv 
         run: scripts/initenv.sh
 
+      - name: append venv/bin to PATH
+        run: echo venv/bin >>$GITHUB_PATH
+
       - name: run formatting checks 
-        run: venv/bin/cmdeploy fmt -v 
+        run: cmdeploy fmt -v 
 
       - name: run deploy-chatmail offline tests 
         working-directory: deploy-chatmail
-        run: venv/bin/pytest tests
+        run: pytest tests
 
       - name: initialize with chatmail domain
-        run: venv/bin/cmdeploy init chat.example.org  
+        run: cmdeploy init chat.example.org  
 
       # all other cmdeploy commands require a staging server 
       # see https://github.com/deltachat/chatmail/issues/100

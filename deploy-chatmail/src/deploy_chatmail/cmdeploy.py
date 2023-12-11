@@ -111,26 +111,20 @@ def status_cmd(args, out):
 
 
 def test_cmd(args, out):
-    """Run local and online tests.
+    """Run local and online tests for chatmail deployment.
 
-    This will also pip-install 'deltachat' if it's not available.
+    This will automatically pip-install 'deltachat' if it's not available.
     """
-
-    tox = shutil.which("tox")
-    proc1 = subprocess.run([tox, "-c", "chatmaild"])
-    proc2 = subprocess.run([tox, "-c", "deploy-chatmail"])
 
     x = importlib.util.find_spec("deltachat")
     if x is None:
         out.check_call(f"{sys.executable} -m pip install deltachat")
 
     pytest_path = shutil.which("pytest")
-    proc3 = subprocess.run(
-        [pytest_path, "tests/", "-rs", "-x", "-vrx", "--durations=5"]
+    ret = out.run_ret(
+        [pytest_path, "tests/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
     )
-    if any(x.returncode != 0 for x in (proc1, proc2, proc3)):
-        return 1
-    return 0
+    return ret
 
 
 def fmt_cmd_options(parser):
@@ -218,6 +212,13 @@ class Out:
         if not quiet:
             self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_call(arg, shell=True, env=env)
+
+    def run_ret(self, args, env=None, quiet=False):
+        if not quiet:
+            cmdstring = " ".join(args)
+            self(f"[$ {cmdstring}]", file=sys.stderr)
+        proc = subprocess.run(args, env=env)
+        return proc.returncode
 
 
 def add_config_option(parser):

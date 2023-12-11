@@ -16,66 +16,6 @@ from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
 
 
-class Out:
-    """Convenience print output printer providing coloring."""
-
-    def red(self, msg, file=sys.stderr):
-        print(colored(msg, "red"), file=file)
-
-    def green(self, msg, file=sys.stderr):
-        print(colored(msg, "green"), file=file)
-
-    def __call__(self, msg, red=False, green=False, file=sys.stdout):
-        color = "red" if red else ("green" if green else None)
-        print(colored(msg, color), file=file)
-
-
-description = """\
-Setup your chatmail server configuration and
-deploy it via SSH to your remote location.
-"""
-
-
-def add_config_option(parser):
-    parser.add_argument(
-        "--config",
-        dest="inipath",
-        action="store",
-        default=Path("chatmail.ini"),
-        type=Path,
-        help="path to the chatmail.ini file",
-    )
-
-
-def add_subcommand(subparsers, func):
-    name = func.__name__
-    assert name.endswith("_cmd")
-    name = name[:-4]
-    doc = func.__doc__.strip().strip(".")
-    p = subparsers.add_parser(name, description=doc, help=doc)
-    p.set_defaults(func=func)
-    add_config_option(p)
-    return p
-
-
-def get_parser():
-    """Return an ArgumentParser for the 'cmdeploy' CLI"""
-
-    parser = argparse.ArgumentParser(description=description)
-    subparsers = parser.add_subparsers(title="subcommands")
-
-    # find all subcommands in the module namespace
-    glob = globals()
-    for name, func in glob.items():
-        if name.endswith("_cmd"):
-            subparser = add_subcommand(subparsers, func)
-            addopts = glob.get(name + "_options")
-            if addopts is not None:
-                addopts(subparser)
-
-    return parser
-
-
 #
 # cmdeploy sub commands and options
 #
@@ -210,6 +150,71 @@ def webdev_cmd(args, out):
     from .www import main
 
     main()
+
+
+#
+# Parsing command line options and starting commands
+#
+
+
+class Out:
+    """Convenience output printer providing coloring."""
+
+    def red(self, msg, file=sys.stderr):
+        print(colored(msg, "red"), file=file)
+
+    def green(self, msg, file=sys.stderr):
+        print(colored(msg, "green"), file=file)
+
+    def __call__(self, msg, red=False, green=False, file=sys.stdout):
+        color = "red" if red else ("green" if green else None)
+        print(colored(msg, color), file=file)
+
+
+def add_config_option(parser):
+    parser.add_argument(
+        "--config",
+        dest="inipath",
+        action="store",
+        default=Path("chatmail.ini"),
+        type=Path,
+        help="path to the chatmail.ini file",
+    )
+
+
+def add_subcommand(subparsers, func):
+    name = func.__name__
+    assert name.endswith("_cmd")
+    name = name[:-4]
+    doc = func.__doc__.strip().strip(".")
+    p = subparsers.add_parser(name, description=doc, help=doc)
+    p.set_defaults(func=func)
+    add_config_option(p)
+    return p
+
+
+description = """
+Setup your chatmail server configuration and
+deploy it via SSH to your remote location.
+"""
+
+
+def get_parser():
+    """Return an ArgumentParser for the 'cmdeploy' CLI"""
+
+    parser = argparse.ArgumentParser(description=description.strip())
+    subparsers = parser.add_subparsers(title="subcommands")
+
+    # find all subcommands in the module namespace
+    glob = globals()
+    for name, func in glob.items():
+        if name.endswith("_cmd"):
+            subparser = add_subcommand(subparsers, func)
+            addopts = glob.get(name + "_options")
+            if addopts is not None:
+                addopts(subparser)
+
+    return parser
 
 
 def main(args=None):

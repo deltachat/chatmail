@@ -38,7 +38,7 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture
 def chatmail_config(pytestconfig):
-    current = basedir = Path()
+    current = basedir = Path().resolve()
     while 1:
         path = current.joinpath("chatmail.ini").resolve()
         if path.exists():

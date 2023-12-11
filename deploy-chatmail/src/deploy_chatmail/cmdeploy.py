@@ -67,10 +67,6 @@ def dns_cmd(args, out):
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     ssh = f"ssh root@{args.config.mailname}"
 
-    def shell_output(arg):
-        out(f"[{arg}]", file=sys.stderr)
-        return subprocess.check_output(arg, shell=True).decode()
-
     def read_dkim_entries(entry):
         lines = []
         for line in entry.split("\n"):
@@ -80,8 +76,8 @@ def dns_cmd(args, out):
             lines.append(line)
         return "\n".join(lines)
 
-    acme_account_url = shell_output(f"{ssh} -- acmetool account-url")
-    dkim_entry = read_dkim_entries(shell_output(f"{ssh} -- opendkim-genzone -F"))
+    acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
+    dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     out(
         f"[writing {args.config.mailname} zone data (using space as separator) to stdout output]",
@@ -105,19 +101,14 @@ def status_cmd(args, out):
 
     ssh = f"ssh root@{args.config.mailname}"
 
-    def shell_output(arg):
-        return subprocess.check_output(arg, shell=True).decode()
-
     out.green(f"chatmail domain: {args.config.mailname}")
     if args.config.privacy_mail:
         out.green("privacy settings: present")
     else:
         out.red("no privacy settings")
 
-    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
-
     s1 = "systemctl --type=service --state=running"
-    for line in shell_output(f"{ssh} -- {s1}").split("\n"):
+    for line in out.shell_output(f"{ssh} -- {s1}").split("\n"):
         if line.startswith("  "):
             print(line)
 
@@ -169,6 +160,10 @@ class Out:
     def __call__(self, msg, red=False, green=False, file=sys.stdout):
         color = "red" if red else ("green" if green else None)
         print(colored(msg, color), file=file)
+
+    def shell_output(self, arg):
+        self(f"[$ {arg}]", file=sys.stderr)
+        return subprocess.check_output(arg, shell=True).decode()
 
 
 def add_config_option(parser):

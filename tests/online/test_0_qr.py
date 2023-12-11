@@ -1,4 +1,4 @@
-from deploy_chatmail.genqr import gen_qr_png_data
+from cmdeploy.genqr import gen_qr_png_data
 
 
 def test_gen_qr_png_data(maildomain):

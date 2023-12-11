@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from deploy_chatmail.cmdeploy import get_parser, main
+from cmdeploy.cmdeploy import get_parser, main
 from chatmaild.config import read_config
 
 

@@ -13,6 +13,7 @@ dependencies = [
   "pytest",
   "setuptools>=68",
   "termcolor",
+  "build",
   "tox",
 ]
 

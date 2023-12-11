@@ -68,6 +68,7 @@ def dns_cmd(args, out):
     ssh = f"ssh root@{args.config.mailname}"
 
     def shell_output(arg):
+        out(f"[{arg}]", file=sys.stderr)
         return subprocess.check_output(arg, shell=True).decode()
 
     def read_dkim_entries(entry):
@@ -79,7 +80,6 @@ def dns_cmd(args, out):
             lines.append(line)
         return "\n".join(lines)
 
-    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
     acme_account_url = shell_output(f"{ssh} -- acmetool account-url")
     dkim_entry = read_dkim_entries(shell_output(f"{ssh} -- opendkim-genzone -F"))
 

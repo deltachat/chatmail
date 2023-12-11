@@ -53,9 +53,9 @@ def run_cmd(args, out):
 
     env = os.environ.copy()
     env["CHATMAIL_DOMAIN"] = args.config.mail_domain
-    deploypy = "deploy-chatmail/src/deploy_chatmail/deploy.py"
+    deploy_path = "cmdeploy/src/cmdeploy/deploy.py"
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
-    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploypy}"
+    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
     out.check_call(cmd, env=env)
 
 
@@ -148,9 +148,9 @@ def fmt_cmd(args, out):
     """Run formattting fixes (fuff and black) on all chatmail source code."""
 
     chatmaild = importlib.resources.files("chatmaild")
-    deploy_chatmail = importlib.resources.files("deploy_chatmail")
-    tests = deploy_chatmail.joinpath("../../../tests")
-    sources = list(str(x) for x in [chatmaild, deploy_chatmail, tests])
+    cmdeploy = importlib.resources.files("cmdeploy")
+    tests = cmdeploy.joinpath("../../../tests")
+    sources = list(str(x) for x in [chatmaild, cmdeploy, tests])
 
     black_args = [shutil.which("black")]
     ruff_args = [shutil.which("ruff")]

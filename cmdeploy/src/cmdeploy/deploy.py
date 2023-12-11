@@ -1,6 +1,6 @@
 import os
 import pyinfra
-from deploy_chatmail import deploy_chatmail
+from cmdeploy import deploy_chatmail
 
 
 def main():

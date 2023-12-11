@@ -27,7 +27,9 @@ def write_initial_config(inipath, mail_domain):
     from importlib.resources import files
 
     inidir = files(__package__).joinpath("ini")
-    content = inidir.joinpath("chatmail.ini.f").read_text().format(mail_domain=mail_domain)
+    content = (
+        inidir.joinpath("chatmail.ini.f").read_text().format(mail_domain=mail_domain)
+    )
     if mail_domain.endswith(".testrun.org"):
         override_inipath = inidir.joinpath("override-testrun.ini")
         privacy = iniconfig.IniConfig(override_inipath)["privacy"]

@@ -9,7 +9,7 @@ def read_config(inipath):
 class Config:
     def __init__(self, inipath, params):
         self._inipath = inipath
-        self.mailname = self.mail_domain = params["mailname"]
+        self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
@@ -23,12 +23,12 @@ class Config:
         return open(self._inipath, "rb")
 
 
-def write_initial_config(inipath, mailname):
+def write_initial_config(inipath, mail_domain):
     from importlib.resources import files
 
     inidir = files(__package__).joinpath("ini")
-    content = inidir.joinpath("chatmail.ini.f").read_text().format(mailname=mailname)
-    if mailname.endswith(".testrun.org"):
+    content = inidir.joinpath("chatmail.ini.f").read_text().format(mail_domain=mail_domain)
+    if mail_domain.endswith(".testrun.org"):
         override_inipath = inidir.joinpath("override-testrun.ini")
         privacy = iniconfig.IniConfig(override_inipath)["privacy"]
         lines = []

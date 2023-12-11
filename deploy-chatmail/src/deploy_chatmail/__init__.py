@@ -347,8 +347,8 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
 
 
 def check_config(config):
-    mailname = config.mailname
-    if mailname != "testrun.org" and not mailname.endswith(".testrun.org"):
+    mail_domain = config.mail_domain
+    if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
         blocked_words = "merlinux schmieder testrun.org".split()
         for value in config.__dict__.values():
             if any(x in value for x in blocked_words):

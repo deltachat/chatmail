@@ -37,7 +37,7 @@ def build_webpages(src_dir, build_dir, config):
 
 
 def _build_webpages(src_dir, build_dir, config):
-    mail_domain = config.mailname
+    mail_domain = config.mail_domain
     assert src_dir.exists(), src_dir
     if not build_dir.exists():
         build_dir.mkdir()
@@ -71,7 +71,7 @@ def main():
     inipath = reporoot.joinpath("chatmail.ini")
     config = read_config(inipath)
     config.webdev = True
-    assert config.mailname
+    assert config.mail_domain
     www_path = reporoot.joinpath("www")
     src_path = www_path.joinpath("src")
     stats = None

@@ -52,17 +52,17 @@ def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
     env = os.environ.copy()
-    env["CHATMAIL_DOMAIN"] = args.config.mailname
+    env["CHATMAIL_DOMAIN"] = args.config.mail_domain
     deploypy = "deploy-chatmail/src/deploy_chatmail/deploy.py"
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
-    cmd = f"{pyinf} --ssh-user root {args.config.mailname} {deploypy}"
+    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploypy}"
     out.check_call(cmd, env=env)
 
 
 def dns_cmd(args, out):
     """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
-    ssh = f"ssh root@{args.config.mailname}"
+    ssh = f"ssh root@{args.config.mail_domain}"
 
     def read_dkim_entries(entry):
         lines = []
@@ -77,16 +77,16 @@ def dns_cmd(args, out):
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     out(
-        f"[writing {args.config.mailname} zone data (using space as separator) to stdout output]",
+        f"[writing {args.config.mail_domain} zone data (using space as separator) to stdout output]",
         green=True,
     )
     print(
         template.read_text()
         .format(
             acme_account_url=acme_account_url,
-            email=f"root@{args.config.mailname}",
+            email=f"root@{args.config.mail_domain}",
             sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-            chatmail_domain=args.config.mailname,
+            chatmail_domain=args.config.mail_domain,
             dkim_entry=dkim_entry,
         )
         .strip()
@@ -96,9 +96,9 @@ def dns_cmd(args, out):
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    ssh = f"ssh root@{args.config.mailname}"
+    ssh = f"ssh root@{args.config.mail_domain}"
 
-    out.green(f"chatmail domain: {args.config.mailname}")
+    out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:
         out.green("privacy settings: present")
     else:

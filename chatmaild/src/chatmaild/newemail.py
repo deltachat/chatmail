@@ -5,7 +5,7 @@
 import json
 import random
 
-mailname_path = "/etc/mailname"
+mail_domain_path = "/etc/mailname"
 
 
 def create_newemail_dict(domain):
@@ -16,7 +16,7 @@ def create_newemail_dict(domain):
 
 
 def print_new_account():
-    domain = open(mailname_path).read().strip()
+    domain = open(mail_domain_path).read().strip()
     creds = create_newemail_dict(domain=domain)
 
     print("Content-Type: application/json")

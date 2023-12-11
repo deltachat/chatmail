@@ -52,7 +52,7 @@ def chatmail_config(pytestconfig):
 
 @pytest.fixture
 def maildomain(chatmail_config):
-    return chatmail_config.mailname
+    return chatmail_config.mail_domain
 
 
 @pytest.fixture

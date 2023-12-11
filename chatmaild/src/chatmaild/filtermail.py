@@ -111,6 +111,9 @@ class BeforeQueueHandler:
         if not mail_encrypted and check_mdn(message, envelope):
             return
 
+        if envelope.mail_from in self.config.passthrough_senders:
+            return
+
         passthrough_recipients = self.config.passthrough_recipients
         envelope_from_domain = from_addr.split("@").pop()
         for recipient in envelope.rcpt_tos:

@@ -20,8 +20,17 @@ max_mailbox_size = 100M
 # time after which seen mails are deleted
 delete_mails_after = 40d
 
-# list of chatmail accounts which can send unencrypted mail
-#passthrough_senders (not implemented yet)
+# minimum length a username must have
+username_min_length = 6
+
+# maximum length a username must have
+username_max_length = 20
+
+# minimum length a password must have
+password_min_length = 9
+
+# list of chatmail accounts which can send outbound un-encrypted mail
+passthrough_senders =
 
 # list of e-mail recipients for which to accept outbound un-encrypted mails
 passthrough_recipients =

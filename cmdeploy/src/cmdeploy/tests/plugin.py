@@ -228,18 +228,22 @@ def imap_or_smtp(request):
 
 
 @pytest.fixture
-def gencreds(maildomain):
+def gencreds(chatmail_config):
     count = itertools.count()
     next(count)
 
     def gen(domain=None):
-        domain = domain if domain else maildomain
+        domain = domain if domain else chatmail_config.mail_domain
         while 1:
             num = next(count)
             alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
-            user = "".join(random.choices(alphanumeric, k=10))
-            user = f"ac{num}_{user}"[:9]
-            password = "".join(random.choices(alphanumeric, k=12))
+            user = "".join(
+                random.choices(alphanumeric, k=chatmail_config.username_max_length)
+            )
+            user = f"ac{num}_{user}"[: chatmail_config.username_max_length]
+            password = "".join(
+                random.choices(alphanumeric, k=chatmail_config.password_min_length)
+            )
             yield f"{user}@{domain}", f"{password}"
 
     return lambda domain=None: next(gen(domain))

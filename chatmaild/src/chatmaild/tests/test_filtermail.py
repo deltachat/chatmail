@@ -127,3 +127,19 @@ def test_excempt_privacy(maildata, gencreds, handler):
         content = msg.as_bytes()
 
     assert "500" in handler.check_DATA(envelope=env2)
+
+
+def test_passthrough_senders(gencreds, handler, maildata):
+    acc1 = gencreds()[0]
+    to_addr = "recipient@something.org"
+    handler.config.passthrough_senders = [acc1]
+
+    msg = maildata("plain.eml", acc1, to_addr)
+
+    class env:
+        mail_from = acc1
+        rcpt_tos = to_addr
+        content = msg.as_bytes()
+
+    # assert that None/no error is returned
+    assert not handler.check_DATA(envelope=env)

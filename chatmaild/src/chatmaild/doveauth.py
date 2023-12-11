@@ -12,6 +12,7 @@ from socketserver import (
 import pwd
 
 from .database import Database
+from .config import read_config, Config
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 
@@ -22,14 +23,17 @@ def encrypt_password(password: str):
     return "{SHA512-CRYPT}" + passhash
 
 
-def is_allowed_to_create(user, cleartext_password) -> bool:
+def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
     """Return True if user and password are admissable."""
     if os.path.exists(NOCREATE_FILE):
         logging.warning(f"blocked account creation because {NOCREATE_FILE!r} exists.")
         return False
 
-    if len(cleartext_password) < 9:
-        logging.warning("Password needs to be at least 9 characters long")
+    if len(cleartext_password) < config.password_min_length:
+        logging.warning(
+            "Password needs to be at least %s characters long",
+            config.password_min_length,
+        )
         return False
 
     parts = user.split("@")
@@ -38,11 +42,15 @@ def is_allowed_to_create(user, cleartext_password) -> bool:
         return False
     localpart, domain = parts
 
-    if domain == "nine.testrun.org":
-        # nine.testrun.org policy, username has to be exactly nine chars
-        if len(localpart) != 9:
-            logging.warning(f"localpart {localpart!r} has not exactly nine chars")
-            return False
+    if (
+        len(localpart) > config.username_max_length
+        or len(localpart) < config.username_min_length
+    ):
+        logging.warning(
+            "localpart %s has to be between %s and %s chars long"
+            % (localpart, config.username_min_length, config.username_max_length)
+        )
+        return False
 
     return True
 
@@ -60,7 +68,7 @@ def lookup_userdb(db, user):
     return get_user_data(db, user)
 
 
-def lookup_passdb(db, user, cleartext_password):
+def lookup_passdb(db, config: Config, user, cleartext_password):
     with db.write_transaction() as conn:
         userdata = conn.get_user(user)
         if userdata:
@@ -72,7 +80,7 @@ def lookup_passdb(db, user, cleartext_password):
             userdata["uid"] = "vmail"
             userdata["gid"] = "vmail"
             return userdata
-        if not is_allowed_to_create(user, cleartext_password):
+        if not is_allowed_to_create(config, user, cleartext_password):
             return
 
         encrypted_password = encrypt_password(cleartext_password)
@@ -87,7 +95,7 @@ def lookup_passdb(db, user, cleartext_password):
         )
 
 
-def handle_dovecot_request(msg, db, mail_domain):
+def handle_dovecot_request(msg, db, config: Config):
     short_command = msg[0]
     if short_command == "L":  # LOOKUP
         parts = msg[1:].split("\t")
@@ -97,15 +105,15 @@ def handle_dovecot_request(msg, db, mail_domain):
         res = ""
         if namespace == "shared":
             if type == "userdb":
-                if user.endswith(f"@{mail_domain}"):
+                if user.endswith(f"@{config.mail_domain}"):
                     res = lookup_userdb(db, user)
                 if res:
                     reply_command = "O"
                 else:
                     reply_command = "N"
             elif type == "passdb":
-                if user.endswith(f"@{mail_domain}"):
-                    res = lookup_passdb(db, user, cleartext_password=args[0])
+                if user.endswith(f"@{config.mail_domain}"):
+                    res = lookup_passdb(db, config, user, cleartext_password=args[0])
                 if res:
                     reply_command = "O"
                 else:
@@ -123,8 +131,7 @@ def main():
     socket = sys.argv[1]
     passwd_entry = pwd.getpwnam(sys.argv[2])
     db = Database(sys.argv[3])
-    with open("/etc/mailname", "r") as fp:
-        mail_domain = fp.read().strip()
+    config = read_config(sys.argv[4])
 
     class Handler(StreamRequestHandler):
         def handle(self):
@@ -133,7 +140,7 @@ def main():
                     msg = self.rfile.readline().strip().decode()
                     if not msg:
                         break
-                    res = handle_dovecot_request(msg, db, mail_domain)
+                    res = handle_dovecot_request(msg, db, config)
                     if res:
                         self.wfile.write(res.encode("ascii"))
                         self.wfile.flush()

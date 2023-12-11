@@ -1,5 +1,5 @@
 [Unit]
-Description=Dict authentication proxy for dovecot
+Description=Chatmail dict authentication proxy for dovecot
 
 [Service]
 ExecStart={execpath} /run/dovecot/doveauth.socket vmail /home/vmail/passdb.sqlite

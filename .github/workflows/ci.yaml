@@ -6,7 +6,7 @@ on:
 
 jobs:
   tox:
-    name: chatmail tests
+    name: isolated chatmaild tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,15 +15,8 @@ jobs:
         working-directory: chatmaild
         run: pipx run tox
 
-      - name: run deploy-chatmail offline tests 
-        working-directory: deploy-chatmail
-        run: pipx run tox
-      - name: run deploy-chatmail offline tests 
-        working-directory: deploy-chatmail
-        run: pipx run tox
-
   scripts:
-    name: cmdeploy invocations 
+    name: deploy-chatmail tests 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -31,5 +24,15 @@ jobs:
       - name: initenv 
         run: scripts/initenv.sh
 
+      - name: run formatting checks 
+        run: venv/bin/cmdeploy fmt -v 
+
+      - name: run deploy-chatmail offline tests 
+        working-directory: deploy-chatmail
+        run: venv/bin/pytest tests
+
       - name: initialize with chatmail domain
         run: venv/bin/cmdeploy init chat.example.org  
+
+      # all other cmdeploy commands require a staging server 
+      # see https://github.com/deltachat/chatmail/issues/100

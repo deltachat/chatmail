@@ -6,8 +6,6 @@ import subprocess
 import imaplib
 import smtplib
 import itertools
-from email.parser import BytesParser
-from email import policy
 from pathlib import Path
 import pytest
 

@@ -6,6 +6,7 @@ import argparse
 import datetime
 import shutil
 import subprocess
+import importlib.resources
 import importlib.util
 import os
 import sys
@@ -132,6 +133,51 @@ def test_cmd(args, out):
     return 0
 
 
+def fmt_cmd_options(parser):
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        dest="verbose",
+        action="store_true",
+        help="provide information on invocations",
+    )
+
+    parser.add_argument(
+        "--check",
+        "-c",
+        action="store_true",
+        help="only check but don't fix problems",
+    )
+
+
+def fmt_cmd(args, out):
+    """Run formattting fixes (fuff and black) on all chatmail source code."""
+
+    chatmaild = importlib.resources.files("chatmaild")
+    deploy_chatmail = importlib.resources.files("deploy_chatmail")
+    tests = deploy_chatmail.joinpath("../../../tests")
+    sources = list(str(x) for x in [chatmaild, deploy_chatmail, tests])
+
+    black_args = [shutil.which("black")]
+    ruff_args = [shutil.which("ruff")]
+
+    if args.check:
+        black_args.append("--check")
+    else:
+        ruff_args.append("--fix")
+
+    if not args.verbose:
+        black_args.append("-q")
+        ruff_args.append("-q")
+
+    black_args.extend(sources)
+    ruff_args.extend(sources)
+
+    out.check_call(" ".join(black_args), quiet=not args.verbose)
+    out.check_call(" ".join(ruff_args), quiet=not args.verbose)
+    return 0
+
+
 def bench_cmd(args, out):
     """Run benchmarks against an online chatmail instance."""
     pytest_path = shutil.which("pytest")
@@ -168,8 +214,9 @@ class Out:
         self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_output(arg, shell=True).decode()
 
-    def check_call(self, arg, env=None):
-        self(f"[$ {arg}]", file=sys.stderr)
+    def check_call(self, arg, env=None, quiet=False):
+        if not quiet:
+            self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_call(arg, shell=True, env=env)
 
 
@@ -228,7 +275,7 @@ def main(args=None):
         return parser.parse_args(["-h"])
     out = Out()
     kwargs = {}
-    if args.func.__name__ != "init_cmd":
+    if args.func.__name__ not in ("init_cmd", "fmt_cmd"):
         if not args.inipath.exists():
             out.red(f"expecting {args.inipath} to exist, run init first?")
             raise SystemExit(1)

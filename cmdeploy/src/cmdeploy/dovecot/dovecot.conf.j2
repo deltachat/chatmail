@@ -86,7 +86,7 @@ plugin {
 plugin {
   # for now we define static quota-rules for all users 
   quota = maildir:User quota
-  quota_rule = *:storage=100M
+  quota_rule = *:storage={{ config.max_mailbox_size }}
   quota_max_mail_size=30M
   quota_grace = 0
   # quota_over_flag_value = TRUE
@@ -137,8 +137,8 @@ service imap-login {
 }
 
 ssl = required
-ssl_cert = </var/lib/acme/live/{{ config.hostname }}/fullchain
-ssl_key = </var/lib/acme/live/{{ config.hostname }}/privkey
+ssl_cert = </var/lib/acme/live/{{ config.mail_domain }}/fullchain
+ssl_key = </var/lib/acme/live/{{ config.mail_domain }}/privkey
 ssl_dh = </usr/share/dovecot/dh.pem
 ssl_min_protocol = TLSv1.2
 ssl_prefer_server_ciphers = yes

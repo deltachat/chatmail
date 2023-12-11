@@ -20,6 +20,9 @@ where = ['src']
 doveauth = "chatmaild.doveauth:main"
 filtermail = "chatmaild.filtermail:main"
 
+[project.entry-points.pytest11]
+"chatmaild.testplugin" = "chatmaild.tests.plugin"
+
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"
 log_format = "%(asctime)s %(levelname)s %(message)s"
@@ -45,5 +48,5 @@ commands =
 [testenv]
 deps = pytest 
        pdbpp 
-commands = pytest -v -rsXx {posargs: ../tests/chatmaild}
+commands = pytest -v -rsXx {posargs}
 """

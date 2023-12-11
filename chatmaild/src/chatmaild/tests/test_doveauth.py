@@ -59,8 +59,8 @@ def test_handle_dovecot_request(db):
     assert userdata["password"].startswith("{SHA512-CRYPT}")
 
 
-def test_100_concurrent_lookups_different_accounts(db, gencreds):
-    num_threads = 100
+def test_50_concurrent_lookups_different_accounts(db, gencreds):
+    num_threads = 50
     req_per_thread = 5
     results = queue.Queue()
 

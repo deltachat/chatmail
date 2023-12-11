@@ -6,7 +6,7 @@ import argparse
 import datetime
 import shutil
 import subprocess
-import importlib
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -110,11 +110,18 @@ def status_cmd(args, out):
 
 
 def test_cmd(args, out):
-    """Run local and online tests."""
+    """Run local and online tests.
+
+    This will also pip-install 'deltachat' if it's not available.
+    """
 
     tox = shutil.which("tox")
     proc1 = subprocess.run([tox, "-c", "chatmaild"])
     proc2 = subprocess.run([tox, "-c", "deploy-chatmail"])
+
+    x = importlib.util.find_spec("deltachat")
+    if x is None:
+        out.check_call(f"{sys.executable} -m pip install deltachat")
 
     pytest_path = shutil.which("pytest")
     proc3 = subprocess.run(
@@ -161,7 +168,7 @@ class Out:
         self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_output(arg, shell=True).decode()
 
-    def check_call(self, arg, env):
+    def check_call(self, arg, env=None):
         self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_call(arg, shell=True, env=env)
 
@@ -181,8 +188,9 @@ def add_subcommand(subparsers, func):
     name = func.__name__
     assert name.endswith("_cmd")
     name = name[:-4]
-    doc = func.__doc__.strip().strip(".")
-    p = subparsers.add_parser(name, description=doc, help=doc)
+    doc = func.__doc__.strip()
+    help = doc.split("\n")[0].strip(".")
+    p = subparsers.add_parser(name, description=doc, help=help)
     p.set_defaults(func=func)
     add_config_option(p)
     return p

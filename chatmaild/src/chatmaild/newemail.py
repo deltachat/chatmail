@@ -1,23 +1,25 @@
-#!/usr/bin/python3
+#!/usr/local/lib/chatmaild/venv/bin/python3
 
 """ CGI script for creating new accounts. """
 
 import json
 import random
 
-mail_domain_path = "/etc/mailname"
+from chatmaild.config import read_config, Config
+
+CONFIG_PATH = "/usr/local/lib/chatmaild/chatmail.ini"
 
 
-def create_newemail_dict(domain):
+def create_newemail_dict(config: Config):
     alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
-    user = "".join(random.choices(alphanumeric, k=9))
-    password = "".join(random.choices(alphanumeric, k=12))
-    return dict(email=f"{user}@{domain}", password=f"{password}")
+    user = "".join(random.choices(alphanumeric, k=config.username_min_length))
+    password = "".join(random.choices(alphanumeric, k=config.password_min_length + 3))
+    return dict(email=f"{user}@{config.mail_domain}", password=f"{password}")
 
 
 def print_new_account():
-    domain = open(mail_domain_path).read().strip()
-    creds = create_newemail_dict(domain=domain)
+    config = read_config(CONFIG_PATH)
+    creds = create_newemail_dict(config)
 
     print("Content-Type: application/json")
     print("")

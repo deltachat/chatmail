@@ -122,7 +122,7 @@ def test_cmd(args, out):
 
     pytest_path = shutil.which("pytest")
     ret = out.run_ret(
-        [pytest_path, "tests/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
+        [pytest_path, "cmdeploy/src/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
     )
     return ret
 
@@ -147,11 +147,7 @@ def fmt_cmd_options(parser):
 def fmt_cmd(args, out):
     """Run formattting fixes (fuff and black) on all chatmail source code."""
 
-    chatmaild = importlib.resources.files("chatmaild")
-    cmdeploy = importlib.resources.files("cmdeploy")
-    tests = cmdeploy.joinpath("../../../tests")
-    sources = list(str(x) for x in [chatmaild, cmdeploy, tests])
-
+    sources = [str(importlib.resources.files(x)) for x in ("chatmaild", "cmdeploy")]
     black_args = [shutil.which("black")]
     ruff_args = [shutil.which("ruff")]
 
@@ -174,9 +170,10 @@ def fmt_cmd(args, out):
 
 def bench_cmd(args, out):
     """Run benchmarks against an online chatmail instance."""
-    pytest_path = shutil.which("pytest")
-    benchmark = "tests/online/benchmark.py"
-    subprocess.check_call([pytest_path, benchmark, "-vrx"])
+    args = ["pytest", "--pyargs", "cmdeploy.tests.online.benchmark", "-vrx"]
+    cmdstring = " ".join(args)
+    out.green(f"[$ {cmdstring}]")
+    subprocess.check_call(args)
 
 
 def webdev_cmd(args, out):

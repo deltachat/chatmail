@@ -31,7 +31,7 @@ jobs:
         run: cmdeploy fmt -v 
 
       - name: run deploy-chatmail offline tests 
-        run: pytest tests
+        run: pytest --pyargs cmdeploy 
 
       - name: initialize with chatmail domain
         run: cmdeploy init chat.example.org  

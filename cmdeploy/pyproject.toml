@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deploy-chatmail"
-version = "0.1"
+name = "cmdeploy"
+version = "0.2"
 dependencies = [
   "pyinfra",
   "pillow",
@@ -26,6 +26,7 @@ cmdeploy = "cmdeploy.cmdeploy:main"
 
 [project.entry-points.pytest11]
 "chatmaild.testplugin" = "chatmaild.tests.plugin"
+"cmdeploy.testplugin" = "cmdeploy.tests.plugin"
 
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"

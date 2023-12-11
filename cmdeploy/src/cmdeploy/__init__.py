@@ -243,7 +243,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
+def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
@@ -253,7 +253,7 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"hostname": mail_server},
+        config=config,
         debug=debug,
     )
     need_restart |= main_config.changed
@@ -266,14 +266,13 @@ def _configure_dovecot(mail_server: str, debug: bool = False) -> bool:
     )
     need_restart |= auth_config.changed
 
-    files.put(
-        src=importlib.resources.files(__package__)
-        .joinpath("dovecot/expunge.cron")
-        .open("rb"),
+    files.template(
+        src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),
         dest="/etc/cron.d/expunge",
         user="root",
         group="root",
         mode="644",
+        config=config,
     )
 
     # as per https://doc.dovecot.org/configuration_manual/os/
@@ -423,7 +422,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
 
     _install_remote_venv_with_chatmaild(config)
     debug = False
-    dovecot_need_restart = _configure_dovecot(mail_server, debug=debug)
+    dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
     opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
     mta_sts_need_restart = _install_mta_sts_daemon()

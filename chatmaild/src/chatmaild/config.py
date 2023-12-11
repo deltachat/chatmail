@@ -11,6 +11,8 @@ class Config:
         self._inipath = inipath
         self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
+        self.max_mailbox_size = params["max_mailbox_size"]
+        self.delete_mails_after = params["delete_mails_after"]
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.passthrough_recipients = params["passthrough_recipients"].split()

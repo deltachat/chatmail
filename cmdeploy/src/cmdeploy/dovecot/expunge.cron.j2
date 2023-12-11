@@ -1,0 +1,4 @@
+2 0 * * * dovecot doveadm expunge -A SEEN BEFORE {{ config.delete_mails_after }} INBOX
+2 0 * * * dovecot doveadm expunge -A SEEN BEFORE {{ config.delete_mails_after }} Deltachat
+2 0 * * * dovecot doveadm expunge -A SEEN BEFORE {{ config.delete_mails_after }} Trash
+2 30 * * * dovecot doveadm purge -A

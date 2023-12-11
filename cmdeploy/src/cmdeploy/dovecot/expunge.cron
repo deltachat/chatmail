@@ -1,4 +1,0 @@
-2 0 * * * dovecot doveadm expunge -A SEEN BEFORE 40d INBOX
-2 0 * * * dovecot doveadm expunge -A SEEN BEFORE 40d Deltachat
-2 0 * * * dovecot doveadm expunge -A SEEN BEFORE 40d Trash
-2 30 * * * dovecot doveadm purge -A

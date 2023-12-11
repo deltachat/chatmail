@@ -15,6 +15,10 @@ dependencies = [
   "termcolor",
   "build",
   "tox",
+  "ruff",
+  "black",
+  "pytest",
+  "pytest-xdist", 
 ]
 
 [project.scripts]

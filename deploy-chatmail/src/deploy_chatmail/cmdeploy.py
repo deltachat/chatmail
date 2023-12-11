@@ -125,7 +125,7 @@ def test_cmd(args, out):
 
     pytest_path = shutil.which("pytest")
     proc3 = subprocess.run(
-        [pytest_path, "tests/online", "-rs", "-x", "-vrx", "--durations=5"]
+        [pytest_path, "tests/", "-rs", "-x", "-vrx", "--durations=5"]
     )
     if any(x.returncode != 0 for x in (proc1, proc2, proc3)):
         return 1
@@ -239,7 +239,11 @@ def main(args=None):
             raise SystemExit(1)
 
     try:
-        sys.exit(args.func(args, out, **kwargs))
+        res = args.func(args, out, **kwargs)
+        if res is None:
+            res = 0
+        return res
+
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)

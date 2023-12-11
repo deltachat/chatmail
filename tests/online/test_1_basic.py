@@ -20,7 +20,7 @@ def test_use_two_chatmailservers(cmfactory, maildomain2):
 
 
 @pytest.mark.parametrize("forgeaddr", ["internal", "someone@example.org"])
-def test_reject_forged_from(cmsetup, maildata, lp, forgeaddr):
+def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
     user1, user3 = cmsetup.gen_users(2)
 
     lp.sec("send encrypted message with forged from")

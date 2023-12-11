@@ -20,6 +20,9 @@ dependencies = [
 [project.scripts]
 cmdeploy = "deploy_chatmail.cmdeploy:main"
 
+[project.entry-points.pytest11]
+"chatmaild.testplugin" = "chatmaild.tests.plugin"
+
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"
 

@@ -26,27 +26,36 @@ def test_reject_forged_from(maildata, gencreds, handler):
         rcpt_tos = [gencreds()[0]]
 
     # test that the filter lets good mail through
-    env.content = maildata("plain.eml", from_addr=env.mail_from).as_bytes()
+    to_addr = gencreds()[0]
+    env.content = maildata(
+        "plain.eml", from_addr=env.mail_from, to_addr=to_addr
+    ).as_bytes()
 
     assert not handler.check_DATA(envelope=env)
 
     # test that the filter rejects forged mail
-    env.content = maildata("plain.eml", from_addr="forged@c3.testrun.org").as_bytes()
+    env.content = maildata(
+        "plain.eml", from_addr="forged@c3.testrun.org", to_addr=to_addr
+    ).as_bytes()
     error = handler.check_DATA(envelope=env)
     assert "500" in error
 
 
 def test_filtermail_no_encryption_detection(maildata):
-    msg = maildata("plain.eml")
+    msg = maildata(
+        "plain.eml", from_addr="some@example.org", to_addr="other@example.org"
+    )
     assert not check_encrypted(msg)
 
     # https://xkcd.com/1181/
-    msg = maildata("fake-encrypted.eml")
+    msg = maildata(
+        "fake-encrypted.eml", from_addr="some@example.org", to_addr="other@example.org"
+    )
     assert not check_encrypted(msg)
 
 
 def test_filtermail_encryption_detection(maildata):
-    msg = maildata("encrypted.eml")
+    msg = maildata("encrypted.eml", from_addr="1@example.org", to_addr="2@example.org")
     assert check_encrypted(msg)
 
     # if the subject is not "..." it is not considered ac-encrypted

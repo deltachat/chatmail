@@ -353,22 +353,6 @@ def lp(request):
 
 
 @pytest.fixture
-def maildata(request, gencreds):
-    datadir = conftestdir.joinpath("mail-data")
-
-    def maildata(name, from_addr=None, to_addr=None):
-        if from_addr is None:
-            from_addr = gencreds()[0]
-        if to_addr is None:
-            to_addr = gencreds()[0]
-        data = datadir.joinpath(name).read_text()
-        text = data.format(from_addr=from_addr, to_addr=to_addr)
-        return BytesParser(policy=policy.default).parsebytes(text.encode())
-
-    return maildata
-
-
-@pytest.fixture
 def cmsetup(maildomain, gencreds):
     return CMSetup(maildomain, gencreds)
 
@@ -414,16 +398,3 @@ class CMUser:
             imap.login(self.addr, self.password)
             self._imap = imap
         return self._imap
-
-
-@pytest.fixture
-def make_config(tmp_path):
-    from chatmaild.config import read_config, write_initial_config
-
-    inipath = tmp_path.joinpath("chatmail.ini")
-
-    def make_conf(mailname):
-        write_initial_config(inipath, mailname=mailname)
-        return read_config(inipath)
-
-    return make_conf

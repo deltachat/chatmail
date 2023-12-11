@@ -91,9 +91,9 @@ class TestEndToEndDeltaChat:
 
         lp.sec("setup encrypted comms between ac1 and ac2 on different instances")
         qr = ac1.get_setup_contact_qr()
-        ac2.qr_setup_contact(qr)
-        msg = ac2.wait_next_incoming_message()
-        assert "verified" in msg.text
+        ch = ac2.qr_setup_contact(qr)
+        assert ch.id >= 10
+        ac1._evtracker.wait_securejoin_inviter_progress(1000)
 
         lp.sec("ac1 sends a message and ac2 marks it as seen")
         chat = ac1.create_chat(ac2)

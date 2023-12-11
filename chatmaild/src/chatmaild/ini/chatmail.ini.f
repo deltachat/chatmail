@@ -1,7 +1,7 @@
 [params]
 
 # mail domain (MUST be set to fully qualified chat mail domain)
-mailname = {mailname}
+mail_domain = {mail_domain}
 
 #
 # If you only do private test deploys, you don't need to modify any settings below

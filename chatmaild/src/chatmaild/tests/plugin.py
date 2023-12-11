@@ -13,8 +13,8 @@ from chatmaild.config import read_config, write_initial_config
 def make_config(tmp_path):
     inipath = tmp_path.joinpath("chatmail.ini")
 
-    def make_conf(mailname):
-        write_initial_config(inipath, mailname=mailname)
+    def make_conf(mail_domain):
+        write_initial_config(inipath, mail_domain=mail_domain)
         return read_config(inipath)
 
     return make_conf
@@ -27,7 +27,7 @@ def example_config(make_config):
 
 @pytest.fixture
 def maildomain(example_config):
-    return example_config.mailname
+    return example_config.mail_domain
 
 
 @pytest.fixture

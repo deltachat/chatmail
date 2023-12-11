@@ -1,4 +1,4 @@
-myorigin = {{ config.mailname }}
+myorigin = {{ config.mail_domain }}
 
 smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
 biff = no
@@ -16,8 +16,8 @@ readme_directory = no
 compatibility_level = 2
 
 # TLS parameters
-smtpd_tls_cert_file=/var/lib/acme/live/{{ config.mailname }}/fullchain
-smtpd_tls_key_file=/var/lib/acme/live/{{ config.mailname }}/privkey
+smtpd_tls_cert_file=/var/lib/acme/live/{{ config.mail_domain }}/fullchain
+smtpd_tls_key_file=/var/lib/acme/live/{{ config.mail_domain }}/privkey
 smtpd_tls_security_level=may
 
 smtp_tls_CApath=/etc/ssl/certs
@@ -26,7 +26,7 @@ smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 smtp_tls_policy_maps = socketmap:inet:127.0.0.1:8461:postfix
 
 smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
-myhostname = {{ config.mailname }}
+myhostname = {{ config.mail_domain }}
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
 
@@ -45,7 +45,7 @@ inet_interfaces = all
 inet_protocols = all
 
 virtual_transport = lmtp:unix:private/dovecot-lmtp
-virtual_mailbox_domains = {{ config.mailname }}
+virtual_mailbox_domains = {{ config.mail_domain }}
 
 smtpd_milters = unix:opendkim/opendkim.sock
 non_smtpd_milters = $smtpd_milters

@@ -25,7 +25,7 @@ class TestCmdline:
         main(["init", "chat.example.org"])
         inipath = tmp_path.joinpath("chatmail.ini")
         config = read_config(inipath)
-        assert config.mailname == "chat.example.org"
+        assert config.mail_domain == "chat.example.org"
 
     def test_init_not_overwrite(self):
         main(["init", "chat.example.org"])

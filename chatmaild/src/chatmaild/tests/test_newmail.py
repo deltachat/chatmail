@@ -18,7 +18,7 @@ def test_create_newemail_dict():
 def test_print_new_account(capsys, monkeypatch, maildomain, tmpdir):
     p = tmpdir.join("mailname")
     p.write(maildomain)
-    monkeypatch.setattr(chatmaild.newemail, "mailname_path", str(p))
+    monkeypatch.setattr(chatmaild.newemail, "mail_domain_path", str(p))
     print_new_account()
     out, err = capsys.readouterr()
     lines = out.split("\n")

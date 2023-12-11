@@ -59,34 +59,34 @@ def add_subcommand(subparsers, func):
 
 
 def get_parser():
-    """Return an ArgumentParser for the 'cmdeploy' CLI."""
-    parser = argparse.ArgumentParser(description=description)
-    subparsers = parser.add_subparsers(
-        title="subcommands",
-    )
+    """Return an ArgumentParser for the 'cmdeploy' CLI"""
 
-    init_parser = add_subcommand(subparsers, init_cmd)
-    init_parser.add_argument(
+    parser = argparse.ArgumentParser(description=description)
+    subparsers = parser.add_subparsers(title="subcommands")
+
+    # find all subcommands in the module namespace
+    glob = globals()
+    for name, func in glob.items():
+        if name.endswith("_cmd"):
+            subparser = add_subcommand(subparsers, func)
+            addopts = glob.get(name + "_options")
+            if addopts is not None:
+                addopts(subparser)
+
+    return parser
+
+
+#
+# cmdeploy sub commands and options
+#
+
+
+def init_cmd_options(parser):
+    parser.add_argument(
         "chatmail_domain",
         action="store",
         help="fully qualified DNS domain name for your chatmail instance",
     )
-
-    run_parser = add_subcommand(subparsers, run_cmd)
-    run_parser.add_argument(
-        "--dry-run",
-        dest="dry_run",
-        action="store_true",
-        help="don't actually modify the server",
-    )
-
-    add_subcommand(subparsers, dns_cmd)
-    add_subcommand(subparsers, status_cmd)
-    add_subcommand(subparsers, bench_cmd)
-    add_subcommand(subparsers, test_cmd)
-    add_subcommand(subparsers, webdev_cmd)
-
-    return parser
 
 
 def init_cmd(args, out):
@@ -98,31 +98,78 @@ def init_cmd(args, out):
     out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
 
 
-def run_cmd(args, out, config):
+def run_cmd_options(parser):
+    parser.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="don't actually modify the server",
+    )
+
+
+def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
     popen_args = ["pyinfra"]
     if args.dry_run:
         popen_args.append("--dry")
-    popen_args.extend(["--ssh-user", "root", config.mailname])
+    popen_args.extend(["--ssh-user", "root", args.config.mailname])
     popen_args.append("deploy-chatmail/src/deploy_chatmail/deploy.py")
 
     out(f"{os.getcwd()} $ {' '.join(popen_args)}")
     env = os.environ.copy()
-    env["CHATMAIL_DOMAIN"] = config.mailname
+    env["CHATMAIL_DOMAIN"] = args.config.mailname
     subprocess.check_call(popen_args, env=env)
 
 
-def status_cmd(args, out, config):
-    """Display status for online chatmail instance."""
-
-    ssh = f"ssh root@{config.mailname}"
+def dns_cmd(args, out):
+    """Generate dns zone file."""
+    template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
+    ssh = f"ssh root@{args.config.mailname}"
 
     def shell_output(arg):
         return subprocess.check_output(arg, shell=True).decode()
 
-    out.green(f"chatmail domain: {config.mailname}")
-    if config.privacy_mail:
+    def read_dkim_entries(entry):
+        lines = []
+        for line in entry.split("\n"):
+            if line.startswith(";") or not line.strip():
+                continue
+            line = line.replace("\t", " ")
+            lines.append(line)
+        return "\n".join(lines)
+
+    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
+    acme_account_url = shell_output(f"{ssh} -- acmetool account-url")
+    dkim_entry = read_dkim_entries(shell_output(f"{ssh} -- opendkim-genzone -F"))
+
+    out(
+        f"[writing {args.config.mailname} zone data (using space as separator) to stdout output]",
+        green=True,
+    )
+    print(
+        template.read_text()
+        .format(
+            acme_account_url=acme_account_url,
+            email=f"root@{args.config.mailname}",
+            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+            chatmail_domain=args.config.mailname,
+            dkim_entry=dkim_entry,
+        )
+        .strip()
+    )
+
+
+def status_cmd(args, out):
+    """Display status for online chatmail instance."""
+
+    ssh = f"ssh root@{args.config.mailname}"
+
+    def shell_output(arg):
+        return subprocess.check_output(arg, shell=True).decode()
+
+    out.green(f"chatmail domain: {args.config.mailname}")
+    if args.config.privacy_mail:
         out.green("privacy settings: present")
     else:
         out.red("no privacy settings")
@@ -135,14 +182,7 @@ def status_cmd(args, out, config):
             print(line)
 
 
-def webdev_cmd(args, out, config):
-    """Run local web development loop for static web pages."""
-    from .www import main
-
-    main()
-
-
-def test_cmd(args, out, config):
+def test_cmd(args, out):
     """Run local and online tests."""
 
     tox = shutil.which("tox")
@@ -158,50 +198,18 @@ def test_cmd(args, out, config):
     return 0
 
 
-def bench_cmd(args, out, config):
+def bench_cmd(args, out):
     """Run benchmarks against an online chatmail instance."""
     pytest_path = shutil.which("pytest")
     benchmark = "tests/online/benchmark.py"
     subprocess.check_call([pytest_path, benchmark, "-vrx"])
 
 
-def read_dkim_entries(entry):
-    lines = []
-    for line in entry.split("\n"):
-        if line.startswith(";") or not line.strip():
-            continue
-        line = line.replace("\t", " ")
-        lines.append(line)
-    return "\n".join(lines)
+def webdev_cmd(args, out):
+    """Run local web development loop for static web pages."""
+    from .www import main
 
-
-def dns_cmd(args, out, config):
-    """Generate dns zone file."""
-    template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
-    ssh = f"ssh root@{config.mailname}"
-
-    def shell_output(arg):
-        return subprocess.check_output(arg, shell=True).decode()
-
-    out(f"[retrieving info by invoking {ssh}]", file=sys.stderr)
-    acme_account_url = shell_output(f"{ssh} -- acmetool account-url")
-    dkim_entry = read_dkim_entries(shell_output(f"{ssh} -- opendkim-genzone -F"))
-
-    out(
-        f"[writing {config.mailname} zone data (using space as separator) to stdout output]",
-        green=True,
-    )
-    print(
-        template.read_text()
-        .format(
-            acme_account_url=acme_account_url,
-            email=f"root@{config.mailname}",
-            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-            chatmail_domain=config.mailname,
-            dkim_entry=dkim_entry,
-        )
-        .strip()
-    )
+    main()
 
 
 def main(args=None):
@@ -217,7 +225,7 @@ def main(args=None):
             out.red(f"expecting {args.inipath} to exist, run init first?")
             raise SystemExit(1)
         try:
-            kwargs["config"] = read_config(args.inipath)
+            args.config = read_config(args.inipath)
         except Exception as ex:
             out.red(ex)
             raise SystemExit(1)

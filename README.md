@@ -25,10 +25,11 @@ DNS domain name (FQDN), for example `chat.example.org`.
         ssh root@CHATMAIL_DOMAIN 
    ```
 
-2. Install the `cmdeploy` command in a virtualenv 
+2. Install the `cmdeploy` command in a virtualenv and activate it
 
    ```
-    source scripts/initenv.sh
+    scripts/initenv.sh
+    . venv/bin/activate
    ```
   
 3. Create chatmail configuration file `chatmail.ini`:

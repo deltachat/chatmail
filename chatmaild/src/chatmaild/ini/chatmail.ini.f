@@ -21,10 +21,10 @@ max_mailbox_size = 100M
 delete_mails_after = 40d
 
 # minimum length a username must have
-username_min_length = 6
+username_min_length = 9
 
 # maximum length a username can have
-username_max_length = 20
+username_max_length = 9
 
 # minimum length a password must have
 password_min_length = 9

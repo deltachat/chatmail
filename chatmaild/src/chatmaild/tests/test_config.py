@@ -25,8 +25,8 @@ def test_read_config_testrun(make_config):
     assert config.max_user_send_per_minute == 60
     assert config.max_mailbox_size == "100M"
     assert config.delete_mails_after == "40d"
-    assert config.username_min_length == 6
-    assert config.username_max_length == 20
+    assert config.username_min_length == 9
+    assert config.username_max_length == 9
     assert config.password_min_length == 9
     assert config.passthrough_recipients == ["privacy@testrun.org"]
     assert config.passthrough_senders == []

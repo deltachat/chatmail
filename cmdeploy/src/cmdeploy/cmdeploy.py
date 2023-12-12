@@ -110,6 +110,15 @@ def status_cmd(args, out):
             print(line)
 
 
+def test_cmd_options(parser):
+    parser.add_argument(
+        "--slow",
+        dest="slow",
+        action="store_true",
+        help="also run slow tests",
+    )
+
+
 def test_cmd(args, out):
     """Run local and online tests for chatmail deployment.
 
@@ -121,9 +130,10 @@ def test_cmd(args, out):
         out.check_call(f"{sys.executable} -m pip install deltachat")
 
     pytest_path = shutil.which("pytest")
-    ret = out.run_ret(
-        [pytest_path, "cmdeploy/src/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
-    )
+    pytest_args = [pytest_path, "cmdeploy/src/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
+    if args.slow:
+        pytest_args.append("--slow")
+    ret = out.run_ret(pytest_args)
     return ret
 
 

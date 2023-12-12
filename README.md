@@ -25,55 +25,54 @@ DNS domain name (FQDN), for example `chat.example.org`.
         ssh root@CHATMAIL_DOMAIN 
    ```
 
-2. Install the `cmdeploy` command in a virtualenv and activate it
+2. Install the `cmdeploy` command in a virtualenv
 
    ```
     scripts/initenv.sh
-    . venv/bin/activate
    ```
   
 3. Create chatmail configuration file `chatmail.ini`:
 
    ```
-    cmdeploy init CHATMAIL_DOMAIN
+    scripts/cmdeploy init CHATMAIL_DOMAIN
    ```
 
 4. Deploy to the remote chatmail server:
 
    ```
-    cmdeploy run 
+    scripts/cmdeploy run
    ```
 
 5. To output a DNS zone file from which you can transfer DNS records 
    to your DNS provider:
 
    ```
-    cmdeploy dns
+    scripts/cmdeploy dns
    ```
 
 6. To check status of your remotely running chatmail service: 
 
    ```
-    cmdeploy status
+    scripts/cmdeploy status
    ```
 
 7. To test your chatmail service: 
 
    ```
-    cmdeploy test
+    scripts/cmdeploy test
    ```
 
 8. To benchmark your chatmail service: 
 
    ```
-    cmdeploy bench
+    scripts/cmdeploy bench
    ```
 
 ### Refining the web pages 
 
 
 ``` 
-    cmdeploy webdev 
+    scripts/cmdeploy webdev 
 ```
 
 This starts a local live development cycle for chatmail Web pages: 

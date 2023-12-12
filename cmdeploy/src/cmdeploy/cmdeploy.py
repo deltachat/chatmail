@@ -15,6 +15,7 @@ from pathlib import Path
 
 from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
+import cmdeploy.dns
 
 
 #
@@ -33,10 +34,29 @@ def init_cmd_options(parser):
 def init_cmd(args, out):
     """Initialize chatmail config file."""
     if args.inipath.exists():
-        out.red(f"Path exists, not modifying: {args.inipath}")
-        raise SystemExit(1)
-    write_initial_config(args.inipath, args.chatmail_domain)
-    out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
+        print(f"Path exists, not modifying: {args.inipath}")
+    else:
+        write_initial_config(args.inipath, args.chatmail_domain)
+        out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
+    ipaddress, _ = cmdeploy.dns.resolve(args.chatmail_domain)
+    mta_ipadress, _ = cmdeploy.dns.resolve("mta-sts." + args.chatmail_domain)
+    entries = 0
+    to_print = ["Now you should add %dnsentry% at your DNS provider:\n"]
+    if not ipaddress:
+        entries += 1
+        to_print.append(f"\tA\t{args.chatmail_domain}\t\t<your server's IPv4 address>")
+    if not mta_ipadress:
+        entries += 1
+        to_print.append(f"\tCNAME\tmta-sts.{args.chatmail_domain}\t{args.chatmail_domain}.")
+    if entries == 1:
+        singular = "this entry"
+    elif entries == 2:
+        singular = "these entries"
+    else:
+        return
+    to_print[0] = to_print[0].replace("%dnsentry%", singular)
+    for line in to_print:
+        print(line)
 
 
 def run_cmd_options(parser):

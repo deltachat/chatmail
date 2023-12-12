@@ -7,16 +7,18 @@
     {% endif %}
     <title>{{ config.mail_domain }} {{ pagename }}</title>
     <link rel="stylesheet" href="./water.css">
+    <link rel="stylesheet" href="./main.css">
     <link rel="icon" href="/logo.svg">
     <link rel=”mask-icon” href=”/logo.svg” color=”#000000">
 </head>
 <body>
-<div>
-    <a href="index.html">home</a> &nbsp;
-    <a href="info.html">more info</a> &nbsp;
-    <a href="privacy.html">privacy</a> &nbsp;
-    <a href="https://github.com/deltachat/chatmail">public development ↗</a>
-</div>
+<ul id="menu">
+    <li><a href="index.html">home</a></li>
+    <li><a href="info.html">info</a></li>
+    <li><a href="privacy.html">privacy</a></li>
+    <li><a href="https://github.com/deltachat/chatmail">public code ↗</a></li>
+    <li id="domain"><a href="index.html">{{ config.mail_domain }}</a></li>
+</ul>
 {{ markdown_html }}
 </body>
 </html>

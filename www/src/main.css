@@ -1,0 +1,19 @@
+
+#menu {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+#menu li {
+  display: inline-block;
+  padding-right: 0.5em;
+}
+
+#domain {
+  margin-left: auto;
+}
+
+#domain a {
+  color: #888;
+}

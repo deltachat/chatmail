@@ -15,7 +15,7 @@ from pathlib import Path
 
 from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
-import cmdeploy.dns
+from cmdeploy.dns import resolve
 
 
 #
@@ -38,8 +38,8 @@ def init_cmd(args, out):
     else:
         write_initial_config(args.inipath, args.chatmail_domain)
         out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
-    ipaddress, _ = cmdeploy.dns.resolve(args.chatmail_domain)
-    mta_ipadress, _ = cmdeploy.dns.resolve("mta-sts." + args.chatmail_domain)
+    ipaddress = resolve(args.chatmail_domain)
+    mta_ipadress = resolve("mta-sts." + args.chatmail_domain)
     entries = 0
     to_print = ["Now you should add %dnsentry% at your DNS provider:\n"]
     if not ipaddress:
@@ -47,7 +47,9 @@ def init_cmd(args, out):
         to_print.append(f"\tA\t{args.chatmail_domain}\t\t<your server's IPv4 address>")
     if not mta_ipadress:
         entries += 1
-        to_print.append(f"\tCNAME\tmta-sts.{args.chatmail_domain}\t{args.chatmail_domain}.")
+        to_print.append(
+            f"\tCNAME\tmta-sts.{args.chatmail_domain}\t{args.chatmail_domain}."
+        )
     if entries == 1:
         singular = "this entry"
     elif entries == 2:
@@ -57,6 +59,7 @@ def init_cmd(args, out):
     to_print[0] = to_print[0].replace("%dnsentry%", singular)
     for line in to_print:
         print(line)
+    print()
 
 
 def run_cmd_options(parser):
@@ -76,6 +79,12 @@ def run_cmd(args, out):
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
+
+    mail_domain = args.config.mail_domain
+    if not resolve(mail_domain) or not resolve(f"mta-sts.{mail_domain}"):
+        out.red("DNS entries missing. Show instructions with:\n")
+        print(f"\tcmdeploy init {mail_domain}\n")
+        sys.exit(1)
     out.check_call(cmd, env=env)
 
 

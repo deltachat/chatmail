@@ -7,15 +7,15 @@ dns_types = {
 }
 
 
-def resolve(domain: str) -> (str, str):
-    result, typ = get("A", domain), "A"
+def resolve(domain: str) -> str:
+    result = get("A", domain)
     if not result:
         result = get("CNAME", domain)
         if result:
-            result, typ = get("A", result[:-1]), "A"
+            result = get("A", result[:-1])
             if not result:
-                result, typ = get("AAAA", domain), "AAAA"
-    return result, typ
+                result = get("AAAA", domain)
+    return result
 
 
 def get(typ: str, domain: str) -> str:

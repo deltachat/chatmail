@@ -43,18 +43,18 @@ def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
 
 
 @pytest.mark.slow
-def test_exceed_rate_limit(cmsetup, gencreds, maildata):
+def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
     """Test that the per-account send-mail limit is exceeded."""
     user1, user2 = cmsetup.gen_users(2)
     mail = maildata(
         "encrypted.eml", from_addr=user1.addr, to_addr=user2.addr
     ).as_string()
-    for i in range(100):
+    for i in range(chatmail_config.max_user_send_per_minute + 5):
         print("Sending mail", str(i))
         try:
             user1.smtp.sendmail(user1.addr, [user2.addr], mail)
         except smtplib.SMTPException as e:
-            if i < 60:
+            if i < chatmail_config.max_user_send_per_minute:
                 pytest.fail(f"rate limit was exceeded too early with msg {i}")
             outcome = e.recipients[user2.addr]
             assert outcome[0] == 450

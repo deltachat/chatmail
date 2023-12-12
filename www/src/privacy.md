@@ -218,97 +218,16 @@ on these or possible objections.
 A deletion can be made
 directly in the Delta Chat email messenger.
 
-a) request information about your personal data processed by us
-in accordance with Art. 15 GDPR.
-In particular,
-you can request information about the processing purposes,
-the category of personal data,
-the categories of recipients to whom your data have been or will be disclosed,
-the planned storage period,
-the existence of a right to rectification, erasure, restriction of processing or objection,
-the existence of a right of complaint,
-the origin of your data if it has not been collected by us,
-as well as the existence of automated decision-making including profiling
-and, if applicable,
-meaningful information about its details;  
+If you have any questions or complaints, 
+please feel free to contact us by email:  
+{{ config.privacy_mail }}
 
-b) in accordance with Art. 16 of the GDPR,
-immediately request the correction
-of inaccurate or incomplete personal data stored by us;  
-
-c) pursuant to Article 17 of the GDPR,
-to request the erasure of your personal data stored by us,
-unless the processing is necessary
-for the exercise of the right to freedom of expression and information,
-for compliance with a legal obligation,
-for reasons of public interest,
-or for the establishment, exercise or defence of legal claims;  
-
-d) pursuant to Art. 18 GDPR,
-to request the restriction of the processing of your personal data,
-insofar as the accuracy of the data is disputed by you,
-the processing is unlawful,
-but you object to its erasure
-and we no longer require the data,
-but you need it for the assertion, exercise or defence of legal claims
-or you have objected to the processing pursuant to Art. 21 GDPR;  
-
-e) pursuant to Art. 20 GDPR,
-to receive your personal data that you have provided to us
-in a structured, common and machine-readable format
-or to request that it be transferred to another controller;  
-
-f) in accordance with Art. 7 (3) of the GDPR,
-to revoke your consent given to us at any time.
-This has the consequence that we may no longer continue the data processing
-based on this consent in the future; and  
-
-g) complain to a supervisory authority
-in accordance with Article 77 of the GDPR.
-As a rule,
-you can contact the supervisory authority of your usual place of residence
+As a rule, you can contact the supervisory authority of your usual place of residence
 or workplace
 or our registered office for this purpose.
 The supervisory authority responsible for our place of business
 is the `{{ config.privacy_supervisor }}`.
 
-If you have any questions or complaints, please feel free to contact us by email:  
-{{ config.privacy_mail }}
-
-
-### 5.1 Right to object
-
-If your personal data is processed on the basis of our legitimate interests
-in accordance with Art. 6 (1) lit. f GDPR,
-you have the right to object to the processing of your personal data
-in accordance with Art. 21 GDPR,
-provided that there are grounds for this based on your particular situation
-or the objection is directed against direct advertising.
-In the latter case,
-you have a general right of objection,
-which will be implemented by us
-without specifying a particular situation.
-
-If you wish to exercise your right of objection,
-simply send an e-mail to: {{ config.privacy_mail }}
-
-### 5.2 Right to withdraw
-
-If your personal data is processed on the basis of your consent
-in accordance with Art. 6 (1) lit. a GDPR
-(e.g. via the mailing list),
-you can withdraw your consent at any time
-and without any disadvantages.
-As a result,
-we may no longer continue the data processing
-that was based on this consent for the future.
-However,
-the withdrawal of your consent
-does not affect the lawfulness of the processing
-carried out on the basis of the consent until the withdrawal.
-
-If you wish to make use of your right of withdrawal,
-simply send an e-mail to: {{ config.privacy_mail }}
 
 ## 6. Validity of this privacy policy 
 

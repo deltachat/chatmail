@@ -28,6 +28,8 @@ DNS domain name (FQDN), for example `chat.example.org`.
 2. Install the `cmdeploy` command in a virtualenv
 
    ```
+    git clone https://github.com/deltachat/chatmail
+    cd chatmail
     scripts/initenv.sh
    ```
   

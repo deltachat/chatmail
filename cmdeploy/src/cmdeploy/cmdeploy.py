@@ -130,7 +130,15 @@ def test_cmd(args, out):
         out.check_call(f"{sys.executable} -m pip install deltachat")
 
     pytest_path = shutil.which("pytest")
-    pytest_args = [pytest_path, "cmdeploy/src/", "-n4", "-rs", "-x", "-vrx", "--durations=5"]
+    pytest_args = [
+        pytest_path,
+        "cmdeploy/src/",
+        "-n4",
+        "-rs",
+        "-x",
+        "-vrx",
+        "--durations=5",
+    ]
     if args.slow:
         pytest_args.append("--slow")
     ret = out.run_ret(pytest_args)

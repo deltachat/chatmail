@@ -10,13 +10,11 @@ from chatmaild.database import DBError
 
 
 def test_basic(db, example_config):
-    lookup_passdb(
-        db, example_config, "link2xt@chat.example.org", "Pieg9aeToe3eghuthe5u"
-    )
-    data = get_user_data(db, "link2xt@chat.example.org")
+    lookup_passdb(db, example_config, "asdf12345@chat.example.org", "q9mr3faue")
+    data = get_user_data(db, "asdf12345@chat.example.org")
     assert data
     data2 = lookup_passdb(
-        db, example_config, "link2xt@chat.example.org", "Pieg9aeToe3eghuthe5u"
+        db, example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
     )
     assert data == data2
 
@@ -24,10 +22,10 @@ def test_basic(db, example_config):
 def test_dont_overwrite_password_on_wrong_login(db, example_config):
     """Test that logging in with a different password doesn't create a new user"""
     res = lookup_passdb(
-        db, example_config, "newuser1@chat.example.org", "kajdlkajsldk12l3kj1983"
+        db, example_config, "newuser12@chat.example.org", "kajdlkajsldk12l3kj1983"
     )
     assert res["password"]
-    res2 = lookup_passdb(db, example_config, "newuser1@chat.example.org", "kajdlqweqwe")
+    res2 = lookup_passdb(db, example_config, "newuser12@chat.example.org", "kajdslqwe")
     # this function always returns a password hash, which is actually compared by dovecot.
     assert res["password"] == res2["password"]
 
@@ -37,9 +35,9 @@ def test_nocreate_file(db, monkeypatch, tmpdir, example_config):
     p.write("")
     monkeypatch.setattr(chatmaild.doveauth, "NOCREATE_FILE", str(p))
     lookup_passdb(
-        db, example_config, "newuser1@chat.example.org", "zequ0Aimuchoodaechik"
+        db, example_config, "newuser12@chat.example.org", "zequ0Aimuchoodaechik"
     )
-    assert not get_user_data(db, "newuser1@chat.example.org")
+    assert not get_user_data(db, "newuser12@chat.example.org")
 
 
 def test_db_version(db):
@@ -56,20 +54,18 @@ def test_too_high_db_version(db):
 def test_handle_dovecot_request(db, example_config):
     msg = (
         "Lshared/passdb/laksjdlaksjdlaksjdlk12j3l1k2j3123/"
-        "some42@chat.example.org\tsome42@chat.example.org"
+        "some42123@chat.example.org\tsome42123@chat.example.org"
     )
     res = handle_dovecot_request(msg, db, example_config)
     assert res
     assert res[0] == "O" and res.endswith("\n")
     userdata = json.loads(res[1:].strip())
-    assert userdata["home"] == "/home/vmail/some42@chat.example.org"
+    assert userdata["home"] == "/home/vmail/some42123@chat.example.org"
     assert userdata["uid"] == userdata["gid"] == "vmail"
     assert userdata["password"].startswith("{SHA512-CRYPT}")
 
 
-def test_50_concurrent_lookups_different_accounts(
-    db, gencreds, example_config, maildomain
-):
+def test_50_concurrent_lookups_different_accounts(db, gencreds, example_config):
     num_threads = 50
     req_per_thread = 5
     results = queue.Queue()

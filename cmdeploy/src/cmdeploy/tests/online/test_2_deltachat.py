@@ -34,7 +34,7 @@ class TestEndToEndDeltaChat:
             Example input: 100M, 2.4T, 500 K
             """
             units = {"B": 1, "K": 2**10, "M": 2**20, "G": 2**30, "T": 2**40}
-            size = re.sub(r'([KMGT])', r' \1', limit.upper())
+            size = re.sub(r"([KMGT])", r" \1", limit.upper())
             number, unit = [string.strip() for string in size.split()]
             return int(float(number) * units[unit])
 

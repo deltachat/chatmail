@@ -17,7 +17,7 @@ max_user_send_per_minute = 60
 # maximum mailbox size of a chatmail account
 max_mailbox_size = 100M
 
-# time after which seen mails are deleted
+# time after which mails are unconditionally deleted
 delete_mails_after = 40d
 
 # minimum length a username must have

@@ -155,7 +155,7 @@ def fmt_cmd_options(parser):
 
 
 def fmt_cmd(args, out):
-    """Run formattting fixes (fuff and black) on all chatmail source code."""
+    """Run formattting fixes (ruff and black) on all chatmail source code."""
 
     sources = [str(importlib.resources.files(x)) for x in ("chatmaild", "cmdeploy")]
     black_args = [shutil.which("black")]

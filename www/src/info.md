@@ -26,7 +26,7 @@ The first login sets your password.
 
 - You may send up to 60 messages per minute
 
-- Messages are unconditionally removed 40 days after arriving on the server
+- Seen messages are removed 40 days after arriving on the server
 
 - You can store up to [100MB messages on the server](https://delta.chat/en/help#what-happens-if-i-turn-on-delete-old-messages-from-server)
 

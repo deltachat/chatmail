@@ -21,3 +21,11 @@
 .banner {
   width: 100%;
 }
+
+.experimental {
+  margin: 3em 0;
+  padding: 1em;
+  border: 4px dashed red;
+  color: red;
+  font-weight: bold;
+}

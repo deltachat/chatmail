@@ -1,4 +1,5 @@
 import time
+import re
 import random
 import pytest
 
@@ -20,14 +21,24 @@ class TestEndToEndDeltaChat:
         assert msg2.text == "message0"
 
     @pytest.mark.slow
-    def test_exceed_quota(self, cmfactory, lp, tmpdir, remote):
+    def test_exceed_quota(self, cmfactory, lp, tmpdir, remote, chatmail_config):
         """This is a very slow test as it needs to upload >100MB of mail data
         before quota is exceeded, and thus depends on the speed of the upload.
         """
         ac1, ac2 = cmfactory.get_online_accounts(2)
         chat = cmfactory.get_accepted_chat(ac1, ac2)
 
-        quota = 1024 * 1024 * 100
+        def parse_size_limit(limit: str) -> int:
+            """Parse a size limit and return the number of bytes as integer.
+
+            Example input: 100M, 2.4T, 500 K
+            """
+            units = {"B": 1, "K": 2**10, "M": 2**20, "G": 2**30, "T": 2**40}
+            size = re.sub(r'([KMGT])', r' \1', limit.upper())
+            number, unit = [string.strip() for string in size.split()]
+            return int(float(number) * units[unit])
+
+        quota = parse_size_limit(chatmail_config.max_mailbox_size)
         attachsize = 1 * 1024 * 1024
         num_to_send = quota // attachsize + 2
         lp.sec(f"ac1: send {num_to_send} large files to ac2")

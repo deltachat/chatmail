@@ -1,5 +1,5 @@
 
-<img width="800px" src="collage-info.png"/>
+<img class="banner" src="collage-info.png"/>
 
 ## More information 
 

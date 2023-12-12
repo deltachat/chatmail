@@ -1,4 +1,4 @@
-<img width="800px" src="collage-privacy.png"/>
+<img class="banner" src="collage-privacy.png"/>
 
 # Privacy Policy for {{ config.mail_domain }} 
 

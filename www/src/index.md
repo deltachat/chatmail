@@ -1,5 +1,5 @@
 
-<img width="800px" src="collage-top.png"/>
+<img class="banner" src="collage-top.png"/>
 
 ## Dear [Delta Chat](https://get.delta.chat) users and newcomers, 
 

@@ -240,7 +240,10 @@ def gencreds(chatmail_config):
             user = "".join(
                 random.choices(alphanumeric, k=chatmail_config.username_max_length)
             )
-            user = f"ac{num}_{user}"[: chatmail_config.username_max_length]
+            if domain == "nine.testrun.org":
+                user = f"ac{num}_{user}"[:9]
+            else:
+                user = f"ac{num}_{user}"[: chatmail_config.username_max_length]
             password = "".join(
                 random.choices(alphanumeric, k=chatmail_config.password_min_length)
             )

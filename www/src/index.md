@@ -14,7 +14,6 @@ Welcome to instant, interoperable and [privacy-preserving](privacy.html) messagi
 
 💬 **Start** chatting with any Delta Chat contacts using [QR invite codes](https://delta.chat/en/help#howtoe2ee)
 
-<div class="experimental">Note: this is an experimental service</div>
-
-
-
+{% if config.mail_domain != "nine.testrun.org" %}
+<div class="experimental">Note: this is only a temporary development chatmail service</div>
+{% endif %}

@@ -39,22 +39,22 @@ class TestDC:
         ac1, ac2 = cmfactory.get_online_accounts(2)
         chat = cmfactory.get_accepted_chat(ac1, ac2)
 
-        def ping_pong():
+        def dc_ping_pong():
             chat.send_text("ping")
             msg = ac2.wait_next_incoming_message()
             msg.chat.send_text("pong")
             ac1.wait_next_incoming_message()
 
-        benchmark(ping_pong, 5)
+        benchmark(dc_ping_pong, 5)
 
     def test_send_10_receive_10(self, benchmark, cmfactory, lp):
         ac1, ac2 = cmfactory.get_online_accounts(2)
         chat = cmfactory.get_accepted_chat(ac1, ac2)
 
-        def send_10_receive_10():
+        def dc_send_10_receive_10():
             for i in range(10):
                 chat.send_text(f"hello {i}")
             for i in range(10):
                 ac2.wait_next_incoming_message()
 
-        benchmark(send_10_receive_10, 5)
+        benchmark(dc_send_10_receive_10, 5)

@@ -94,6 +94,7 @@ def dns_cmd(args, out):
     """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     ssh = f"ssh root@{args.config.mail_domain}"
+    get_ipv6 = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
 
     def read_dkim_entries(entry):
         lines = []
@@ -107,6 +108,7 @@ def dns_cmd(args, out):
     print("Checking your DKIM keys and DNS entries...")
     acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
+    ipv6 = out.shell_output(f"{ssh} -- {get_ipv6}").strip()
 
     to_print = []
     with open(template, "r") as f:
@@ -117,6 +119,7 @@ def dns_cmd(args, out):
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,
+                ipv6=ipv6,
             ).strip()
             if " MX " in line:
                 domain, typ, prio, value = line.split()
@@ -129,6 +132,11 @@ def dns_cmd(args, out):
                 domain, typ, prio, weight, port, value = line.split()
                 current = get("SRV", domain[:-1])
                 if current != f"{prio} {weight} {port} {value}":
+                    print(line)
+            if " AAAA " in line:
+                domain, value = line.split(" AAAA ")
+                current = get("AAAA", domain.strip()[:-1])
+                if current != value:
                     print(line)
             if " CAA " in line:
                 domain, value = line.split(" IN CAA ")

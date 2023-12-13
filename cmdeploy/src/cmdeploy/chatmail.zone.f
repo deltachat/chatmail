@@ -1,4 +1,5 @@
 {chatmail_domain}.                   MX 10 {chatmail_domain}.
+{chatmail_domain}.                   AAAA {ipv6}
 _submission._tcp.{chatmail_domain}.  SRV 0 1 587 {chatmail_domain}.
 _submissions._tcp.{chatmail_domain}. SRV 0 1 465 {chatmail_domain}.
 _imap._tcp.{chatmail_domain}.        SRV 0 1 143 {chatmail_domain}.

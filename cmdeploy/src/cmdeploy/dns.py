@@ -1,5 +1,6 @@
 import requests
 from ipaddress import ip_address
+from json.decoder import JSONDecodeError
 
 resolvers = [
     "https://dns.nextdns.io/dns-query",
@@ -31,7 +32,11 @@ class DNS:
                 headers={"accept": "application/dns-json"},
             )
 
-            j = r.json()
+            try:
+                j = r.json()
+            except JSONDecodeError:
+                # ignore DNS resolvers which don't give us JSON
+                continue
             if "Answer" in j:
                 for answer in j["Answer"]:
                     if answer["type"] == dns_types[typ]:
@@ -47,7 +52,11 @@ class DNS:
                 headers={"accept": "application/dns-json"},
             )
 
-            j = r.json()
+            try:
+                j = r.json()
+            except JSONDecodeError:
+                # ignore DNS resolvers which don't give us JSON
+                continue
             if "Answer" in j:
                 result = (0, None)
                 for answer in j["Answer"]:

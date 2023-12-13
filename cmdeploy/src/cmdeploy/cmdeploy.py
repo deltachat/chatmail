@@ -169,6 +169,12 @@ def dns_cmd(args, out):
                 dkim_entry=dkim_entry,
                 ipv6=ipv6,
             ).strip()
+            for typ in ["A", "AAAA", "CNAME", "CAA"]:
+                if f" {typ} " in line:
+                    domain, value = line.split(f" {typ} ")
+                    current = dns.get(typ, domain.strip()[:-1])
+                    if current != value:
+                        to_print.append(line)
             if " MX " in line:
                 domain, typ, prio, value = line.split()
                 current = dns.resolve_mx(domain[:-1])
@@ -180,16 +186,6 @@ def dns_cmd(args, out):
                 domain, typ, prio, weight, port, value = line.split()
                 current = dns.get("SRV", domain[:-1])
                 if current != f"{prio} {weight} {port} {value}":
-                    to_print.append(line)
-            if " AAAA " in line:
-                domain, value = line.split(" AAAA ")
-                current = dns.get("AAAA", domain.strip()[:-1])
-                if current != value:
-                    to_print.append(line)
-            if " CAA " in line:
-                domain, value = line.split(" IN CAA ")
-                current = dns.get("CAA", domain.strip()[:-1])
-                if current != value:
                     to_print.append(line)
             if "  TXT " in line:
                 domain, value = line.split(" TXT ")

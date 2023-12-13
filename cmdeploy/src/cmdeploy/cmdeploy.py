@@ -106,6 +106,7 @@ def dns_cmd(args, out):
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     ssh = f"ssh root@{args.config.mail_domain}"
     get_ipv6 = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
+    get_ipv4 = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
     dns = DNS()
 
     def read_dkim_entries(entry):
@@ -121,6 +122,15 @@ def dns_cmd(args, out):
     acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
     ipv6 = out.shell_output(f"{ssh} -- {get_ipv6}").strip()
+    ipv4 = out.shell_output(f"{ssh} -- {get_ipv4}").strip()
+
+    print()
+    if not dns.check_ptr_record(ipv4, args.config.mail_domain):
+        print(f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}.")
+        print("You can do so at your hosting provider (maybe this isn't your DNS provider).\n")
+    if not dns.check_ptr_record(ipv6, args.config.mail_domain):
+        print(f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}.")
+        print("You can do so at your hosting provider (maybe this isn't your DNS provider).\n")
 
     to_print = []
     with open(template, "r") as f:

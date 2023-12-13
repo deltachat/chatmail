@@ -1,4 +1,5 @@
 import requests
+from ipaddress import ip_address
 
 url = "https://dns.nextdns.io/dns-query"
 dns_types = {
@@ -9,6 +10,7 @@ dns_types = {
     "SRV": 33,
     "CAA": 257,
     "TXT": 16,
+    "PTR": 12,
 }
 
 
@@ -59,3 +61,8 @@ class DNS:
                 if not result:
                     result = self.get("AAAA", domain)
         return result
+
+    def check_ptr_record(self, ip: str, mail_domain) -> str:
+        """Check the PTR record for an IPv4 or IPv6 address."""
+        result = self.get("PTR", ip_address(ip).reverse_pointer)
+        return result[:-1] == mail_domain

@@ -92,6 +92,15 @@ def run_cmd(args, out):
     out.check_call(cmd, env=env)
 
 
+def dns_cmd_options(parser):
+    parser.add_argument(
+        "--zonefile",
+        dest="zonefile",
+        action="store_true",
+        help="print the whole zonefile for deploying directly",
+    )
+
+
 def dns_cmd(args, out):
     """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
@@ -115,7 +124,23 @@ def dns_cmd(args, out):
 
     to_print = []
     with open(template, "r") as f:
-        for line in f.readlines():
+        zonefile = (
+            f.read()
+            .format(
+                acme_account_url=acme_account_url,
+                email=f"root@{args.config.mail_domain}",
+                sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+                chatmail_domain=args.config.mail_domain,
+                dkim_entry=dkim_entry,
+                ipv6=ipv6,
+            )
+            .strip()
+        )
+        if args.zonefile:
+            print(zonefile)
+            return
+        started_dkim_parsing = False
+        for line in zonefile.splitlines():
             line = line.format(
                 acme_account_url=acme_account_url,
                 email=f"root@{args.config.mail_domain}",
@@ -128,24 +153,24 @@ def dns_cmd(args, out):
                 domain, typ, prio, value = line.split()
                 current = dns.resolve_mx(domain[:-1])
                 if not current[0]:
-                    print(line)
+                    to_print.append(line)
                 elif current[1] != value:
                     print(line.replace(prio, str(current[0] + 1)))
             if " SRV " in line:
                 domain, typ, prio, weight, port, value = line.split()
                 current = dns.get("SRV", domain[:-1])
                 if current != f"{prio} {weight} {port} {value}":
-                    print(line)
+                    to_print.append(line)
             if " AAAA " in line:
                 domain, value = line.split(" AAAA ")
                 current = dns.get("AAAA", domain.strip()[:-1])
                 if current != value:
-                    print(line)
+                    to_print.append(line)
             if " CAA " in line:
                 domain, value = line.split(" IN CAA ")
                 current = dns.get("CAA", domain.strip()[:-1])
                 if current != value:
-                    print(line)
+                    to_print.append(line)
             if "  TXT " in line:
                 domain, value = line.split(" TXT ")
                 current = dns.get("TXT", domain.strip()[:-1])
@@ -153,17 +178,18 @@ def dns_cmd(args, out):
                     if current.split("id=")[0] == value.split("id=")[0]:
                         continue
                 if current != value:
-                    print(line)
+                    to_print.append(line)
             if " IN TXT ( " in line:
-                line += f.read()
-                domain, data = line.split(" IN TXT ")
-                current = dns.get("TXT", domain.strip()[:-1]).replace('" "', '"\n "')
-                current = f"( {current} )"
-                if current.replace(";", "\\;") != data:
-                    print(
-                        "wrong:   '", current.replace(";", "\\;"), "'"
-                    )
-                    print("missing: '", data, "'")
+                started_dkim_parsing = True
+                dkim_lines = [line]
+            if started_dkim_parsing and line.startswith('"'):
+                dkim_lines.append(" " + line)
+        domain, data = "\n".join(dkim_lines).split(" IN TXT ")
+        current = dns.get("TXT", domain.strip()[:-1]).replace('" "', '"\n "')
+        current = f"( {current} )"
+        if current.replace(";", "\\;") != data:
+            to_print.append("current:  '" + current.replace(";", "\\;") + "'")
+            to_print.append("expected: '" + data + "'")
     if to_print:
         to_print.insert(
             0, "\nYou should configure the following DNS entries at your provider:\n"

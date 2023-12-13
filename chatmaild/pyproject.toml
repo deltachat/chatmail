@@ -8,6 +8,8 @@ version = "0.2"
 dependencies = [
   "aiosmtpd",
   "iniconfig",
+  "deltachat-rpc-server",
+  "deltachat-rpc-client",
 ]
 
 [tool.setuptools]
@@ -19,6 +21,7 @@ where = ['src']
 [project.scripts]
 doveauth = "chatmaild.doveauth:main"
 filtermail = "chatmaild.filtermail:main"
+echobot = "chatmaild.echo:main"
 
 [project.entry-points.pytest11]
 "chatmaild.testplugin" = "chatmaild.tests.plugin"

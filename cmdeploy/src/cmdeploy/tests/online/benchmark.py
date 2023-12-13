@@ -30,10 +30,10 @@ def test_login_smtp(benchmark, smtp, gencreds):
 
 class TestDC:
     def test_autoconfigure(self, benchmark, cmfactory):
-        def autoconfig_and_idle_ready():
+        def dc_autoconfig_and_idle_ready():
             cmfactory.get_online_accounts(1)
 
-        benchmark(autoconfig_and_idle_ready, 5)
+        benchmark(dc_autoconfig_and_idle_ready, 5)
 
     def test_ping_pong(self, benchmark, cmfactory):
         ac1, ac2 = cmfactory.get_online_accounts(2)

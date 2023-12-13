@@ -45,7 +45,7 @@ def init_cmd(args, out):
     if not ipaddress:
         entries += 1
         to_print.append(f"\tA\t{args.chatmail_domain}\t\t<your server's IPv4 address>")
-    if not mta_ipadress:
+    if not mta_ipadress or mta_ipadress != ipaddress:
         entries += 1
         to_print.append(
             f"\tCNAME\tmta-sts.{args.chatmail_domain}\t{args.chatmail_domain}."
@@ -81,7 +81,9 @@ def run_cmd(args, out):
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
 
     mail_domain = args.config.mail_domain
-    if not resolve(mail_domain) or not resolve(f"mta-sts.{mail_domain}"):
+    root_ip = resolve(mail_domain)
+    mta_ip = resolve(f"mta-sts.{mail_domain}")
+    if not root_ip or root_ip != mta_ip:
         out.red("DNS entries missing. Show instructions with:\n")
         print(f"\tcmdeploy init {mail_domain}\n")
         sys.exit(1)

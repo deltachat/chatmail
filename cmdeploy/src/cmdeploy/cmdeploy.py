@@ -52,8 +52,8 @@ def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
     env = os.environ.copy()
-    env["CHATMAIL_DOMAIN"] = args.config.mail_domain
-    deploy_path = "cmdeploy/src/cmdeploy/deploy.py"
+    env["CHATMAIL_INI"] = args.inipath
+    deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
     out.check_call(cmd, env=env)

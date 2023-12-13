@@ -96,7 +96,6 @@ def dns_cmd_options(parser):
     parser.add_argument(
         "--zonefile",
         dest="zonefile",
-        action="store_true",
         help="print the whole zonefile for deploying directly",
     )
 
@@ -156,7 +155,9 @@ def dns_cmd(args, out):
             .strip()
         )
         if args.zonefile:
-            print(zonefile)
+            with open(args.zonefile, "w+") as zf:
+                zf.write(zonefile)
+            print(f"DNS records successfully written to: {args.zonefile}")
             return
         started_dkim_parsing = False
         for line in zonefile.splitlines():

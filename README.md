@@ -46,8 +46,9 @@ Please substitute it with your own domain.
     scripts/cmdeploy run
    ```
 
-5. To output a DNS zone file from which you can transfer DNS records 
-   to your DNS provider:
+5. To show recommended DNS records which you can configure
+   at your DNS provider
+   (it can take some time until they are public):
 
    ```
     scripts/cmdeploy dns

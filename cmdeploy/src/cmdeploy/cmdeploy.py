@@ -143,6 +143,7 @@ def dns_cmd(args, out):
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,
                 ipv6=ipv6,
+                ipv4=ipv4,
             )
             .strip()
         )

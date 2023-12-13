@@ -15,7 +15,7 @@ from pathlib import Path
 
 from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
-from cmdeploy.dns import resolve
+from cmdeploy.dns import resolve, resolve_mx, get
 
 
 #
@@ -104,24 +104,62 @@ def dns_cmd(args, out):
             lines.append(line)
         return "\n".join(lines)
 
+    print("Checking your DKIM keys and DNS entries...")
     acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
-    out(
-        f"[writing {args.config.mail_domain} zone data (using space as separator) to stdout output]",
-        green=True,
-    )
-    print(
-        template.read_text()
-        .format(
-            acme_account_url=acme_account_url,
-            email=f"root@{args.config.mail_domain}",
-            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-            chatmail_domain=args.config.mail_domain,
-            dkim_entry=dkim_entry,
+    to_print = []
+    with open(template, "r") as f:
+        for line in f.readlines():
+            line = line.format(
+                acme_account_url=acme_account_url,
+                email=f"root@{args.config.mail_domain}",
+                sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+                chatmail_domain=args.config.mail_domain,
+                dkim_entry=dkim_entry,
+            ).strip()
+            if " MX " in line:
+                domain, typ, prio, value = line.split()
+                current = resolve_mx(domain[:-1])
+                if not current[0]:
+                    print(line)
+                elif current[1] != value:
+                    print(line.replace(prio, str(current[0] + 1)))
+            if " SRV " in line:
+                domain, typ, prio, weight, port, value = line.split()
+                current = get("SRV", domain[:-1])
+                if current != f"{prio} {weight} {port} {value}":
+                    print(line)
+            if " CAA " in line:
+                domain, value = line.split(" IN CAA ")
+                current = get("CAA", domain.strip()[:-1])
+                if current != value:
+                    print(line)
+            if "  TXT " in line:
+                domain, value = line.split(" TXT ")
+                current = get("TXT", domain.strip()[:-1])
+                if domain.startswith("_mta-sts."):
+                    if current.split("id=")[0] == value.split("id=")[0]:
+                        continue
+                if current != value:
+                    print(line)
+            if " IN TXT ( " in line:
+                line += f.read()
+                domain, data = line.split(" IN TXT ")
+                current = get("TXT", domain.strip()[:-1]).replace('" "', '"\n "')
+                current = f"( {current} )"
+                if current.replace(";", "\\;") != data:
+                    print(
+                        "wrong:   '", current.replace(";", "\\;"), "'"
+                    )
+                    print("missing: '", data, "'")
+    if to_print:
+        to_print.insert(
+            0, "\nYou should configure the following DNS entries at your provider:\n"
         )
-        .strip()
-    )
+        print("\n".join(to_print))
+    else:
+        out.green("Great! All your DNS entries are correct.")
 
 
 def status_cmd(args, out):

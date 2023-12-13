@@ -37,7 +37,7 @@ DNS domain name (FQDN), for example `chat.example.org`.
    Verify that SSH root login works:
 
    ```
-        ssh root@CHATMAIL_DOMAIN
+    ssh root@CHATMAIL_DOMAIN
    ```
 
 4. Deploy to the remote chatmail server:

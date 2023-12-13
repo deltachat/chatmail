@@ -45,11 +45,11 @@ def init_cmd(args, out):
     to_print = ["Now you should add %dnsentry% at your DNS provider:\n"]
     if not ipaddress:
         entries += 1
-        to_print.append(f"\tA\t{args.chatmail_domain}\t\t<your server's IPv4 address>")
+        to_print.append(f"\tA\t{args.chatmail_domain}.\t\t<your server's IPv4 address>")
     if not mta_ipadress or mta_ipadress != ipaddress:
         entries += 1
         to_print.append(
-            f"\tCNAME\tmta-sts.{args.chatmail_domain}\t{args.chatmail_domain}."
+            f"\tCNAME\tmta-sts.{args.chatmail_domain}.\t{args.chatmail_domain}."
         )
     if entries == 1:
         singular = "this entry"
@@ -126,11 +126,19 @@ def dns_cmd(args, out):
 
     print()
     if not dns.check_ptr_record(ipv4, args.config.mail_domain):
-        print(f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}.")
-        print("You can do so at your hosting provider (maybe this isn't your DNS provider).\n")
+        print(
+            f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}."
+        )
+        print(
+            "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
+        )
     if not dns.check_ptr_record(ipv6, args.config.mail_domain):
-        print(f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}.")
-        print("You can do so at your hosting provider (maybe this isn't your DNS provider).\n")
+        print(
+            f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}."
+        )
+        print(
+            "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
+        )
 
     to_print = []
     with open(template, "r") as f:

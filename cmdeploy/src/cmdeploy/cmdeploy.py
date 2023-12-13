@@ -173,7 +173,7 @@ def dns_cmd(args, out):
                 if f" {typ} " in line:
                     domain, value = line.split(f" {typ} ")
                     current = dns.get(typ, domain.strip()[:-1])
-                    if current != value:
+                    if current != value.strip():
                         to_print.append(line)
             if " MX " in line:
                 domain, typ, prio, value = line.split()

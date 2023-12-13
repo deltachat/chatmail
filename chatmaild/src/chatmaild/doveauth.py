@@ -46,13 +46,14 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
         len(localpart) > config.username_max_length
         or len(localpart) < config.username_min_length
     ):
-        logging.warning(
-            "localpart %s has to be between %s and %s chars long",
-            localpart,
-            config.username_min_length,
-            config.username_max_length,
-        )
-        return False
+        if localpart != "echo":
+            logging.warning(
+                "localpart %s has to be between %s and %s chars long",
+                localpart,
+                config.username_min_length,
+                config.username_max_length,
+            )
+            return False
 
     return True
 

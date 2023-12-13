@@ -127,14 +127,14 @@ def dns_cmd(args, out):
     print()
     if not dns.check_ptr_record(ipv4, args.config.mail_domain):
         print(
-            f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}."
+            f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}"
         )
         print(
             "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
         )
     if not dns.check_ptr_record(ipv6, args.config.mail_domain):
         print(
-            f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}."
+            f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}"
         )
         print(
             "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
@@ -207,11 +207,13 @@ def dns_cmd(args, out):
         current = dns.get("TXT", domain.strip()[:-1]).replace('" "', '"\n "')
         current = f"( {current} )"
         if current.replace(";", "\\;") != data:
-            to_print.append("current:  '" + current.replace(";", "\\;") + "'")
-            to_print.append("expected: '" + data + "'")
+            to_print.append(dkim_entry)
     if to_print:
         to_print.insert(
-            0, "\nYou should configure the following DNS entries at your provider:\n"
+            0, "You should configure the following DNS entries at your provider:\n"
+        )
+        to_print.append(
+            "\nIf you already configured the DNS entries, don't worry. It can take a while until they are public."
         )
         print("\n".join(to_print))
     else:

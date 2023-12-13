@@ -114,7 +114,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         )
 
 
-def _configure_opendkim(domain: str, dkim_selector: str) -> bool:
+def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
     """Configures OpenDKIM"""
     need_restart = False
 
@@ -359,13 +359,15 @@ def check_config(config):
     return config
 
 
-def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> None:
+def deploy_chatmail(config_path: Path) -> None:
     """Deploy a chat-mail instance.
 
-    :param mail_domain: domain part of your future email addresses
-    :param mail_server: the DNS name under which your mail server is reachable
-    :param dkim_selector:
+    :param config_path: path to chatmail.ini
     """
+    config = read_config(config_path)
+    check_config(config)
+    mail_domain = config.mail_domain
+
     from .www import build_webpages
 
     apt.update(name="apt update", cache_time=24 * 3600)
@@ -395,7 +397,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     )
 
     # Deploy acmetool to have TLS certificates.
-    deploy_acmetool(nginx_hook=True, domains=[mail_server, f"mta-sts.{mail_server}"])
+    deploy_acmetool(nginx_hook=True, domains=[mail_domain, f"mta-sts.{mail_domain}"])
 
     apt.packages(
         name="Install Postfix",
@@ -425,11 +427,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
         packages=["fcgiwrap"],
     )
 
-    pkg_root = importlib.resources.files(__package__)
-    chatmail_ini = pkg_root.joinpath("../../../chatmail.ini").resolve()
-    config = read_config(chatmail_ini)
-    check_config(config)
-    www_path = pkg_root.joinpath("../../../www").resolve()
+    www_path = importlib.resources.files(__package__).joinpath("../../../www").resolve()
 
     build_dir = www_path.joinpath("build")
     src_dir = www_path.joinpath("src")
@@ -440,7 +438,7 @@ def deploy_chatmail(mail_domain: str, mail_server: str, dkim_selector: str) -> N
     debug = False
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
-    opendkim_need_restart = _configure_opendkim(mail_domain, dkim_selector)
+    opendkim_need_restart = _configure_opendkim(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
 

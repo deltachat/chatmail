@@ -175,14 +175,8 @@ def show_dns(args, out):
         )
 
 
-def check_necessary_dns(args, out, msg, mail_domain):
-    """Check whether $mail_domain and mta-sts.$mail_domain resolve.
-
-    :param args: the argparse args object
-    :param out: an object to control CLI output
-    :param msg: a string like: "Now you should add %dnsentry% at your DNS provider:\n"
-    :param mail_domain: the mail_domain of the chatmail server
-    """
+def check_necessary_dns(out, mail_domain):
+    """Check whether $mail_domain and mta-sts.$mail_domain resolve."""
     dns = DNS(out, mail_domain)
     try:
         ipaddress = dns.resolve(mail_domain)
@@ -190,21 +184,18 @@ def check_necessary_dns(args, out, msg, mail_domain):
     except subprocess.CalledProcessError:
         ipaddress = None
         mta_ipadress = None
-    entries = 0
-    to_print = [msg]
+    to_print = []
     if not ipaddress:
-        entries += 1
         to_print.append(f"\tA\t{mail_domain}.\t\t<your server's IPv4 address>")
-    if not mta_ipadress or mta_ipadress != ipaddress:
-        entries += 1
+    elif not mta_ipadress or mta_ipadress != ipaddress:
         to_print.append(f"\tCNAME\tmta-sts.{mail_domain}.\t{mail_domain}.")
-    if entries == 1:
-        singular = "this entry"
-    elif entries == 2:
-        singular = "these entries"
+    if to_print:
+        to_print.insert(
+            0,
+            "\nFor chatmail to work, you need to configure this at your DNS provider:\n",
+        )
+        for line in to_print:
+            print(line)
+        print()
     else:
         return True
-    to_print[0] = to_print[0].replace("%dnsentry%", singular)
-    for line in to_print:
-        print(line)
-    print()

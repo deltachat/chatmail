@@ -84,6 +84,18 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         ],
     )
 
+    files.template(
+        src=importlib.resources.files(__package__).joinpath("metrics.cron.j2"),
+        dest="/etc/cron.d/chatmail-metrics",
+        user="root",
+        group="root",
+        mode="644",
+        config={
+            "mail_domain": config.mail_domain,
+            "execpath": f"{remote_venv_dir}/bin/chatmail-metrics",
+        },
+    )
+
     # install systemd units
     for fn in (
         "doveauth",

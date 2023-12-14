@@ -39,9 +39,7 @@ def init_cmd(args, out):
         write_initial_config(args.inipath, mail_domain)
         out.green(f"created config file for {mail_domain} in {args.inipath}")
     check_necessary_dns(
-        args,
         out,
-        "\nNow you should add %dnsentry% at your DNS provider:\n",
         mail_domain,
     )
 
@@ -59,9 +57,7 @@ def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
     mail_domain = args.config.mail_domain
     if not check_necessary_dns(
-        args,
         out,
-        "\nmissing DNS entries, please add %dnsentry% at your DNS provider:\n",
         mail_domain,
     ):
         sys.exit(1)

@@ -3,10 +3,11 @@ from ipaddress import ip_address
 
 
 class DNS:
-    def __init__(self, out, ssh):
+    def __init__(self, out, mail_domain):
         self.session = requests.Session()
         self.out = out
-        self.ssh = ssh
+        self.ssh = f"ssh root@{mail_domain}"
+        self.out.shell_output(f"{self.ssh} -- unbound-control flush {mail_domain}")
 
     def get_ipv4(self):
         cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"

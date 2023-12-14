@@ -33,12 +33,13 @@ def init_cmd_options(parser):
 
 def init_cmd(args, out):
     """Initialize chatmail config file."""
+    mail_domain = args.chatmail_domain
     if args.inipath.exists():
         print(f"Path exists, not modifying: {args.inipath}")
     else:
-        write_initial_config(args.inipath, args.chatmail_domain)
-        out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
-    dns = DNS(out, f"ssh root@{args.chatmail_domain}")
+        write_initial_config(args.inipath, mail_domain)
+        out.green(f"created config file for {mail_domain} in {args.inipath}")
+    dns = DNS(out, mail_domain)
     try:
         ipaddress = dns.resolve(args.chatmail_domain)
         mta_ipadress = dns.resolve("mta-sts." + args.chatmail_domain)
@@ -86,7 +87,7 @@ def run_cmd(args, out):
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
 
     mail_domain = args.config.mail_domain
-    dns = DNS()
+    dns = DNS(out, mail_domain)
     root_ip = dns.resolve(mail_domain)
     mta_ip = dns.resolve(f"mta-sts.{mail_domain}")
     if not root_ip or root_ip != mta_ip:
@@ -107,8 +108,9 @@ def dns_cmd_options(parser):
 def dns_cmd(args, out):
     """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
-    ssh = f"ssh root@{args.config.mail_domain}"
-    dns = DNS(out, ssh)
+    mail_domain = args.config.mail_domain
+    ssh = f"ssh root@{mail_domain}"
+    dns = DNS(out, mail_domain)
 
     def read_dkim_entries(entry):
         lines = []

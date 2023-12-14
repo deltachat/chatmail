@@ -1,4 +1,10 @@
-2 0 * * * dovecot doveadm expunge -A SAVEDBEFORE {{ config.delete_mails_after }} MAILBOX INBOX
-2 0 * * * dovecot doveadm expunge -A SAVEDBEFORE {{ config.delete_mails_after }} MAILBOX Deltachat
-2 0 * * * dovecot doveadm expunge -A SAVEDBEFORE {{ config.delete_mails_after }} MAILBOX Trash
-2 30 * * * dovecot doveadm purge -A
+# delete all mails after {{ config.delete_mails_after }} days, in the Inbox
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/cur -depth -mtime +{{ config.delete_mails_after }} -type f -delete
+# or in any IMAP subfolder
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/.*/cur -depth -mtime +{{ config.delete_mails_after }} -type f -delete
+# even if they are unseen
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/new -depth -mtime +{{ config.delete_mails_after }} -type f -delete
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/.*/new -depth -mtime +{{ config.delete_mails_after }} -type f -delete
+# or only temporary (but then they shouldn't be around after {{ config.delete_mails_after }} days anyway).
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/tmp -depth -mtime +{{ config.delete_mails_after }} -type f -delete
+2 0 * * * dovecot find /home/vmail/mail/{{ config.mail_domain }}/*/.*/tmp -depth -mtime +{{ config.delete_mails_after }} -type f -delete

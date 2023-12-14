@@ -36,29 +36,6 @@ def build_webpages(src_dir, build_dir, config):
         print(traceback.format_exc())
 
 
-def timespan_to_english(timespan):
-    val = int(timespan[:-1])
-    c = timespan[-1].lower()
-    match c:
-        case "y":
-            return f"{val} years"
-        case "m":
-            return f"{val} months"
-        case "w":
-            return f"{val} weeks"
-        case "d":
-            return f"{val} days"
-        case "h":
-            return f"{val} hours"
-        case "c":
-            return f"{val} seconds"
-        case _:
-            raise ValueError(
-                c
-                + " is not a valid time unit. Try [y]ears, [w]eeks, [d]ays, or [h]ours"
-            )
-
-
 def int_to_english(number):
     if number >= 0 and number <= 12:
         a = [
@@ -103,9 +80,6 @@ def _build_webpages(src_dir, build_dir, config):
             )
             render_vars["password_min_length"] = int_to_english(
                 config.password_min_length
-            )
-            render_vars["delete_mails_after"] = timespan_to_english(
-                config.delete_mails_after
             )
             target = build_dir.joinpath(path.stem + ".html")
 

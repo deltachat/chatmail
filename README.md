@@ -45,14 +45,9 @@ Please substitute it with your own domain.
    ```
     scripts/cmdeploy run
    ```
-
-5. To show recommended DNS records which you can configure
-   at your DNS provider
-   (it can take some time until they are public):
-
-   ```
-    scripts/cmdeploy dns
-   ```
+   This script will also show you additional DNS records
+   which you should configure at your DNS provider
+   (it can take some time until they are public).
 
 ### Other helpful commands:
 
@@ -60,6 +55,12 @@ To check the status of your remotely running chatmail service:
 
 ```
 scripts/cmdeploy status
+```
+
+To check whether your DNS records are correct:
+
+```
+scripts/cmdeploy dns
 ```
 
 To test whether your chatmail service is working correctly:

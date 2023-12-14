@@ -124,24 +124,11 @@ def dns_cmd(args, out):
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     ipv6 = dns.get_ipv6()
+    reverse_ipv6 = dns.check_ptr_record(ipv6, args.config.mail_domain)
     ipv4 = dns.get_ipv4()
-    print()
-    if not dns.check_ptr_record(ipv4, args.config.mail_domain):
-        print(
-            f"You should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}"
-        )
-        print(
-            "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
-        )
-    if not dns.check_ptr_record(ipv6, args.config.mail_domain):
-        print(
-            f"You should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}"
-        )
-        print(
-            "You can do so at your hosting provider (maybe this isn't your DNS provider).\n"
-        )
-
+    reverse_ipv4 = dns.check_ptr_record(ipv4, args.config.mail_domain)
     to_print = []
+
     with open(template, "r") as f:
         zonefile = (
             f.read()
@@ -179,11 +166,11 @@ def dns_cmd(args, out):
                         to_print.append(line)
             if " MX " in line:
                 domain, typ, prio, value = line.split()
-                current = dns.resolve_mx(domain[:-1])
-                if not current[0]:
+                current = dns.get(typ, domain[:-1])
+                if not current:
                     to_print.append(line)
-                elif current[1] != value:
-                    print(line.replace(prio, str(current[0] + 1)))
+                elif current.split()[1] != value:
+                    print(line.replace(prio, str(int(current[0]) + 1)))
             if " SRV " in line:
                 domain, typ, prio, weight, port, value = line.split()
                 current = dns.get("SRV", domain[:-1])
@@ -207,6 +194,7 @@ def dns_cmd(args, out):
         current = f"( {current} )"
         if current.replace(";", "\\;") != data:
             to_print.append(dkim_entry)
+
     if to_print:
         to_print.insert(
             0, "You should configure the following DNS entries at your provider:\n"
@@ -217,6 +205,21 @@ def dns_cmd(args, out):
         print("\n".join(to_print))
     else:
         out.green("Great! All your DNS entries are correct.")
+
+    if not reverse_ipv4:
+        print(
+            f"\nYou should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}"
+        )
+        print(
+            "You can do so at your hosting provider (maybe this isn't your DNS provider)."
+        )
+    if not reverse_ipv6:
+        print(
+            f"\nYou should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}"
+        )
+        print(
+            "You can do so at your hosting provider (maybe this isn't your DNS provider)."
+        )
 
 
 def status_cmd(args, out):

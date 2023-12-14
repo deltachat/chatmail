@@ -1,22 +1,5 @@
 import requests
 from ipaddress import ip_address
-from json.decoder import JSONDecodeError
-
-resolvers = [
-    "https://dns.nextdns.io/dns-query",
-    "https://dns.google/resolve",
-    "https://cloudflare-dns.com/dns-query",
-]
-dns_types = {
-    "A": 1,
-    "AAAA": 28,
-    "CNAME": 5,
-    "MX": 15,
-    "SRV": 33,
-    "CAA": 257,
-    "TXT": 16,
-    "PTR": 12,
-}
 
 
 class DNS:
@@ -35,47 +18,12 @@ class DNS:
 
     def get(self, typ: str, domain: str) -> str:
         """Get a DNS entry"""
-        for url in resolvers:
-            r = self.session.get(
-                url,
-                params={"name": domain, "type": typ},
-                headers={"accept": "application/dns-json"},
-            )
-
-            try:
-                j = r.json()
-            except JSONDecodeError:
-                # ignore DNS resolvers which don't give us JSON
-                continue
-            if "Answer" in j:
-                for answer in j["Answer"]:
-                    if answer["type"] == dns_types[typ]:
-                        return answer["data"]
-        return ""
-
-    def resolve_mx(self, domain: str) -> (str, str):
-        """Resolve an MX entry"""
-        for url in resolvers:
-            r = self.session.get(
-                url,
-                params={"name": domain, "type": "MX"},
-                headers={"accept": "application/dns-json"},
-            )
-
-            try:
-                j = r.json()
-            except JSONDecodeError:
-                # ignore DNS resolvers which don't give us JSON
-                continue
-            if "Answer" in j:
-                result = (0, None)
-                for answer in j["Answer"]:
-                    if answer["type"] == dns_types["MX"]:
-                        prio, server_name = answer["data"].split()
-                        if int(prio) > result[0]:
-                            result = (int(prio), server_name)
-                return result
-        return None, None
+        dig_result = self.out.shell_output(f"{self.ssh} -- dig {typ} {domain}")
+        line_num = 0
+        for line in dig_result.splitlines():
+            line_num += 1
+            if line.strip() == ";; ANSWER SECTION:":
+                return dig_result.splitlines()[line_num].split("\t")[-1]
 
     def resolve(self, domain: str) -> str:
         result = self.get("A", domain)

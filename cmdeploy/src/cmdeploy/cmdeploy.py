@@ -38,9 +38,13 @@ def init_cmd(args, out):
     else:
         write_initial_config(args.inipath, args.chatmail_domain)
         out.green(f"created config file for {args.chatmail_domain} in {args.inipath}")
-    dns = DNS()
-    ipaddress = dns.resolve(args.chatmail_domain)
-    mta_ipadress = dns.resolve("mta-sts." + args.chatmail_domain)
+    dns = DNS(out, f"ssh root@{args.chatmail_domain}")
+    try:
+        ipaddress = dns.resolve(args.chatmail_domain)
+        mta_ipadress = dns.resolve("mta-sts." + args.chatmail_domain)
+    except subprocess.CalledProcessError:
+        ipaddress = None
+        mta_ipadress = None
     entries = 0
     to_print = ["Now you should add %dnsentry% at your DNS provider:\n"]
     if not ipaddress:
@@ -104,9 +108,7 @@ def dns_cmd(args, out):
     """Generate dns zone file."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     ssh = f"ssh root@{args.config.mail_domain}"
-    get_ipv6 = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
-    get_ipv4 = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
-    dns = DNS()
+    dns = DNS(out, ssh)
 
     def read_dkim_entries(entry):
         lines = []
@@ -120,9 +122,9 @@ def dns_cmd(args, out):
     print("Checking your DKIM keys and DNS entries...")
     acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
-    ipv6 = out.shell_output(f"{ssh} -- {get_ipv6}").strip()
-    ipv4 = out.shell_output(f"{ssh} -- {get_ipv4}").strip()
 
+    ipv6 = dns.get_ipv6()
+    ipv4 = dns.get_ipv4()
     print()
     if not dns.check_ptr_record(ipv4, args.config.mail_domain):
         print(

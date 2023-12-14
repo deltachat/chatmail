@@ -42,7 +42,7 @@ The first login sets your password.
 
 - You may send up to {{ config.max_user_send_per_minute }} messages per minute.
 
-- Messages are unconditionally removed {{ delete_mails_after }} after arriving on the server
+- Messages are unconditionally removed {{ config.delete_mails_after }} days after arriving on the server
 
 - You can store up to [{{ config.max_mailbox_size }} messages on the server](https://delta.chat/en/help#what-happens-if-i-turn-on-delete-old-messages-from-server).
 

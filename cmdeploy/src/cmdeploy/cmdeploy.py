@@ -215,8 +215,9 @@ class Out:
         color = "red" if red else ("green" if green else None)
         print(colored(msg, color), file=file)
 
-    def shell_output(self, arg):
-        self(f"[$ {arg}]", file=sys.stderr)
+    def shell_output(self, arg, no_print=False):
+        if not no_print:
+            self(f"[$ {arg}]", file=sys.stderr)
         return subprocess.check_output(arg, shell=True).decode()
 
     def check_call(self, arg, env=None, quiet=False):

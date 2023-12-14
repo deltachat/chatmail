@@ -153,7 +153,7 @@ def show_dns(args, out):
             0, "You should configure the following DNS entries at your provider:\n"
         )
         to_print.append(
-            "\nIf you already configured the DNS entries, don't worry. It can take a while until they are public."
+            "\nIf you already configured the DNS entries, wait a bit until the DNS entries propagate to the Internet."
         )
         print("\n".join(to_print))
     else:

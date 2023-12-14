@@ -62,7 +62,7 @@ we process the following data and details:
 Creating an account happens in one of two ways on our mail servers: 
 
 - with a QR invitation token 
-  which is scanned using the DeltaChat app
+  which is scanned using the Delta Chat app
   and then the account is created.
 
 - by letting Delta Chat otherwise create an account 

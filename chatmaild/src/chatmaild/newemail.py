@@ -4,16 +4,22 @@
 
 import json
 import random
+import secrets
+import string
 
 from chatmaild.config import read_config, Config
 
 CONFIG_PATH = "/usr/local/lib/chatmaild/chatmail.ini"
+ALPHANUMERIC = string.ascii_lowercase + string.digits
+ALPHANUMERIC_PUNCT = string.ascii_letters + string.digits + string.punctuation
 
 
 def create_newemail_dict(config: Config):
-    alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
-    user = "".join(random.choices(alphanumeric, k=config.username_min_length))
-    password = "".join(random.choices(alphanumeric, k=config.password_min_length + 3))
+    user = "".join(random.choices(ALPHANUMERIC, k=config.username_min_length))
+    password = "".join(
+        secrets.choice(ALPHANUMERIC_PUNCT)
+        for _ in range(config.password_min_length + 3)
+    )
     return dict(email=f"{user}@{config.mail_domain}", password=f"{password}")
 
 

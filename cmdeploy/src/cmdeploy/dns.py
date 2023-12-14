@@ -50,8 +50,11 @@ class DNS:
 
     def check_ptr_record(self, ip: str, mail_domain) -> str:
         """Check the PTR record for an IPv4 or IPv6 address."""
-        result = self.get("PTR", ip_address(ip).reverse_pointer)
-        return result[:-1] == mail_domain
+        result = self.get("-x", ip)
+        if ip_address(ip).version == 6:
+            result = result.split()[-1]
+        if result[:-1] == mail_domain:
+            return result
 
 
 def show_dns(args, out):
@@ -74,9 +77,9 @@ def show_dns(args, out):
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     ipv6 = dns.get_ipv6()
-    reverse_ipv6 = dns.check_ptr_record(ipv6, args.config.mail_domain)
+    reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
     ipv4 = dns.get_ipv4()
-    reverse_ipv4 = dns.check_ptr_record(ipv4, args.config.mail_domain)
+    reverse_ipv4 = dns.check_ptr_record(ipv4, mail_domain)
     to_print = []
 
     with open(template, "r") as f:

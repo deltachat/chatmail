@@ -20,8 +20,18 @@ dns_types = {
 
 
 class DNS:
-    def __init__(self):
+    def __init__(self, out, ssh):
         self.session = requests.Session()
+        self.out = out
+        self.ssh = ssh
+
+    def get_ipv4(self):
+        cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
+        return self.out.shell_output(f"{self.ssh} -- {cmd}").strip()
+
+    def get_ipv6(self):
+        cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
+        return self.out.shell_output(f"{self.ssh} -- {cmd}").strip()
 
     def get(self, typ: str, domain: str) -> str:
         """Get a DNS entry"""

@@ -41,6 +41,10 @@ http {
 			try_files $uri $uri/ =404;
 		}
 
+                location /metrics {
+                        default_type text/plain;
+                }
+
         # add cgi-bin support
         include /usr/share/doc/fcgiwrap/examples/nginx.conf;
 	}

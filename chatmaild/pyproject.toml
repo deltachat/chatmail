@@ -22,6 +22,7 @@ where = ['src']
 doveauth = "chatmaild.doveauth:main"
 filtermail = "chatmaild.filtermail:main"
 echobot = "chatmaild.echo:main"
+chatmail-metrics = "chatmaild.metrics:main"
 
 [project.entry-points.pytest11]
 "chatmaild.testplugin" = "chatmaild.tests.plugin"

@@ -15,8 +15,8 @@ after which the initially specified password is required for using them.
 
 ## Deploying your own chatmail server 
 
-We subsequently use `CHATMAIL_DOMAIN` as a placeholder for your fully qualified 
-DNS domain name (FQDN), for example `chat.example.org`.
+We use `chat.example.org` as the chatmail domain in the following steps. 
+Please substitute it with your own domain. 
 
 1. Install the `cmdeploy` command in a virtualenv
 
@@ -25,19 +25,19 @@ DNS domain name (FQDN), for example `chat.example.org`.
     cd chatmail
     scripts/initenv.sh
    ```
-  
+
 2. Create chatmail configuration file `chatmail.ini`:
 
    ```
-    scripts/cmdeploy init CHATMAIL_DOMAIN
+    scripts/cmdeploy init chat.example.org  # <-- use your domain 
    ```
 
-3. Setup first DNS records for your `CHATMAIL_DOMAIN`,
+3. Setup first DNS records for your chatmail domain, 
    according to the hints provided by `cmdeploy init`.
    Verify that SSH root login works:
 
    ```
-    ssh root@CHATMAIL_DOMAIN
+    ssh root@chat.example.org   # <-- use your domain 
    ```
 
 4. Deploy to the remote chatmail server:
@@ -104,7 +104,7 @@ to automatically install all chatmail components on a server.
 ### Home page and getting started for users
 
 `cmdeploy run` also creates default static Web pages and deploys them
-to an nginx web server under `https://CHATMAIL_DOMAIN`.
+to a nginx web server with: 
 
 - a default `index.html` along with a QR code that users can click to
   create accounts on your chatmail provider,

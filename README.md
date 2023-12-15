@@ -75,7 +75,7 @@ scripts/cmdeploy bench
 
 ## Overview of this repository
 
-This repository drives the development of "chatmail instances",
+This repository drives the development of chatmail services, 
 comprised of minimal setups of
 
 - [postfix smtp server](https://www.postfix.org)
@@ -91,7 +91,7 @@ as well as custom services that are integrated with these two:
   to send mails for them.
 
 - `chatmaild/src/chatmaild/filtermail.py` prevents
-  unencrypted e-mail from leaving the chatmail instance
+  unencrypted e-mail from leaving the chatmail service
   and is integrated into postfix's outbound mail pipelines.
 
 There is also the `cmdeploy/src/cmdeploy/cmdeploy.py` command line tool

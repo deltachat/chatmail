@@ -48,12 +48,4 @@ http {
         # add cgi-bin support
         include /usr/share/doc/fcgiwrap/examples/nginx.conf;
 	}
-    server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-        server_name _;
-
-        return 301 https://$host$request_uri;
-    }
 }
-

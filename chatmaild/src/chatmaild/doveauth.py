@@ -102,12 +102,17 @@ def handle_dovecot_request(msg, db, config: Config):
     short_command = msg[0]
     if short_command == "L":  # LOOKUP
         parts = msg[1:].split("\t")
-        keyname, user = parts[:2]
+
+        # Dovecot <2.3.17 has only one part,
+        # do not attempt to read any other parts for compatibility.
+        keyname = parts[0]
+
         namespace, type, *args = keyname.split("/")
         reply_command = "F"
         res = ""
         if namespace == "shared":
             if type == "userdb":
+                user = args[0]
                 if user.endswith(f"@{config.mail_domain}"):
                     res = lookup_userdb(db, user)
                 if res:
@@ -115,6 +120,7 @@ def handle_dovecot_request(msg, db, config: Config):
                 else:
                     reply_command = "N"
             elif type == "passdb":
+                user = args[1]
                 if user.endswith(f"@{config.mail_domain}"):
                     res = lookup_passdb(db, config, user, cleartext_password=args[0])
                 if res:

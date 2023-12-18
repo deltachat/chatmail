@@ -1,6 +1,6 @@
 import importlib.resources
 
-from pyinfra.operations import apt, files, server
+from pyinfra.operations import apt, files, systemd, server
 
 
 def deploy_acmetool(nginx_hook=False, email="", domains=[]):
@@ -44,6 +44,23 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         user="root",
         group="root",
         mode="644",
+    )
+
+    service_file = files.put(
+        src=importlib.resources.files(__package__).joinpath(
+            "acmetool-redirector.service"
+        ),
+        dest="/etc/systemd/system/acmetool-redirector.service",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    systemd.service(
+        name="Setup acmetool-redirector service",
+        service="acmetool-redirector.service",
+        running=True,
+        enabled=True,
+        restarted=service_file.changed,
     )
 
     server.shell(

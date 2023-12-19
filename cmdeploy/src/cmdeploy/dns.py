@@ -47,10 +47,11 @@ class DNS:
     def check_ptr_record(self, ip: str, mail_domain) -> str:
         """Check the PTR record for an IPv4 or IPv6 address."""
         result = self.get("-x", ip)
-        if ip_address(ip).version == 6:
-            result = result.split()[-1]
-        if result[:-1] == mail_domain:
-            return result
+        if result:
+            if ip_address(ip).version == 6:
+                result = result.split()[-1]
+            if result[:-1] == mail_domain:
+                return result
 
 
 def show_dns(args, out):
@@ -101,7 +102,7 @@ def show_dns(args, out):
                 zf.write(zonefile)
                 print(f"DNS records successfully written to: {args.zonefile}")
             return
-        except AttributeError:
+        except TypeError:
             pass
         started_dkim_parsing = False
         for line in zonefile.splitlines():
@@ -135,8 +136,9 @@ def show_dns(args, out):
                 domain, value = line.split(" TXT ")
                 current = dns.get("TXT", domain.strip()[:-1])
                 if domain.startswith("_mta-sts."):
-                    if current.split("id=")[0] == value.split("id=")[0]:
-                        continue
+                    if current:
+                        if current.split("id=")[0] == value.split("id=")[0]:
+                            continue
                 if current != value:
                     to_print.append(line)
             if " IN TXT ( " in line:
@@ -145,9 +147,12 @@ def show_dns(args, out):
             if started_dkim_parsing and line.startswith('"'):
                 dkim_lines.append(" " + line)
         domain, data = "\n".join(dkim_lines).split(" IN TXT ")
-        current = dns.get("TXT", domain.strip()[:-1]).replace('" "', '"\n "')
-        current = f"( {current} )"
-        if current.replace(";", "\\;") != data:
+        current = dns.get("TXT", domain.strip()[:-1])
+        if current:
+            current = "( %s )" % (current.replace('" "', '"\n "'))
+            if current.replace(";", "\\;") != data:
+                to_print.append(dkim_entry)
+        else:
             to_print.append(dkim_entry)
 
     if to_print:
@@ -190,8 +195,6 @@ def check_necessary_dns(out, mail_domain):
     if not (ipv4 or ipv6):
         to_print.append(f"\t{mail_domain}.\t\t\tA<your server's IPv4 address>")
     if not mta_ip or not (mta_ip == ipv4 or mta_ip == ipv6):
-        #print(mta_entry, mta_ip)
-        #print(ipv4, ipv6)
         to_print.append(f"\tmta-sts.{mail_domain}.\tCNAME\t{mail_domain}.")
     if to_print:
         to_print.insert(

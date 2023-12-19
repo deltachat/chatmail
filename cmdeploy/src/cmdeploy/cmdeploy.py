@@ -211,10 +211,13 @@ class Out:
         color = "red" if red else ("green" if green else None)
         print(colored(msg, color), file=file)
 
-    def shell_output(self, arg, no_print=False):
+    def shell_output(self, arg, no_print=False, timeout=10):
         if not no_print:
             self(f"[$ {arg}]", file=sys.stderr)
-        return subprocess.check_output(arg, shell=True).decode()
+            output = subprocess.STDOUT
+        else:
+            output = subprocess.DEVNULL
+        return subprocess.check_output(arg, shell=True, timeout=timeout, stderr=output).decode()
 
     def check_call(self, arg, env=None, quiet=False):
         if not quiet:

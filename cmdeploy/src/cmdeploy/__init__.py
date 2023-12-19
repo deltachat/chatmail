@@ -399,7 +399,11 @@ def deploy_chatmail(config_path: Path) -> None:
     # to use 127.0.0.1 as the resolver.
     apt.packages(
         name="Install unbound",
-        packages="unbound",
+        packages=["unbound", "unbound-anchor"],
+    )
+    server.shell(
+        name="Generate root keys for validating DNSSEC",
+        commands=["unbound-anchor -a /var/lib/unbound/root.key || true"],
     )
     systemd.service(
         name="Start and enable unbound",

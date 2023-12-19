@@ -12,6 +12,7 @@ from pyinfra import host
 from pyinfra.operations import apt, files, server, systemd, pip
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
+from pyinfra.facts.server import LinuxDistribution
 from .acmetool import deploy_acmetool
 
 from chatmaild.config import read_config, Config
@@ -399,12 +400,18 @@ def deploy_chatmail(config_path: Path) -> None:
     # to use 127.0.0.1 as the resolver.
     apt.packages(
         name="Install unbound",
-        packages=["unbound", "unbound-anchor"],
+        packages=["unbound"],
     )
-    server.shell(
-        name="Generate root keys for validating DNSSEC",
-        commands=["unbound-anchor -a /var/lib/unbound/root.key || true"],
-    )
+    if host.get_fact(LinuxDistribution).get("name") == "Debian":
+        # on Debian, the root key doesn't seem to be auto-generated during apt install unbound.
+        apt.packages(
+            name="Install unbound-anchor for generating DNSSEC validation root key",
+            packages=["unbound-anchor"],
+        )
+        server.shell(
+            name="Generate root keys for validating DNSSEC",
+            commands=["unbound-anchor -a /var/lib/unbound/root.key || true"],
+        )
     systemd.service(
         name="Start and enable unbound",
         service="unbound.service",

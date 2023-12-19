@@ -1,5 +1,3 @@
-import ipaddress
-
 import requests
 import importlib
 import subprocess
@@ -71,7 +69,11 @@ def show_dns(args, out):
         return "\n".join(lines)
 
     print("Checking your DKIM keys and DNS entries...")
-    acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
+    try:
+        acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
+    except subprocess.CalledProcessError:
+        print("Please run `cmdeploy run` first.")
+        return
     dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     ipv6 = dns.get_ipv6()

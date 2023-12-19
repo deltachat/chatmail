@@ -21,7 +21,7 @@ class DNS:
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             str(e)
             if warn_reachable and ("exit status 255" in str(e) or "timed out" in str(e)):
-                print(f"Warning: can't reach the server with: {self.ssh[:-4]}")
+                self.out.red(f"\nWarning: can't reach the server with: {self.ssh[:-4]}")
             if retry_local:
                 return self.out.shell_output(f"{cmd}", no_print=True)
             if e == subprocess.CalledProcessError:
@@ -205,5 +205,5 @@ def check_necessary_dns(out, mail_domain):
             print(line)
         print()
     else:
-        print("All necessary DNS entries seem to be set.")
+        print("\nAll necessary DNS entries seem to be set.")
         return True

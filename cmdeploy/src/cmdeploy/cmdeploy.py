@@ -69,7 +69,7 @@ def run_cmd(args, out):
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
 
     out.check_call(cmd, env=env)
-    show_dns(args, out)
+    print("Deploy completed, call `cmdeploy dns` next.")
 
 
 def dns_cmd_options(parser):

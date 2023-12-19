@@ -205,5 +205,5 @@ def check_necessary_dns(out, mail_domain):
             print(line)
         print()
     else:
-        print("\nAll necessary DNS entries seem to be set.")
+        dns.out.green("\nAll necessary DNS entries seem to be set.")
         return True

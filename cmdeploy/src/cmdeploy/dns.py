@@ -1,3 +1,5 @@
+import sys
+
 import requests
 import importlib
 import subprocess
@@ -11,19 +13,21 @@ class DNS:
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
         try:
-            self.shell(f"unbound-control flush {mail_domain}", retry_local=False, warn_reachable=True)
+            self.shell(f"unbound-control flush {mail_domain}", retry_local=False)
         except subprocess.CalledProcessError:
             pass
 
-    def shell(self, cmd, retry_local=False, warn_reachable=False):
+    def shell(self, cmd, retry_local=False):
         try:
             return self.out.shell_output(f"{self.ssh}{cmd}", no_print=True, timeout=3)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             str(e)
-            if warn_reachable and ("exit status 255" in str(e) or "timed out" in str(e)):
-                self.out.red(f"\nWarning: can't reach the server with: {self.ssh[:-4]}")
             if retry_local:
                 return self.out.shell_output(f"{cmd}", no_print=True)
+            else:
+                if "exit status 255" in str(e) or "timed out" in str(e):
+                    self.out.red(f"\nError: can't reach the server with: {self.ssh[:-4]}")
+                    sys.exit(1)
             if e == subprocess.CalledProcessError:
                 raise
 

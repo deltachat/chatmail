@@ -6,7 +6,6 @@ it will echo back any message that has non-empty text and also supports the /hel
 import logging
 import os
 import sys
-from threading import Thread
 
 from deltachat_rpc_client import Bot, DeltaChat, EventType, Rpc, events
 
@@ -76,10 +75,7 @@ def main():
             config = read_config(sys.argv[1])
             password = create_newemail_dict(config).get("password")
             email = "echo@" + config.mail_domain
-            configure_thread = Thread(
-                target=bot.configure, kwargs={"email": email, "password": password}
-            )
-            configure_thread.start()
+            bot.configure(email, password)
         bot.run_forever()
 
 

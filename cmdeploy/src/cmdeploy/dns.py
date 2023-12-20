@@ -166,17 +166,19 @@ def show_dns(args, out):
     else:
         out.green("Great! All your DNS entries are correct.")
 
+    to_print = []
     if not reverse_ipv4:
-        print(
-            f"\nYou should add a PTR/reverse DNS entry for {ipv4}, with the value: {args.config.mail_domain}"
-        )
-        print(
-            "You can do so at your hosting provider (maybe this isn't your DNS provider)."
-        )
+        to_print.append(f"\tIPv4:\t{ipv4}\t{args.config.mail_domain}")
     if not reverse_ipv6:
-        print(
-            f"\nYou should add a PTR/reverse DNS entry for {ipv6}, with the value: {args.config.mail_domain}"
-        )
+        to_print.append(f"\tIPv6:\t{ipv6}\t{args.config.mail_domain}")
+    if len(to_print) > 0:
+        if len(to_print) == 1:
+            warning = "You should add the following PTR/reverse DNS entry:"
+        else:
+            warning = "You should add the following PTR/reverse DNS entries:"
+        out.red(warning)
+        for entry in to_print:
+            print(entry)
         print(
             "You can do so at your hosting provider (maybe this isn't your DNS provider)."
         )

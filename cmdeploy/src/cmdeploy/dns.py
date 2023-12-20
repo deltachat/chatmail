@@ -19,7 +19,7 @@ class DNS:
 
     def shell(self, cmd):
         try:
-            return self.out.shell_output(f"{self.ssh}{cmd}", no_print=True, timeout=3)
+            return self.out.shell_output(f"{self.ssh}{cmd}", no_print=True)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             if "exit status 255" in str(e) or "timed out" in str(e):
                 self.out.red(f"Error: can't reach the server with: {self.ssh[:-4]}")

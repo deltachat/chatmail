@@ -217,7 +217,9 @@ class Out:
             output = subprocess.STDOUT
         else:
             output = subprocess.DEVNULL
-        return subprocess.check_output(arg, shell=True, timeout=timeout, stderr=output).decode()
+        return subprocess.check_output(
+            arg, shell=True, timeout=timeout, stderr=output
+        ).decode()
 
     def check_call(self, arg, env=None, quiet=False):
         if not quiet:

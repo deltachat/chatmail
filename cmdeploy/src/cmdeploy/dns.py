@@ -13,22 +13,18 @@ class DNS:
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
         try:
-            self.shell(f"unbound-control flush {mail_domain}", retry_local=False)
+            self.shell(f"unbound-control flush {mail_domain}")
         except subprocess.CalledProcessError:
             pass
 
-    def shell(self, cmd, retry_local=False):
+    def shell(self, cmd):
         try:
             return self.out.shell_output(f"{self.ssh}{cmd}", no_print=True, timeout=3)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            str(e)
-            if retry_local:
-                return self.out.shell_output(f"{cmd}", no_print=True)
+            if "exit status 255" in str(e) or "timed out" in str(e):
+                self.out.red(f"Error: can't reach the server with: {self.ssh[:-4]}")
+                sys.exit(1)
             else:
-                if "exit status 255" in str(e) or "timed out" in str(e):
-                    self.out.red(f"\nError: can't reach the server with: {self.ssh[:-4]}")
-                    sys.exit(1)
-            if e == subprocess.CalledProcessError:
                 raise
 
     def get_ipv4(self):
@@ -41,7 +37,7 @@ class DNS:
 
     def get(self, typ: str, domain: str) -> str | None:
         """Get a DNS entry"""
-        dig_result = self.shell(f"dig {typ} {domain}", retry_local=True)
+        dig_result = self.shell(f"dig {typ} {domain}")
         line_num = 0
         for line in dig_result.splitlines():
             line_num += 1

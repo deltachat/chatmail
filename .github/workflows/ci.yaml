@@ -33,8 +33,5 @@ jobs:
       - name: run deploy-chatmail offline tests 
         run: pytest --pyargs cmdeploy 
 
-      - name: initialize with chatmail domain
-        run: cmdeploy init chat.example.org  
-
       # all other cmdeploy commands require a staging server 
       # see https://github.com/deltachat/chatmail/issues/100

@@ -13,7 +13,7 @@ class DNS:
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
         try:
-            self.shell(f"unbound-control flush {mail_domain}")
+            self.shell(f"unbound-control flush_zone {mail_domain}")
         except subprocess.CalledProcessError:
             pass
 

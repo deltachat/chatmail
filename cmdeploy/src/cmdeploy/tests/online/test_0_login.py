@@ -2,6 +2,16 @@ import pytest
 import threading
 import queue
 
+from chatmaild.config import read_config
+from cmdeploy.cmdeploy import main
+
+
+def test_init(tmp_path, maildomain):
+    inipath = tmp_path.joinpath("chatmail.ini")
+    main(["init", "--config", str(inipath), maildomain])
+    config = read_config(inipath)
+    assert config.mail_domain == maildomain
+
 
 def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
     """Test a) that an initial login creates a user automatically

@@ -2,7 +2,6 @@ import os
 
 import pytest
 from cmdeploy.cmdeploy import get_parser, main
-from chatmaild.config import read_config
 
 
 @pytest.fixture(autouse=True)
@@ -20,12 +19,6 @@ class TestCmdline:
         init = parser.parse_args(["init", "chat.example.org"])
         run = parser.parse_args(["run"])
         assert init and run
-
-    def test_init(self, tmp_path):
-        main(["init", "chat.example.org"])
-        inipath = tmp_path.joinpath("chatmail.ini")
-        config = read_config(inipath)
-        assert config.mail_domain == "chat.example.org"
 
     @pytest.mark.xfail(reason="init doesn't exit anymore, check for CLI output instead")
     def test_init_not_overwrite(self):

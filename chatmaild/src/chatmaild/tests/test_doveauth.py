@@ -52,8 +52,9 @@ def test_too_high_db_version(db):
 
 
 def test_handle_dovecot_request(db, example_config):
+    # Test that password can contain ", ', \ and /
     msg = (
-        "Lshared/passdb/laksjdlaksjdlaksjdlk12j3l1k2j3123/"
+        'Lshared/passdb/laksjdlaksjdlak\\\\sjdlk\\"12j\\\'3l1/k2j3123"'
         "some42123@chat.example.org\tsome42123@chat.example.org"
     )
     res = handle_dovecot_request(msg, db, example_config)

@@ -98,6 +98,32 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         )
 
 
+def split_and_unescape(s):
+    """Split strings using double quote as a separator and backslash as escape character
+    into parts."""
+
+    out = ""
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\":
+            # Skip escape character.
+            i += 1
+
+            # This will raise IndexError if there is no character
+            # after escape character. This is expected
+            # as this is an invalid input.
+            out += s[i]
+        elif c == '"':
+            # Separator
+            yield out
+            out = ""
+        else:
+            out += c
+        i += 1
+    yield out
+
+
 def handle_dovecot_request(msg, db, config: Config):
     short_command = msg[0]
     if short_command == "L":  # LOOKUP
@@ -107,7 +133,9 @@ def handle_dovecot_request(msg, db, config: Config):
         # do not attempt to read any other parts for compatibility.
         keyname = parts[0]
 
-        namespace, type, *args = keyname.split("/")
+        namespace, type, args = keyname.split("/", 2)
+        args = list(split_and_unescape(args))
+
         reply_command = "F"
         res = ""
         if namespace == "shared":

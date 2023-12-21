@@ -151,10 +151,12 @@ While this file is present, account creation will be blocked.
 
 ### Ports
 
-Postfix listens on ports 25 (smtp) and 587 (submission) and 465 (submissions).
-Dovecot listens on ports 143(imap) and 993 (imaps).
+[Postfix](http://www.postfix.org/) listens on ports 25 (smtp) and 587 (submission) and 465 (submissions).
+[Dovecot](https://www.dovecot.org/) listens on ports 143 (imap) and 993 (imaps).
+[nginx](https://www.nginx.com/) listens on port 443 (https).
+[acmetool](https://hlandau.github.io/acmetool/) listens on port 80 (http).
 
 Delta Chat apps will, however, discover all ports and configurations
-automatically by reading the `autoconfig.xml` file from the chatmail service.
+automatically by reading the [autoconfig XML file](https://web.archive.org/web/20210624004729/https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration) from the chatmail service.
 
 

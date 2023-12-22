@@ -37,21 +37,15 @@ class DNS:
 
     def get(self, typ: str, domain: str) -> str | None:
         """Get a DNS entry"""
-        dig_result = self.shell(f"dig {typ} {domain}")
-        line_num = 0
-        for line in dig_result.splitlines():
-            line_num += 1
-            if line.strip() == ";; ANSWER SECTION:":
-                return dig_result.splitlines()[line_num].split("\t")[-1]
+        dig_result = self.shell(f"dig -r -q {domain} -t {typ} +short")
+        line = dig_result.partition("\n")[0]
+        if line:
+            return line
 
-    def check_ptr_record(self, ip: str, mail_domain) -> str:
+    def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""
-        result = self.get("-x", ip)
-        if result:
-            if ip_address(ip).version == 6:
-                result = result.split()[-1]
-            if result[:-1] == mail_domain:
-                return result
+        result = self.shell(f"dig -r -x {ip} +short").rstrip()
+        return result == f"{mail_domain}."
 
 
 def show_dns(args, out):

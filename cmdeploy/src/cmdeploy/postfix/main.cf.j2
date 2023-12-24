@@ -11,9 +11,8 @@ append_dot_mydomain = no
 
 readme_directory = no
 
-# See http://www.postfix.org/COMPATIBILITY_README.html -- default to 2 on
-# fresh installs.
-compatibility_level = 2
+# See http://www.postfix.org/COMPATIBILITY_README.html
+compatibility_level = 3.6
 
 # TLS parameters
 smtpd_tls_cert_file=/var/lib/acme/live/{{ config.mail_domain }}/fullchain

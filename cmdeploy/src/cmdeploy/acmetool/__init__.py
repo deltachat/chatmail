@@ -1,6 +1,8 @@
 import importlib.resources
 
 from pyinfra.operations import apt, files, systemd, server
+from pyinfra import host
+from pyinfra.facts.systemd import SystemdStatus
 
 
 def deploy_acmetool(nginx_hook=False, email="", domains=[]):
@@ -55,6 +57,13 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         group="root",
         mode="644",
     )
+    if host.get_fact(SystemdStatus).get("nginx.service"):
+        systemd.service(
+            name="Stop nginx service to free port 80",
+            service="nginx",
+            running=False,
+        )
+
     systemd.service(
         name="Setup acmetool-redirector service",
         service="acmetool-redirector.service",

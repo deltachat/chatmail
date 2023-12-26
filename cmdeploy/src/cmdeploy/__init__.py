@@ -459,13 +459,10 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= redis_conf.changed
 
-    ratelimit_conf = files.put(
-        name="enable rate limiting",
-        src=importlib.resources.files(__package__).joinpath("rspamd/ratelimit.conf"),
-        dest="/etc/rspamd/local.d/ratelimit.conf",
-        user="root",
-        group="root",
-        mode="644",
+    ratelimit_conf = files.file(
+        name="disable rate limiting",
+        path="/etc/rspamd/local.d/ratelimit.conf",
+        present=False,
     )
     need_restart |= ratelimit_conf.changed
 

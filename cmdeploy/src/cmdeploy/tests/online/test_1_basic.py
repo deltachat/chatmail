@@ -42,6 +42,20 @@ def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
     assert "500" in str(e.value)
 
 
+@pytest.mark.parametrize("from_addr", ["fake@example.org", "fake@testrun.org"])
+def test_reject_wrong_dmarc_spf(cmsetup, maildata, from_addr):
+    """Test that emails with missing or wrong DKIM and SPF entries are rejected."""
+    # create recipient
+    recipient = "charlie@c1.testrun.org"  # cmsetup.gen_users(1)[0]
+    # craft email object with fake sender
+    msg = maildata("plain.eml", from_addr=from_addr, to_addr=recipient).as_string()
+    # initiate SMTP connection
+    with smtplib.SMTP(cmsetup.maildomain, 25) as s:
+        with pytest.raises(smtplib.SMTPException):
+            s.sendmail(from_addr=from_addr, to_addrs=recipient, msg=msg)
+            # assert response code == 500 or something
+
+
 @pytest.mark.slow
 def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
     """Test that the per-account send-mail limit is exceeded."""

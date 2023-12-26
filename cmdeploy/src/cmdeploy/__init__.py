@@ -130,6 +130,19 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
     """Configures OpenDKIM"""
     need_restart = False
 
+    server.group(name="Create opendkim group", group="opendkim", system=True)
+    server.user(
+        name="Add postfix user to opendkim group for socket access",
+        user="postfix",
+        groups=["opendkim"],
+        system=True,
+    )
+
+    apt.packages(
+        name="apt install opendkim opendkim-tools",
+        packages=["opendkim", "opendkim-tools"],
+    )
+
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("opendkim/opendkim.conf"),
         dest="/etc/opendkim.conf",
@@ -168,7 +181,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
     need_restart |= signing_table.changed
-
     files.directory(
         name="Add opendkim socket directory to /var/spool/postfix",
         path="/var/spool/postfix/opendkim",
@@ -459,6 +471,7 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
 
     dkim_directory = "/var/lib/rspamd/dkim/"
     dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
+    dkim_dns_file = f"{dkim_directory}{mail_domain}.{dkim_selector}.zone"
 
     dkim_config = files.template(
         src=importlib.resources.files(__package__).joinpath(
@@ -488,7 +501,7 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
         server.shell(
             name="Generate DKIM domain keys with rspamd",
             commands=[
-                f"rspamadm dkim_keygen -s {dkim_selector} -d {mail_domain} -k {dkim_key_path}"
+                f"rspamadm dkim_keygen -b 2048 -s {dkim_selector} -d {mail_domain} -k {dkim_key_path} > {dkim_dns_file}"
             ],
             _sudo=True,
             _sudo_user="_rspamd",
@@ -545,14 +558,6 @@ def deploy_chatmail(config_path: Path) -> None:
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
 
-    server.group(name="Create opendkim group", group="opendkim", system=True)
-    server.user(
-        name="Add postfix user to opendkim group for socket access",
-        user="postfix",
-        groups=["opendkim"],
-        system=True,
-    )
-
     # Run local DNS resolver `unbound`.
     # `resolvconf` takes care of setting up /etc/resolv.conf
     # to use 127.0.0.1 as the resolver.
@@ -585,14 +590,6 @@ def deploy_chatmail(config_path: Path) -> None:
     apt.packages(
         name="Install Dovecot",
         packages=["dovecot-imapd", "dovecot-lmtpd"],
-    )
-
-    apt.packages(
-        name="Install OpenDKIM",
-        packages=[
-            "opendkim",
-            "opendkim-tools",
-        ],
     )
 
     apt.packages(

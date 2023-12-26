@@ -392,6 +392,11 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     """Configures rspamd for Rate Limiting."""
     need_restart = False
 
+    apt.packages(
+        name="apt install rspamd",
+        packages="rspamd",
+    )
+
     phishing_conf = files.put(
         name="disable phishing rspamd plugin",
         src=importlib.resources.files(__package__).joinpath("rspamd/phishing.conf"),
@@ -495,6 +500,11 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
 def _configure_redis() -> bool:
     """Configures redis as a key-value storage for rspamd."""
     need_restart = False
+
+    apt.packages(
+        name="apt install redis-server",
+        packages="redis-server",
+    )
 
     redis_config = files.put(
         src=importlib.resources.files(__package__).joinpath("rspamd/redis.conf"),
@@ -610,8 +620,8 @@ def deploy_chatmail(config_path: Path) -> None:
     nginx_need_restart = _configure_nginx(mail_domain)
 
     remove_opendkim()
-    rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
     redis_need_restart = _configure_redis()
+    rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
 
     systemd.service(
         name="Start and enable redis-server",

@@ -384,11 +384,7 @@ def remove_opendkim() -> bool:
         present=False,
     )
 
-    apt.packages(
-        name="Remove openDKIM",
-        packages="opendkim",
-        present=False
-    )
+    apt.packages(name="Remove openDKIM", packages="opendkim", present=False)
     return False
 
 
@@ -460,7 +456,9 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
 
     dkim_config = files.template(
-        src=importlib.resources.files(__package__).joinpath("rspamd/dkim_signing.conf.j2"),
+        src=importlib.resources.files(__package__).joinpath(
+            "rspamd/dkim_signing.conf.j2"
+        ),
         dest="/etc/rspamd/local.d/dkim_signing.conf",
         user="root",
         group="root",
@@ -630,7 +628,6 @@ def deploy_chatmail(config_path: Path) -> None:
         enabled=True,
         restarted=rspamd_need_restart,
     )
-
 
     systemd.service(
         name="Start and enable MTA-STS daemon",

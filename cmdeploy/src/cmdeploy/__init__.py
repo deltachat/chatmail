@@ -449,6 +449,18 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= hfilter.changed
 
+    groups_conf = files.put(
+        name="set metrics for DKIM, SPF, and DMARC fails",
+        src=importlib.resources.files(__package__).joinpath(
+            "rspamd/policies_group.conf"
+        ),
+        dest="/etc/rspamd/local.d/policies_group.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= groups_conf.changed
+
     redis_conf = files.put(
         name="enable redis for caching",
         src=importlib.resources.files(__package__).joinpath("rspamd/rspamd_redis.conf"),

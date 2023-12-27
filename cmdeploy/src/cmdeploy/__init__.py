@@ -254,6 +254,15 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     )
     need_restart |= master_config.changed
 
+    header_cleanup = files.put(
+        src=importlib.resources.files(__package__).joinpath("postfix/submission_header_cleanup"),
+        dest="/etc/postfix/submission_header_cleanup",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= header_cleanup.changed
+
     return need_restart
 
 

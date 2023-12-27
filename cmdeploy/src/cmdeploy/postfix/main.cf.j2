@@ -48,3 +48,5 @@ virtual_mailbox_domains = {{ config.mail_domain }}
 
 smtpd_milters = unix:opendkim/opendkim.sock
 non_smtpd_milters = $smtpd_milters
+
+header_checks = regexp:/etc/postfix/submission_header_cleanup

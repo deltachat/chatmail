@@ -44,13 +44,12 @@ def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
 
 @pytest.mark.parametrize("from_addr", ["fake@example.org", "fake@testrun.org"])
 def test_reject_missing_dkim(cmsetup, maildata, from_addr):
-    """Test that emails with missing or wrong DKIM entries are rejected."""
+    """Test that emails with missing or wrong DMARC, DKIM, and SPF entries are rejected."""
     recipient = cmsetup.gen_users(1)[0]
     msg = maildata("plain.eml", from_addr=from_addr, to_addr=recipient.addr).as_string()
     with smtplib.SMTP(cmsetup.maildomain, 25) as s:
-        with pytest.raises(smtplib.SMTPDataError):
+        with pytest.raises(smtplib.SMTPDataError, match="Spam message rejected"):
             s.sendmail(from_addr=from_addr, to_addrs=recipient.addr, msg=msg)
-            # assert response code == 500 or something
 
 
 @pytest.mark.slow

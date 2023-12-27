@@ -1,7 +1,10 @@
 import time
 import re
 import random
+
 import pytest
+import requests
+import ipaddress
 
 
 class TestEndToEndDeltaChat:
@@ -119,3 +122,17 @@ class TestEndToEndDeltaChat:
             for msg in msgs:
                 assert "error" not in m.get_message_info()
             time.sleep(1)
+
+
+def test_hide_senders_ip_address(cmfactory):
+    public_ip = requests.get("http://icanhazip.com").content.decode().strip()
+    assert ipaddress.ip_address(public_ip)
+
+    user1, user2 = cmfactory.get_online_accounts(2)
+    chat = cmfactory.get_accepted_chat(user1, user2)
+
+    chat.send_text("testing submission header cleanup")
+    user2.wait_next_incoming_message()
+    user2.direct_imap.select_folder("Inbox")
+    msg = user2.direct_imap.get_all_messages()[0]
+    assert public_ip not in msg.obj.as_string()

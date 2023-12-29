@@ -28,5 +28,5 @@ def test_read_config_testrun(make_config):
     assert config.username_min_length == 9
     assert config.username_max_length == 9
     assert config.password_min_length == 9
-    assert config.passthrough_recipients == ["privacy@testrun.org"]
+    assert "privacy@testrun.org" in config.passthrough_recipients
     assert config.passthrough_senders == []

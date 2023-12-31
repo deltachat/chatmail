@@ -3,7 +3,7 @@
 
 ## More information 
 
-`nine.testrun.org` provides a low-maintenance, resource efficient and 
+{{ config.mail_domain }} provides a low-maintenance, resource efficient and 
 interoperable e-mail service for everyone. What's behind a `chatmail` is 
 effectively a normal e-mail address just like any other but optimized 
 for the usage in chats, especially DeltaChat.

@@ -50,3 +50,11 @@ smtpd_milters = unix:opendkim/opendkim.sock
 non_smtpd_milters = $smtpd_milters
 
 header_checks = regexp:/etc/postfix/submission_header_cleanup
+
+## Permit Mail-Pipeling lik described in https://www.heinlein-support.de/blog/smtp-smuggling-aka-postmasters-weihnachtsstress
+smtpd_discard_ehlo_keywords = silent-discard,pipelining
+
+## Into Process to hardening this service, bug of Postfix have to been fixed:
+mua_client_restrictions = permit_sasl_authenticated, reject
+mua_sender_restrictions = permit_sasl_authenticated, reject
+mua_helo_restrictions = permit_mynetworks, reject_non_fqdn_hostname, reject_invalid_hostname, permit

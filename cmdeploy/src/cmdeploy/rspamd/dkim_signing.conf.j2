@@ -1,0 +1,10 @@
+selector = {{ config.dkim_selector }}
+use_esld = false  # don't cut c1.testrun.org down to testrun.org
+domain = {
+    {{ config.mail_domain }} {
+        selectors [
+            selector = {{ config.dkim_selector }}
+            path = {{ config.dkim_key_path }}
+        ]
+    }
+}

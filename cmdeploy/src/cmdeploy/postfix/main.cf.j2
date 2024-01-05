@@ -46,7 +46,7 @@ inet_protocols = all
 virtual_transport = lmtp:unix:private/dovecot-lmtp
 virtual_mailbox_domains = {{ config.mail_domain }}
 
-smtpd_milters = unix:opendkim/opendkim.sock
+smtpd_milters = inet:127.0.0.1:11332
 non_smtpd_milters = $smtpd_milters
 
 header_checks = regexp:/etc/postfix/submission_header_cleanup

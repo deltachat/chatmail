@@ -7,7 +7,7 @@ Date: Sun, 15 Oct 2023 16:41:44 +0000
 Message-ID: <Mr.3gckbNy5bch.uK3Hd2Ws6-w@c2.testrun.org>
 References: <Mr.3gckbNy5bch.uK3Hd2Ws6-w@c2.testrun.org>
 Chat-Version: 1.0
-Autocrypt: addr=foobar@c2.testrun.org; prefer-encrypt=mutual;
+Autocrypt: addr={from_addr}; prefer-encrypt=mutual;
 	keydata=xjMEZSrw3hYJKwYBBAHaRw8BAQdAiEKNQFU28c6qsx4vo/JHdt73RXdjMOmByf/XsGiJ7m
 	nNFzxmb29iYXJAYzIudGVzdHJ1bi5vcmc+wosEEBYIADMCGQEFAmUq8N4CGwMECwkIBwYVCAkKCwID
 	FgIBFiEEGil0OvTIa6RngmCLUYNnEa9leJAACgkQUYNnEa9leJCX3gEAhm0MehE5byBBU1avPczr/I

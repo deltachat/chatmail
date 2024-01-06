@@ -48,4 +48,12 @@ http {
 		# add cgi-bin support
 		include /usr/share/doc/fcgiwrap/examples/nginx.conf;
 	}
+
+	# Redirect www. to non-www
+	server {
+		listen 443 ssl;
+		listen [::]:443 ssl;
+		server_name www.{{ config.domain_name }};
+		return 301 $scheme://{{ config.domain_name }}$request_uri;
+	}
 }

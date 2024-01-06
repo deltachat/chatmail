@@ -61,7 +61,10 @@ def test_handle_dovecot_request(db, example_config):
     assert res
     assert res[0] == "O" and res.endswith("\n")
     userdata = json.loads(res[1:].strip())
-    assert userdata["home"] == "/home/vmail/some42123@chat.example.org"
+    assert (
+        userdata["home"]
+        == "/home/vmail/mail/chat.example.org/some42123@chat.example.org"
+    )
     assert userdata["uid"] == userdata["gid"] == "vmail"
     assert userdata["password"].startswith("{SHA512-CRYPT}")
 

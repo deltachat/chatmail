@@ -91,7 +91,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
                VALUES (?, ?, ?)"""
         conn.execute(q, (user, encrypted_password, int(time.time())))
         return dict(
-            home=f"/home/vmail/{user}",
+            home=f"/home/vmail/mail/{config.mail_domain}/{user}",
             uid="vmail",
             gid="vmail",
             password=encrypted_password,

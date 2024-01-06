@@ -183,11 +183,14 @@ def check_necessary_dns(out, mail_domain):
     ipv4 = dns.get("A", mail_domain)
     ipv6 = dns.get("AAAA", mail_domain)
     mta_entry = dns.get("CNAME", "mta-sts." + mail_domain)
+    www_entry = dns.get("CNAME", "www." + mail_domain)
     to_print = []
     if not (ipv4 or ipv6):
         to_print.append(f"\t{mail_domain}.\t\t\tA<your server's IPv4 address>")
     if mta_entry != mail_domain + ".":
         to_print.append(f"\tmta-sts.{mail_domain}.\tCNAME\t{mail_domain}.")
+    if www_entry != mail_domain + ".":
+        to_print.append(f"\twww.{mail_domain}.\tCNAME\t{mail_domain}.")
     if to_print:
         to_print.insert(
             0,

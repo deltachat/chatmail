@@ -1,0 +1,63 @@
+name: deploy on staging.testrun.org, and if that works, on nine.testrun.org
+
+on:
+  push:
+    branches:
+      - main
+      - staging-ci
+
+jobs:
+  deploy:
+    name: deploy on staging.testrun.org, and if that works, on nine.testrun.org
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: rebuild staging.testrun.org to have a clean VPS
+        run: |
+            curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.HETZNER_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"image":"debian-12"}' \
+            "https://api.hetzner.cloud/v1/servers/${{ secrets.STAGING_SERVER_ID }}/actions/rebuild"
+
+      - name: initenv 
+        run: scripts/initenv.sh
+
+      - name: append venv/bin to PATH
+        run: echo venv/bin >>$GITHUB_PATH
+
+      - name: run formatting checks 
+        run: cmdeploy fmt -v 
+
+      - name: run deploy-chatmail offline tests 
+        run: pytest --pyargs cmdeploy 
+
+      - name: prepare SSH connection
+        run: |
+          mkdir ~/.ssh
+          echo "${{ secrets.STAGING_SSH_KEY }}" >> ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.NINE_HOST_KEY }}" >> ~/.ssh/known_hosts
+          echo " --- wait until staging.testrun.org VPS is rebuilt --- "
+          while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
+
+      - name: cmdeploy init staging.testrun.org
+        run: cmdeploy init staging.testrun.org
+
+      - name: cmdeploy run
+        run: cmdeploy run
+
+      - name: cmdeploy test
+        run: cmdeploy test
+
+      - name: cmdeploy init nine.testrun.org
+        run: rm chatmail.ini && cmdeploy init nine.testrun.org
+
+      - name: cmdeploy run
+        run: cmdeploy run
+
+      - name: cmdeploy test
+        run: cmdeploy test
+

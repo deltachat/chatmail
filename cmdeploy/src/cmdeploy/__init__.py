@@ -442,7 +442,10 @@ def deploy_chatmail(config_path: Path) -> None:
     )
     server.shell(
         name="Generate root keys for validating DNSSEC",
-        commands=["unbound-anchor -a /var/lib/unbound/root.key || true"],
+        commands=[
+            "unbound-anchor -a /var/lib/unbound/root.key || true",
+            "systemctl reset-failed unbound.service",
+        ],
     )
     systemd.service(
         name="Start and enable unbound",

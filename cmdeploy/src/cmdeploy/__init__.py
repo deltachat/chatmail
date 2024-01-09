@@ -461,16 +461,6 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= groups_conf.changed
 
-    redis_conf = files.put(
-        name="enable redis for caching",
-        src=importlib.resources.files(__package__).joinpath("rspamd/rspamd_redis.conf"),
-        dest="/etc/rspamd/local.d/redis.conf",
-        user="root",
-        group="root",
-        mode="644",
-    )
-    need_restart |= redis_conf.changed
-
     ratelimit_conf = files.file(
         name="disable rate limiting",
         path="/etc/rspamd/local.d/ratelimit.conf",
@@ -515,27 +505,6 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
             _sudo=True,
             _sudo_user="_rspamd",
         )
-
-    return need_restart
-
-
-def _configure_redis() -> bool:
-    """Configures redis as a key-value storage for rspamd."""
-    need_restart = False
-
-    apt.packages(
-        name="apt install redis-server",
-        packages="redis-server",
-    )
-
-    redis_config = files.put(
-        src=importlib.resources.files(__package__).joinpath("rspamd/redis.conf"),
-        dest="/etc/redis/redis.conf",
-        user="redis",
-        group="redis",
-        mode="640",
-    )
-    need_restart |= redis_config.changed
 
     return need_restart
 
@@ -626,16 +595,7 @@ def deploy_chatmail(config_path: Path) -> None:
     nginx_need_restart = _configure_nginx(mail_domain)
 
     remove_opendkim()
-    redis_need_restart = _configure_redis()
     rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
-
-    systemd.service(
-        name="Start and enable redis-server",
-        service="redis-server.service",
-        running=True,
-        enabled=True,
-        restarted=redis_need_restart,
-    )
 
     systemd.service(
         name="Start and enable rspamd",

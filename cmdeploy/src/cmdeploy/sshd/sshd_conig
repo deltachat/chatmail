@@ -11,7 +11,7 @@
 
 Include /etc/ssh/sshd_config.d/*.conf
 
-#Port 22
+Port 22022
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
@@ -25,15 +25,15 @@ Include /etc/ssh/sshd_config.d/*.conf
 
 # Logging
 #SyslogFacility AUTH
-#LogLevel INFO
+LogLevel VERBOSE
 
 # Authentication:
 
 #LoginGraceTime 2m
-#PermitRootLogin prohibit-password
+PermitRootLogin prohibit-password
 #StrictModes yes
-#MaxAuthTries 6
-#MaxSessions 10
+MaxAuthTries 3
+MaxSessions 2
 
 #PubkeyAuthentication yes
 
@@ -84,20 +84,20 @@ KbdInteractiveAuthentication no
 # and KbdInteractiveAuthentication to 'no'.
 UsePAM yes
 
-#AllowAgentForwarding yes
-#AllowTcpForwarding yes
+AllowAgentForwarding no
+AllowTcpForwarding no
 #GatewayPorts no
-X11Forwarding yes
+X11Forwarding no
 #X11DisplayOffset 10
 #X11UseLocalhost yes
 #PermitTTY yes
 PrintMotd no
 #PrintLastLog yes
-#TCPKeepAlive yes
+TCPKeepAlive no
 #PermitUserEnvironment no
-#Compression delayed
+Compression no
 #ClientAliveInterval 0
-#ClientAliveCountMax 3
+ClientAliveCountMax 2
 #UseDNS no
 #PidFile /run/sshd.pid
 #MaxStartups 10:30:100
@@ -120,4 +120,3 @@ Subsystem       sftp    /usr/lib/openssh/sftp-server
 #       AllowTcpForwarding no
 #       PermitTTY no
 #       ForceCommand cvs server
-PermitRootLogin yes

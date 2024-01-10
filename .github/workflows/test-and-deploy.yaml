@@ -63,12 +63,3 @@ jobs:
       - name: cmdeploy test
         run: cmdeploy test --slow
 
-      - name: cmdeploy init nine.testrun.org
-        run: rm chatmail.ini && cmdeploy init nine.testrun.org
-
-      - name: cmdeploy run
-        run: cmdeploy run
-
-      - name: cmdeploy test
-        run: cmdeploy test
-

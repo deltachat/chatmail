@@ -43,11 +43,12 @@ class DNS:
 
     def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""
-        result = self.shell(f"dig -r -x {ip} +short").rstrip()
+        result = self.shell(f"dig @ns1.your-server.de -r -x {ip} +short").rstrip()
         return result == f"{mail_domain}."
 
 
-def show_dns(args, out):
+def show_dns(args, out) -> int:
+    """Check existing DNS records, optionally write them to zone file, return exit code 0 or 1."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
     ssh = f"ssh root@{mail_domain}"
@@ -70,7 +71,7 @@ def show_dns(args, out):
         acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     except subprocess.CalledProcessError:
         print("Please run `cmdeploy run` first.")
-        return
+        return 1
     dkim_entry = read_dkim_entries(
         out.shell_output(f"{ssh} -- cat /var/lib/rspamd/dkim/{mail_domain}.dkim.zone")
     )
@@ -99,7 +100,7 @@ def show_dns(args, out):
             with open(args.zonefile, "w+") as zf:
                 zf.write(zonefile)
                 print(f"DNS records successfully written to: {args.zonefile}")
-            return
+            return 0
         except TypeError:
             pass
         started_dkim_parsing = False
@@ -153,6 +154,7 @@ def show_dns(args, out):
         else:
             to_print.append(dkim_entry)
 
+    exit_code = 0
     if to_print:
         to_print.insert(
             0, "You should configure the following DNS entries at your provider:\n"
@@ -161,6 +163,7 @@ def show_dns(args, out):
             "\nIf you already configured the DNS entries, wait a bit until the DNS entries propagate to the Internet."
         )
         print("\n".join(to_print))
+        exit_code = 1
     else:
         out.green("Great! All your DNS entries are correct.")
 
@@ -180,6 +183,8 @@ def show_dns(args, out):
         print(
             "You can do so at your hosting provider (maybe this isn't your DNS provider)."
         )
+        exit_code = 1
+    return exit_code
 
 
 def check_necessary_dns(out, mail_domain):

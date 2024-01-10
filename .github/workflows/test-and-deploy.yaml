@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # disabled for now, we don't want to reset TLS cert, and for testing nine.testrun.org resetting makes less sense
       #- name: rebuild staging.testrun.org to have a clean VPS
       #  run: |
       #      curl -X POST \
@@ -48,6 +49,16 @@ jobs:
 
       - name: cmdeploy run
         run: cmdeploy run
+
+      - name: cmdeploy dns
+        run: |
+          echo "${{ secrets.DEFAULT_DNS_ZONE }}" > staging.testrun.org.zone
+          cmdeploy dns --zonefile staging-additional.zone
+          cat staging-additional.zone >> staging.testrun.org.zone
+          scp -o StrictHostKeyChecking=accept-new staging.testrun.org.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
+          ssh root@ns.testrun.org nsd-checkzone staging.testrun.org /etc/nsd/staging.testrun.org.zone
+          ssh root@ns.testrun.org systemctl reload nsd
+          cmdeploy dns
 
       - name: cmdeploy test
         run: cmdeploy test --slow

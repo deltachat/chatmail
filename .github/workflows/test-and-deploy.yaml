@@ -13,14 +13,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # disabled for now, we don't want to reset TLS cert, and for testing nine.testrun.org resetting makes less sense
-      #- name: rebuild staging.testrun.org to have a clean VPS
-      #  run: |
-      #      curl -X POST \
-      #      -H "Authorization: Bearer ${{ secrets.HETZNER_API_TOKEN }}" \
-      #      -H "Content-Type: application/json" \
-      #      -d '{"image":"debian-12"}' \
-      #      "https://api.hetzner.cloud/v1/servers/${{ secrets.STAGING_SERVER_ID }}/actions/rebuild"
+      - name: stash TLS cert before rebuilding
+        run: |
+          mkdir ~/.ssh
+          echo "${{ secrets.STAGING_SSH_KEY }}" >> ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan staging.testrun.org > ~/.ssh/known_hosts
+          rsync -avz root@staging.testrun.org:/var/lib/acme . || true
+
+      - name: rebuild staging.testrun.org to have a clean VPS
+        run: |
+            curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.HETZNER_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"image":"debian-12"}' \
+            "https://api.hetzner.cloud/v1/servers/${{ secrets.STAGING_SERVER_ID }}/actions/rebuild"
 
       - name: initenv 
         run: scripts/initenv.sh
@@ -34,15 +41,13 @@ jobs:
       - name: run deploy-chatmail offline tests 
         run: pytest --pyargs cmdeploy 
 
-      - name: prepare SSH connection
+      - name: upload TLS cert after rebuilding
         run: |
-          mkdir ~/.ssh
-          echo "${{ secrets.STAGING_SSH_KEY }}" >> ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.NINE_HOST_KEY }}" >> ~/.ssh/known_hosts
           echo " --- wait until staging.testrun.org VPS is rebuilt --- "
+          rm ~/.ssh/known_hosts
           while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
+          rsync -avz acme root@staging.testrun.org:/var/lib/ || true
 
       - name: cmdeploy init staging.testrun.org
         run: cmdeploy init staging.testrun.org

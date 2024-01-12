@@ -52,7 +52,7 @@ def setup_account(data_dir: str, debug: bool) -> deltachat.Account:
         configtracker = ac.configure()
         try:
             configtracker.wait_finish()
-        except ConfigureFailed as e:
+        except ConfigureFailed:
             print(
                 "configuration setup failed for %s with password:\n%s"
                 % (ac.get_config("addr"), ac.get_config("mail_pw"))
@@ -88,10 +88,16 @@ class GreetBot:
                 print("Inviting", user)
                 contact = self.account.create_contact(user)
                 chat = contact.create_chat()
-                chat.send_text("Welcome to %s! Here you can try out Delta Chat." % (self.domain,))
-                chat.send_text("I prepared some webxdc apps for you, if you are interested:")
+                chat.send_text(
+                    "Welcome to %s! Here you can try out Delta Chat." % (self.domain,)
+                )
+                chat.send_text(
+                    "I prepared some webxdc apps for you, if you are interested:"
+                )
                 chat.send_file(pkg_resources.resource_filename(__name__, "editor.xdc"))
-                chat.send_file(pkg_resources.resource_filename(__name__, "tower-builder.xdc"))
+                chat.send_file(
+                    pkg_resources.resource_filename(__name__, "tower-builder.xdc")
+                )
                 chat.send_text(
                     "You can send a message to xstore@testrun.org to discover more apps! "
                     "Some of these games you can also play with friends, directly in the chat."
@@ -101,7 +107,9 @@ class GreetBot:
 def main():
     args = configargparse.ArgumentParser()
     args.add_argument("--db_path", help="location of the Delta Chat database")
-    args.add_argument("--passdb", default=PASSDB_PATH, help="location of the chatmail passdb")
+    args.add_argument(
+        "--passdb", default=PASSDB_PATH, help="location of the chatmail passdb"
+    )
     args.add_argument("--show-ffi", action="store_true", help="print Delta Chat log")
     ops = args.parse_args()
 

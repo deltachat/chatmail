@@ -4,7 +4,6 @@ import requests
 import importlib
 import subprocess
 import datetime
-from ipaddress import ip_address
 
 
 class DNS:

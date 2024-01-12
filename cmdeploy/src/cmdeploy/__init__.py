@@ -382,7 +382,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
-def remove_opendkim() -> bool:
+def remove_opendkim() -> None:
     """Remove OpenDKIM, deprecated"""
     files.file(
         name="Remove legacy opendkim.conf",
@@ -397,7 +397,6 @@ def remove_opendkim() -> bool:
     )
 
     apt.packages(name="Remove openDKIM", packages="opendkim", present=False)
-    return False
 
 
 def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:

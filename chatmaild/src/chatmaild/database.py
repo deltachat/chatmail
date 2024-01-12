@@ -46,11 +46,17 @@ class Connection:
             )
         return result
 
+    def get_user_list(self) -> set[str]:
+        """Get a set of all users."""
+        q = "SELECT addr from users"
+        return set([tup[0] for tup in self._sqlconn.execute(q).fetchall()])
+
 
 class Database:
-    def __init__(self, path: str):
+    def __init__(self, path: str, read_only=False):
         self.path = Path(path)
-        self.ensure_tables()
+        if not read_only:
+            self.ensure_tables()
 
     def _get_connection(
         self, write=False, transaction=False, closing=False

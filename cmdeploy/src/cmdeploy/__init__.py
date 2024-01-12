@@ -411,25 +411,16 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
         packages="rspamd",
     )
 
-    phishing_conf = files.put(
-        name="disable phishing rspamd plugin",
-        src=importlib.resources.files(__package__).joinpath("rspamd/phishing.conf"),
-        dest="/etc/rspamd/local.d/phishing.conf",
-        user="root",
-        group="root",
-        mode="644",
-    )
-    need_restart |= phishing_conf.changed
-
-    rbl = files.put(
-        name="disable rbl rspamd plugin",
-        src=importlib.resources.files(__package__).joinpath("rspamd/rbl.conf"),
-        dest="/etc/rspamd/override.d/rbl.conf",
-        user="root",
-        group="root",
-        mode="644",
-    )
-    need_restart |= rbl.changed
+    for module in ["phishing", "rbl", "hfilter"]:
+        disabled_module_conf = files.put(
+            name="disable phishing rspamd plugin",
+            src=importlib.resources.files(__package__).joinpath("rspamd/disabled.conf"),
+            dest=f"/etc/rspamd/local.d/{module}.conf",
+            user="root",
+            group="root",
+            mode="644",
+        )
+        need_restart |= disabled_module_conf.changed
 
     options_inc = files.put(
         name="disable fuzzy checks",
@@ -440,16 +431,6 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
         mode="644",
     )
     need_restart |= options_inc.changed
-
-    hfilter = files.put(
-        name="disable hfilter rspamd plugin",
-        src=importlib.resources.files(__package__).joinpath("rspamd/hfilter.conf"),
-        dest="/etc/rspamd/local.d/hfilter.conf",
-        user="root",
-        group="root",
-        mode="644",
-    )
-    need_restart |= hfilter.changed
 
     groups_conf = files.put(
         name="set metrics for DKIM, SPF, and DMARC fails",

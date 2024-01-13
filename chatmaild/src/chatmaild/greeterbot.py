@@ -62,7 +62,7 @@ def setup_account(data_dir: str, debug: bool) -> deltachat.Account:
     ac.start_io()
     avatar = pkg_resources.resource_filename(__name__, "avatar.jpg")
     ac.set_avatar(avatar)
-    ac.set_config("displayname", "Hello at try.webxdc.org!")
+    ac.set_config("displayname", f"Hello at {chatmail_config.mail_domain}!")
     return ac
 
 
@@ -99,7 +99,7 @@ class GreetBot:
                     pkg_resources.resource_filename(__name__, "tower-builder.xdc")
                 )
                 chat.send_text(
-                    "You can send a message to xstore@testrun.org to discover more apps! "
+                    "You can visit https://webxdc.org/apps to discover more apps! "
                     "Some of these games you can also play with friends, directly in the chat."
                 )
 

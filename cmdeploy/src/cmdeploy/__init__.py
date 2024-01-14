@@ -126,71 +126,6 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         )
 
 
-def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
-    """Configures OpenDKIM"""
-    need_restart = False
-
-    main_config = files.template(
-        src=importlib.resources.files(__package__).joinpath("opendkim/opendkim.conf"),
-        dest="/etc/opendkim.conf",
-        user="root",
-        group="root",
-        mode="644",
-        config={"domain_name": domain, "opendkim_selector": dkim_selector},
-    )
-    need_restart |= main_config.changed
-
-    files.directory(
-        name="Add opendkim directory to /etc",
-        path="/etc/opendkim",
-        user="opendkim",
-        group="opendkim",
-        mode="750",
-        present=True,
-    )
-
-    keytable = files.template(
-        src=importlib.resources.files(__package__).joinpath("opendkim/KeyTable"),
-        dest="/etc/dkimkeys/KeyTable",
-        user="opendkim",
-        group="opendkim",
-        mode="644",
-        config={"domain_name": domain, "opendkim_selector": dkim_selector},
-    )
-    need_restart |= keytable.changed
-
-    signing_table = files.template(
-        src=importlib.resources.files(__package__).joinpath("opendkim/SigningTable"),
-        dest="/etc/dkimkeys/SigningTable",
-        user="opendkim",
-        group="opendkim",
-        mode="644",
-        config={"domain_name": domain, "opendkim_selector": dkim_selector},
-    )
-    need_restart |= signing_table.changed
-
-    files.directory(
-        name="Add opendkim socket directory to /var/spool/postfix",
-        path="/var/spool/postfix/opendkim",
-        user="opendkim",
-        group="opendkim",
-        mode="750",
-        present=True,
-    )
-
-    if not host.get_fact(File, f"/etc/dkimkeys/{dkim_selector}.private"):
-        server.shell(
-            name="Generate OpenDKIM domain keys",
-            commands=[
-                f"opendkim-genkey -D /etc/dkimkeys -d {domain} -s {dkim_selector}"
-            ],
-            _sudo=True,
-            _sudo_user="opendkim",
-        )
-
-    return need_restart
-
-
 def _install_mta_sts_daemon() -> bool:
     need_restart = False
 
@@ -370,6 +305,107 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
+def remove_opendkim() -> None:
+    """Remove OpenDKIM, deprecated"""
+    files.file(
+        name="Remove legacy opendkim.conf",
+        path="/etc/opendkim.conf",
+        present=False,
+    )
+
+    files.directory(
+        name="Remove legacy opendkim socket directory from /var/spool/postfix",
+        path="/var/spool/postfix/opendkim",
+        present=False,
+    )
+
+    apt.packages(name="Remove openDKIM", packages="opendkim", present=False)
+
+
+def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
+    """Configures rspamd for Rate Limiting."""
+    need_restart = False
+
+    apt.packages(
+        name="apt install rspamd",
+        packages="rspamd",
+    )
+
+    for module in ["phishing", "rbl", "hfilter", "ratelimit"]:
+        disabled_module_conf = files.put(
+            name=f"disable {module} rspamd plugin",
+            src=importlib.resources.files(__package__).joinpath("rspamd/disabled.conf"),
+            dest=f"/etc/rspamd/local.d/{module}.conf",
+            user="root",
+            group="root",
+            mode="644",
+        )
+        need_restart |= disabled_module_conf.changed
+
+    options_inc = files.put(
+        name="disable fuzzy checks",
+        src=importlib.resources.files(__package__).joinpath("rspamd/options.inc"),
+        dest="/etc/rspamd/local.d/options.inc",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= options_inc.changed
+
+    # https://rspamd.com/doc/modules/force_actions.html
+    force_actions_conf = files.put(
+        name="Set up rules to reject on DKIM, SPF and DMARC fails",
+        src=importlib.resources.files(__package__).joinpath(
+            "rspamd/force_actions.conf"
+        ),
+        dest="/etc/rspamd/local.d/force_actions.conf",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= force_actions_conf.changed
+
+    dkim_directory = "/var/lib/rspamd/dkim/"
+    dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"
+    dkim_dns_file = f"{dkim_directory}{mail_domain}.{dkim_selector}.zone"
+
+    dkim_config = files.template(
+        src=importlib.resources.files(__package__).joinpath(
+            "rspamd/dkim_signing.conf.j2"
+        ),
+        dest="/etc/rspamd/local.d/dkim_signing.conf",
+        user="root",
+        group="root",
+        mode="644",
+        config={
+            "dkim_selector": str(dkim_selector),
+            "mail_domain": mail_domain,
+            "dkim_key_path": dkim_key_path,
+        },
+    )
+    need_restart |= dkim_config.changed
+
+    files.directory(
+        name="ensure DKIM key directory exists",
+        path=dkim_directory,
+        present=True,
+        user="_rspamd",
+        group="_rspamd",
+    )
+
+    if not host.get_fact(File, dkim_key_path):
+        server.shell(
+            name="Generate DKIM domain keys with rspamd",
+            commands=[
+                f"rspamadm dkim_keygen -b 2048 -s {dkim_selector} -d {mail_domain} -k {dkim_key_path} > {dkim_dns_file}"
+            ],
+            _sudo=True,
+            _sudo_user="_rspamd",
+        )
+
+    return need_restart
+
+
 def check_config(config):
     mail_domain = config.mail_domain
     if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
@@ -396,14 +432,6 @@ def deploy_chatmail(config_path: Path) -> None:
     apt.update(name="apt update", cache_time=24 * 3600)
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
-
-    server.group(name="Create opendkim group", group="opendkim", system=True)
-    server.user(
-        name="Add postfix user to opendkim group for socket access",
-        user="postfix",
-        groups=["opendkim"],
-        system=True,
-    )
 
     # Run local DNS resolver `unbound`.
     # `resolvconf` takes care of setting up /etc/resolv.conf
@@ -440,14 +468,6 @@ def deploy_chatmail(config_path: Path) -> None:
     )
 
     apt.packages(
-        name="Install OpenDKIM",
-        packages=[
-            "opendkim",
-            "opendkim-tools",
-        ],
-    )
-
-    apt.packages(
         name="Install nginx",
         packages=["nginx"],
     )
@@ -468,16 +488,18 @@ def deploy_chatmail(config_path: Path) -> None:
     debug = False
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
-    opendkim_need_restart = _configure_opendkim(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
 
+    remove_opendkim()
+    rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
+
     systemd.service(
-        name="Start and enable OpenDKIM",
-        service="opendkim.service",
+        name="Start and enable rspamd",
+        service="rspamd.service",
         running=True,
         enabled=True,
-        restarted=opendkim_need_restart,
+        restarted=rspamd_need_restart,
     )
 
     systemd.service(

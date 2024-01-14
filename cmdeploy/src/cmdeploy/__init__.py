@@ -352,17 +352,18 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
     )
     need_restart |= options_inc.changed
 
-    groups_conf = files.put(
-        name="set metrics for DKIM, SPF, and DMARC fails",
+    # https://rspamd.com/doc/modules/force_actions.html
+    force_actions_conf = files.put(
+        name="Set up rules to reject on DKIM, SPF and DMARC fails",
         src=importlib.resources.files(__package__).joinpath(
-            "rspamd/policies_group.conf"
+            "rspamd/force_actions.conf"
         ),
-        dest="/etc/rspamd/local.d/policies_group.conf",
+        dest="/etc/rspamd/local.d/force_actions.conf",
         user="root",
         group="root",
         mode="644",
     )
-    need_restart |= groups_conf.changed
+    need_restart |= force_actions_conf.changed
 
     dkim_directory = "/var/lib/rspamd/dkim/"
     dkim_key_path = f"{dkim_directory}{mail_domain}.{dkim_selector}.key"

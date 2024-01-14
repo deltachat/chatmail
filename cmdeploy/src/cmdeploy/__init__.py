@@ -335,7 +335,7 @@ def _configure_rspamd(dkim_selector: str, mail_domain: str) -> bool:
 
     for module in ["phishing", "rbl", "hfilter", "ratelimit"]:
         disabled_module_conf = files.put(
-            name="disable phishing rspamd plugin",
+            name=f"disable {module} rspamd plugin",
             src=importlib.resources.files(__package__).joinpath("rspamd/disabled.conf"),
             dest=f"/etc/rspamd/local.d/{module}.conf",
             user="root",

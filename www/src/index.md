@@ -7,7 +7,7 @@ Welcome to instant, interoperable and [privacy-preserving](privacy.html) messagi
 
 👉 **Tap** or scan this QR code to get a random `@{{config.mail_domain}}` e-mail address
 
-<a href="DCACCOUNT:https://{{ config.mail_domain }}/cgi-bin/newemail.py">
+<a href="DCACCOUNT:https://{{ config.mail_domain }}/new">
     <img width=300 style="float: none;" src="qr-chatmail-invite-{{config.mail_domain}}.png" /></a>
 
 🐣 **Choose** your Avatar and Name

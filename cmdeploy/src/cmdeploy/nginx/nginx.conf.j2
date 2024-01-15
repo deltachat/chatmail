@@ -45,8 +45,22 @@ http {
 			default_type text/plain;
 		}
 
-		# add cgi-bin support
-		include /usr/share/doc/fcgiwrap/examples/nginx.conf;
+		location /new {
+			if ($request_method = GET) {
+				# Redirect to Delta Chat,
+				# which will in turn do a POST request.
+				return 301 dcaccount:https://{{ config.domain_name }}/new;
+			}
+
+			fastcgi_pass unix:/run/fcgiwrap.socket;
+			include /etc/nginx/fastcgi_params;
+			fastcgi_param SCRIPT_FILENAME /usr/lib/cgi-bin/newemail.py;
+		}
+
+		# Old URL for compatibility with e.g. printed QR codes.
+		location /cgi-bin/newemail.py {
+			return 301 /new;
+		}
 	}
 
 	# Redirect www. to non-www

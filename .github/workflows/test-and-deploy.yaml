@@ -20,6 +20,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan staging.testrun.org > ~/.ssh/known_hosts
           rsync -avz root@staging.testrun.org:/var/lib/acme . || true
+          rsync -avz root@staging.testrun.org:/var/lib/rspamd/dkim . || true
 
       - name: rebuild staging.testrun.org to have a clean VPS
         run: |
@@ -48,6 +49,7 @@ jobs:
           while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
           rsync -avz acme root@staging.testrun.org:/var/lib/ || true
+          rsync -avz dkim root@staging.testrun.org:/var/lib/rspamd/ || true
 
       - name: cmdeploy init staging.testrun.org
         run: cmdeploy init staging.testrun.org
@@ -57,6 +59,7 @@ jobs:
 
       - name: set DNS entries
         run: |
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown _rspamd:_rspamd -R /var/lib/rspamd/dkim
           echo "${{ secrets.DEFAULT_DNS_ZONE }}" > staging.testrun.org.zone
           cmdeploy dns --zonefile staging-additional.zone
           cat staging-additional.zone >> staging.testrun.org.zone

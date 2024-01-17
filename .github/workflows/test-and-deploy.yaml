@@ -55,7 +55,7 @@ jobs:
       - name: cmdeploy run
         run: cmdeploy run
 
-      - name: cmdeploy dns
+      - name: set DNS entries
         run: |
           echo "${{ secrets.DEFAULT_DNS_ZONE }}" > staging.testrun.org.zone
           cmdeploy dns --zonefile staging-additional.zone
@@ -63,8 +63,10 @@ jobs:
           scp -o StrictHostKeyChecking=accept-new staging.testrun.org.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org nsd-checkzone staging.testrun.org /etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
-          cmdeploy dns || cmdeploy dns || cmdeploy dns
 
       - name: cmdeploy test
         run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
+
+      - name: cmdeploy dns
+        run: cmdeploy dns || cmdeploy dns || cmdeploy dns
 

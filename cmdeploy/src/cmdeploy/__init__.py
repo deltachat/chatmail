@@ -495,7 +495,7 @@ def deploy_chatmail(config_path: Path) -> None:
     nginx_need_restart = _configure_nginx(mail_domain)
 
     remove_opendkim()
-    rspamd_need_restart = _configure_rspamd("dkim", mail_domain)
+    rspamd_need_restart = _configure_rspamd(config.dkim_selector, mail_domain)
 
     systemd.service(
         name="Start and enable rspamd",

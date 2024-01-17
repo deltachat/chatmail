@@ -1,4 +1,5 @@
 import iniconfig
+import datetime
 
 
 def read_config(inipath):
@@ -24,6 +25,7 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+        self.dkim_selector = params.get("dkim_selector")
 
     def _getbytefile(self):
         return open(self._inipath, "rb")
@@ -34,7 +36,12 @@ def write_initial_config(inipath, mail_domain):
 
     inidir = files(__package__).joinpath("ini")
     content = (
-        inidir.joinpath("chatmail.ini.f").read_text().format(mail_domain=mail_domain)
+        inidir.joinpath("chatmail.ini.f")
+        .read_text()
+        .format(
+            mail_domain=mail_domain,
+            dkim_selector=str(datetime.datetime.now().strftime("%Y%m%d%H%M")),
+        )
     )
     if mail_domain.endswith(".testrun.org"):
         override_inipath = inidir.joinpath("override-testrun.ini")

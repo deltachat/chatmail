@@ -35,6 +35,8 @@ passthrough_senders =
 # list of e-mail recipients for which to accept outbound un-encrypted mails
 passthrough_recipients = xstore@testrun.org groupsbot@hispanilandia.net
 
+dkim_selector = {dkim_selector}
+
 #
 # Deployment Details
 #

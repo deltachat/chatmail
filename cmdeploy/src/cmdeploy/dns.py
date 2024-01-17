@@ -51,6 +51,7 @@ def show_dns(args, out) -> int:
     """Check existing DNS records, optionally write them to zone file, return exit code 0 or 1."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
+    dkim_selector = args.config.dkim_selector
     ssh = f"ssh root@{mail_domain}"
     dns = DNS(out, mail_domain)
 
@@ -61,8 +62,8 @@ def show_dns(args, out) -> int:
                 continue
             line = line.replace("\t", " ")
             lines.append(line)
-        lines[0] = f"dkim._domainkey.{mail_domain}. IN TXT " + lines[0].strip(
-            "dkim._domainkey IN TXT "
+        lines[0] = f"{dkim_selector}._domainkey.{mail_domain}. IN TXT " + lines[0].strip(
+            f"{dkim_selector}._domainkey IN TXT "
         )
         return "\n".join(lines)
 
@@ -73,7 +74,7 @@ def show_dns(args, out) -> int:
         print("Please run `cmdeploy run` first.")
         return 1
     dkim_entry = read_dkim_entries(
-        out.shell_output(f"{ssh} -- cat /var/lib/rspamd/dkim/{mail_domain}.dkim.zone")
+        out.shell_output(f"{ssh} -- cat /var/lib/rspamd/dkim/{mail_domain}.{dkim_selector}.zone")
     )
 
     ipv6 = dns.get_ipv6()

@@ -1,5 +1,5 @@
 import iniconfig
-import datetime
+from datetime import datetime
 
 
 def read_config(inipath):
@@ -35,12 +35,15 @@ def write_initial_config(inipath, mail_domain):
     from importlib.resources import files
 
     inidir = files(__package__).joinpath("ini")
+    selector = "dkim"
+    if mail_domain == "staging.testrun.org":
+        selector = datetime.now().strftime("%Y%m%d%H%M")
     content = (
         inidir.joinpath("chatmail.ini.f")
         .read_text()
         .format(
             mail_domain=mail_domain,
-            dkim_selector=str(datetime.datetime.now().strftime("%Y%m%d%H%M")),
+            dkim_selector=selector,
         )
     )
     if mail_domain.endswith(".testrun.org"):

@@ -43,7 +43,7 @@ class DNS:
 
     def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""
-        result = self.shell(f"dig @ns1.your-server.de -r -x {ip} +short").rstrip()
+        result = self.shell(f"dig -r -x {ip} +short").rstrip()
         return result == f"{mail_domain}."
 
 

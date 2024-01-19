@@ -11,9 +11,10 @@
 # ==========================================================================
 {% if debug == true %}
 smtp      inet  n       -       y       -       -       smtpd -v
-{% else %}
+{%- else %}
 smtp      inet  n       -       y       -       -       smtpd 
-{% endif %}
+{%- endif %}
+  -o smtpd_milters=unix:opendkim/opendkim.sock
 submission inet n       -       y       -       -       smtpd
   -o syslog_name=postfix/submission
   -o smtpd_tls_security_level=encrypt
@@ -78,6 +79,7 @@ filter    unix -        n       n       -       -       lmtp
 # Local SMTP server for reinjecting filered mail.
 localhost:{{ config.postfix_reinject_port }} inet  n       -       n       -       10      smtpd
   -o syslog_name=postfix/reinject
+  -o smtpd_milters=unix:opendkim/opendkim.sock
   -o cleanup_service_name=authclean
 
 # Cleanup `Received` headers for authenticated mail

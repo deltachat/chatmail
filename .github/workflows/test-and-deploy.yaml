@@ -1,4 +1,4 @@
-name: deploy on staging.testrun.org, and if that works, on nine.testrun.org
+name: deploy on staging.testrun.org, and run tests
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    name: deploy on staging.testrun.org, and if that works, on nine.testrun.org
+    name: deploy on staging.testrun.org, and run tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

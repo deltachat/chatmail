@@ -61,9 +61,6 @@ def show_dns(args, out) -> int:
                 continue
             line = line.replace("\t", " ")
             lines.append(line)
-        lines[0] = f"dkim._domainkey.{mail_domain}. IN TXT " + lines[0].strip(
-            "dkim._domainkey IN TXT "
-        )
         return "\n".join(lines)
 
     print("Checking your DKIM keys and DNS entries...")
@@ -72,9 +69,7 @@ def show_dns(args, out) -> int:
     except subprocess.CalledProcessError:
         print("Please run `cmdeploy run` first.")
         return 1
-    dkim_entry = read_dkim_entries(
-        out.shell_output(f"{ssh} -- cat /var/lib/rspamd/dkim/{mail_domain}.dkim.zone")
-    )
+    dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
 
     ipv6 = dns.get_ipv6()
     reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
@@ -140,7 +135,7 @@ def show_dns(args, out) -> int:
                             continue
                 if current != value:
                     to_print.append(line)
-            if " IN TXT ( " in line:
+            if "IN TXT ( " in line:
                 started_dkim_parsing = True
                 dkim_lines = [line]
             if started_dkim_parsing and line.startswith('"'):
@@ -148,8 +143,8 @@ def show_dns(args, out) -> int:
         domain, data = "\n".join(dkim_lines).split(" IN TXT ")
         current = dns.get("TXT", domain.strip()[:-1])
         if current:
-            current = "( %s" % (current.replace('" "', '"\n "'))
-            if current != data:
+            current = "( %s )" % (current.replace('" "', '"\n "'))
+            if current.replace(";", "\\;") != data:
                 to_print.append(dkim_entry)
         else:
             to_print.append(dkim_entry)

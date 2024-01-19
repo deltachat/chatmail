@@ -30,8 +30,7 @@ jobs:
      #      -d '{"image":"debian-12"}' \
      #      "https://api.hetzner.cloud/v1/servers/${{ secrets.STAGING_SERVER_ID }}/actions/rebuild"
 
-      - name: initenv 
-        run: scripts/initenv.sh
+      - run: scripts/initenv.sh
 
       - name: append venv/bin to PATH
         run: echo venv/bin >>$GITHUB_PATH
@@ -51,25 +50,23 @@ jobs:
      #    rsync -avz acme root@staging.testrun.org:/var/lib/ || true
      #    rsync -avz dkim root@staging.testrun.org:/var/lib/rspamd/ || true
 
-      - name: cmdeploy init staging.testrun.org
-        run: cmdeploy init staging.testrun.org
+      - run: cmdeploy init staging.testrun.org
 
-      - name: cmdeploy run
-        run: cmdeploy run
+      - run: cmdeploy run
 
       - name: set DNS entries
         run: |
           #ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown _rspamd:_rspamd -R /var/lib/rspamd/dkim
-          echo "${{ secrets.DEFAULT_DNS_ZONE }}" > staging.testrun.org.zone
           cmdeploy dns --zonefile staging-generated.zone
-          cat staging-generated.zone >> staging.testrun.org.zone
-          scp -o StrictHostKeyChecking=accept-new staging.testrun.org.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
+          cat staging-generated.zone >> .github/workflows/staging.testrun.org-default.zone
+          cat .github/workflows/staging.testrun.org-default.zone
+          scp -o StrictHostKeyChecking=accept-new .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org nsd-checkzone staging.testrun.org /etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 
       - name: cmdeploy test
         run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
 
-      - name: cmdeploy dns
+      - name: cmdeploy dns (try 3 times)
         run: cmdeploy dns || cmdeploy dns || cmdeploy dns
 

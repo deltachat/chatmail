@@ -13,3 +13,4 @@ mta-sts.{chatmail_domain}.           CNAME {chatmail_domain}.
 www.{chatmail_domain}.               CNAME {chatmail_domain}.
 _smtp._tls.{chatmail_domain}.        TXT "v=TLSRPTv1;rua=mailto:{email}"
 {dkim_entry}
+_adsp._domainkey.{chatmail_domain}.  TXT "dkim=discardable"

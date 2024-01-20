@@ -13,13 +13,15 @@ auth_cache_size = 100M
 mail_debug = yes
 {% endif %}
 
+mail_server_admin = mailto:root@{{ config.mail_domain }}
+mail_server_comment = Chatmail server
 
 mail_plugins = quota
 
 # these are the capabilities Delta Chat cares about actually 
 # so let's keep the network overhead per login small
 # https://github.com/deltachat/deltachat-core-rust/blob/master/src/imap/capabilities.rs
-imap_capability = IMAP4rev1 IDLE MOVE QUOTA CONDSTORE NOTIFY
+imap_capability = IMAP4rev1 IDLE MOVE QUOTA CONDSTORE NOTIFY METADATA
 
 
 # Authentication for system users.
@@ -73,6 +75,7 @@ mail_privileged_group = vmail
 # <https://datatracker.ietf.org/doc/html/rfc4978.html>
 protocol imap {
   mail_plugins = $mail_plugins imap_zlib imap_quota
+  imap_metadata = yes
 }
 
 protocol lmtp {

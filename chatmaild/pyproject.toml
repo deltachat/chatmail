@@ -8,7 +8,7 @@ version = "0.2"
 dependencies = [
   "aiosmtpd",
   "iniconfig",
-  "deltachat-rpc-server",
+  "deltachat-rpc-server==1.131.4",
   "deltachat-rpc-client",
 ]
 

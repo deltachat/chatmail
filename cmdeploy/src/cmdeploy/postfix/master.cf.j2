@@ -34,6 +34,7 @@ submission inet n       -       y       -       -       smtpd
   -o milter_macro_daemon_name=ORIGINATING
   -o smtpd_client_connection_count_limit=1000
   -o smtpd_proxy_filter=127.0.0.1:{{ config.filtermail_smtp_port }}
+  -o cleanup_service_name=authclean
 smtps     inet  n       -       y       -       -       smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes
@@ -50,6 +51,7 @@ smtps     inet  n       -       y       -       -       smtpd
   -o smtpd_client_connection_count_limit=1000
   -o milter_macro_daemon_name=ORIGINATING
   -o smtpd_proxy_filter=127.0.0.1:{{ config.filtermail_smtp_port }}
+  -o cleanup_service_name=authclean
 #628       inet  n       -       y       -       -       qmqpd
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup
@@ -80,3 +82,12 @@ filter    unix -        n       n       -       -       lmtp
 # Local SMTP server for reinjecting filered mail.
 localhost:{{ config.postfix_reinject_port }} inet  n       -       n       -       10      smtpd
   -o syslog_name=postfix/reinject
+
+# Cleanup `Received` headers for authenticated mail
+# to avoid leaking client IP.
+#
+# We do not do this for received mails
+# as this will break DKIM signatures
+# if `Received` header is signed.
+authclean unix  n       -       -       -       0       cleanup
+  -o header_checks=regexp:/etc/postfix/submission_header_cleanup

@@ -132,15 +132,16 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
 
     server.group(name="Create opendkim group", group="opendkim", system=True)
     server.user(
+        name="Create opendkim user",
+        user="opendkim",
+        groups=["opendkim"],
+        system=True,
+    )
+    server.user(
         name="Add postfix user to opendkim group for socket access",
         user="postfix",
         groups=["opendkim"],
         system=True,
-    )
-
-    apt.packages(
-        name="apt install opendkim opendkim-tools",
-        packages=["opendkim", "opendkim-tools"],
     )
 
     main_config = files.template(
@@ -206,6 +207,11 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         group="opendkim",
         mode="750",
         present=True,
+    )
+
+    apt.packages(
+        name="apt install opendkim opendkim-tools",
+        packages=["opendkim", "opendkim-tools"],
     )
 
     if not host.get_fact(File, f"/etc/dkimkeys/{dkim_selector}.private"):

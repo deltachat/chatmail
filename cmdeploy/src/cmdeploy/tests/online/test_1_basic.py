@@ -42,6 +42,18 @@ def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
     assert "500" in str(e.value)
 
 
+def test_authenticated_from(cmsetup, maildata):
+    """Test that envelope FROM must be the same as login."""
+    user1, user2, user3 = cmsetup.gen_users(3)
+
+    msg = maildata("encrypted.eml", from_addr=user2.addr, to_addr=user3.addr)
+    with pytest.raises(smtplib.SMTPException) as e:
+        user1.smtp.sendmail(
+            from_addr=user2.addr, to_addrs=[user3.addr], msg=msg.as_string()
+        )
+    assert e.value.recipients[user3.addr][0] == 553
+
+
 @pytest.mark.parametrize("from_addr", ["fake@example.org", "fake@testrun.org"])
 def test_reject_missing_dkim(cmsetup, maildata, from_addr):
     """Test that emails with missing or wrong DMARC, DKIM, and SPF entries are rejected."""

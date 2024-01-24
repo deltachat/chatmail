@@ -17,7 +17,7 @@ from chatmaild.database import DBError
 
 def test_basic(db, example_config):
     lookup_passdb(db, example_config, "asdf12345@chat.example.org", "q9mr3faue")
-    data = get_user_data(db, "asdf12345@chat.example.org")
+    data = get_user_data(db, example_config, "asdf12345@chat.example.org")
     assert data
     data2 = lookup_passdb(
         db, example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
@@ -43,7 +43,7 @@ def test_nocreate_file(db, monkeypatch, tmpdir, example_config):
     lookup_passdb(
         db, example_config, "newuser12@chat.example.org", "zequ0Aimuchoodaechik"
     )
-    assert not get_user_data(db, "newuser12@chat.example.org")
+    assert not get_user_data(db, example_config, "newuser12@chat.example.org")
 
 
 def test_db_version(db):

@@ -10,6 +10,7 @@ dependencies = [
   "iniconfig",
   "deltachat-rpc-server",
   "deltachat-rpc-client",
+  "requests",
 ]
 
 [tool.setuptools]
@@ -20,6 +21,7 @@ where = ['src']
 
 [project.scripts]
 doveauth = "chatmaild.doveauth:main"
+chatmail-metadata = "chatmaild.metadata:main"
 filtermail = "chatmaild.filtermail:main"
 echobot = "chatmaild.echo:main"
 chatmail-metrics = "chatmaild.metrics:main"

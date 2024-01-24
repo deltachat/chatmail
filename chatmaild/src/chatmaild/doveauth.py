@@ -58,17 +58,18 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
     return True
 
 
-def get_user_data(db, user):
+def get_user_data(db, config: Config, user):
     with db.read_connection() as conn:
         result = conn.get_user(user)
     if result:
+        result["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"
         result["uid"] = "vmail"
         result["gid"] = "vmail"
     return result
 
 
-def lookup_userdb(db, user):
-    return get_user_data(db, user)
+def lookup_userdb(db, config: Config, user):
+    return get_user_data(db, config, user)
 
 
 def lookup_passdb(db, config: Config, user, cleartext_password):
@@ -80,6 +81,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
                 "UPDATE users SET last_login=? WHERE addr=?", (int(time.time()), user)
             )
 
+            userdata["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"
             userdata["uid"] = "vmail"
             userdata["gid"] = "vmail"
             return userdata
@@ -142,7 +144,7 @@ def handle_dovecot_request(msg, db, config: Config):
             if type == "userdb":
                 user = args[0]
                 if user.endswith(f"@{config.mail_domain}"):
-                    res = lookup_userdb(db, user)
+                    res = lookup_userdb(db, config, user)
                 if res:
                     reply_command = "O"
                 else:

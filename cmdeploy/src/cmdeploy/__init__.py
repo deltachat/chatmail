@@ -102,6 +102,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         "doveauth",
         "filtermail",
         "echobot",
+        "chatmail-metadata",
     ):
         params = dict(
             execpath=f"{remote_venv_dir}/bin/{fn}",
@@ -337,6 +338,27 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
     )
     need_restart |= auth_config.changed
+    lua_push_notification_script = files.put(
+        src=importlib.resources.files(__package__).joinpath(
+            "dovecot/push_notification.lua"
+        ),
+        dest="/etc/dovecot/push_notification.lua",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= lua_push_notification_script.changed
+
+    sieve_script = files.put(
+        src=importlib.resources.files(__package__).joinpath(
+            "dovecot/default.sieve"
+        ),
+        dest="/etc/dovecot/default.sieve",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= sieve_script.changed
 
     files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),
@@ -484,7 +506,7 @@ def deploy_chatmail(config_path: Path) -> None:
 
     apt.packages(
         name="Install Dovecot",
-        packages=["dovecot-imapd", "dovecot-lmtpd"],
+        packages=["dovecot-imapd", "dovecot-lmtpd", "dovecot-sieve"],
     )
 
     apt.packages(

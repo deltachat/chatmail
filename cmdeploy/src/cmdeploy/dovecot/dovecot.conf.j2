@@ -21,7 +21,7 @@ mail_plugins = quota
 # these are the capabilities Delta Chat cares about actually 
 # so let's keep the network overhead per login small
 # https://github.com/deltachat/deltachat-core-rust/blob/master/src/imap/capabilities.rs
-imap_capability = IMAP4rev1 IDLE MOVE QUOTA CONDSTORE NOTIFY METADATA
+imap_capability = IMAP4rev1 IDLE MOVE QUOTA CONDSTORE NOTIFY METADATA XDELTAPUSH
 
 
 # Authentication for system users.
@@ -71,6 +71,9 @@ mail_privileged_group = vmail
 ## Mail processes
 ##
 
+# Pass all IMAP METADATA requests to the server implementing Dovecot's dict protocol.
+mail_attribute_dict = proxy:/run/dovecot/metadata.socket:metadata
+
 # Enable IMAP COMPRESS (RFC 4978).
 # <https://datatracker.ietf.org/doc/html/rfc4978.html>
 protocol imap {
@@ -79,7 +82,21 @@ protocol imap {
 }
 
 protocol lmtp {
-  mail_plugins = $mail_plugins quota
+  # quota plugin documentation:
+  # <https://doc.dovecot.org/configuration_manual/quota_plugin/>
+  #
+  # notify plugin is a dependency of push_notification plugin:
+  # <https://doc.dovecot.org/settings/plugin/notify-plugin/>
+  #
+  # push_notification plugin documentation:
+  # <https://doc.dovecot.org/configuration_manual/push_notification/>
+  #
+  # mail_lua and push_notification_lua are needed for Lua push notification handler.
+  # <https://doc.dovecot.org/configuration_manual/push_notification/#configuration>
+  #
+  # Sieve to mark messages that should not be notified as \Seen
+  # <https://doc.dovecot.org/configuration_manual/sieve/configuration/>
+  mail_plugins = $mail_plugins quota mail_lua notify push_notification push_notification_lua sieve
 }
 
 plugin {
@@ -95,7 +112,15 @@ plugin {
   # quota_over_flag_value = TRUE
 }
 
+# push_notification configuration
+plugin {
+  # <https://doc.dovecot.org/configuration_manual/push_notification/#lua-lua>
+  push_notification_driver = lua:file=/etc/dovecot/push_notification.lua
+}
 
+plugin {
+  sieve_default = file:/etc/dovecot/default.sieve
+}
 
 service lmtp {
   user=vmail

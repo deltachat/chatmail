@@ -48,7 +48,7 @@ def test_reject_missing_dkim(cmsetup, maildata, from_addr):
     recipient = cmsetup.gen_users(1)[0]
     msg = maildata("plain.eml", from_addr=from_addr, to_addr=recipient.addr).as_string()
     with smtplib.SMTP(cmsetup.maildomain, 25) as s:
-        with pytest.raises(smtplib.SMTPDataError, match="missing DKIM signature"):
+        with pytest.raises(smtplib.SMTPDataError, match="No valid DKIM signature"):
             s.sendmail(from_addr=from_addr, to_addrs=recipient.addr, msg=msg)
 
 

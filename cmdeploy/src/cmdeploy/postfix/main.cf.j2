@@ -49,3 +49,6 @@ virtual_mailbox_domains = {{ config.mail_domain }}
 mua_client_restrictions = permit_sasl_authenticated, reject
 mua_sender_restrictions = reject_sender_login_mismatch, permit_sasl_authenticated, reject
 mua_helo_restrictions = permit_mynetworks, reject_invalid_helo_hostname, reject_non_fqdn_helo_hostname, permit
+
+# 1:1 map MAIL FROM to SASL login name.
+smtpd_sender_login_maps = regexp:/etc/postfix/login_map

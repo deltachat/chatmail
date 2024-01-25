@@ -301,6 +301,18 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     )
     need_restart |= header_cleanup.changed
 
+    # Login map that 1:1 maps email address to login.
+    login_map = files.put(
+        src=importlib.resources.files(__package__).joinpath(
+            "postfix/login_map"
+        ),
+        dest="/etc/postfix/login_map",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= login_map.changed
+
     return need_restart
 
 

@@ -23,6 +23,31 @@ smtp_tls_CApath=/etc/ssl/certs
 smtp_tls_security_level=may
 smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 smtp_tls_policy_maps = socketmap:inet:127.0.0.1:8461:postfix
+smtpd_tls_protocols = >=TLSv1.2
+
+# Disable anonymous cipher suites
+# and known insecure algorithms.
+#
+# Disabling anonymous ciphers
+# does not generally improve security
+# because clients that want to verify certificate
+# will not select them anyway,
+# but makes cipher suite list shorter and security scanners happy.
+# See <https://www.postfix.org/TLS_README.html> for discussion.
+#
+# Only ancient insecure ciphers should be disabled here
+# as MTA clients that do not support more secure cipher
+# likely do not support MTA-STS either and will
+# otherwise fall back to using plaintext connection.
+smtpd_tls_exclude_ciphers = aNULL, RC4, MD5, DES
+
+# Override client's preference order.
+# <https://www.postfix.org/postconf.5.html#tls_preempt_cipherlist>
+#
+# This is mostly to ensure cipher suites with forward secrecy
+# are preferred over non cipher suites without forward secrecy.
+# See <https://www.postfix.org/FORWARD_SECRECY_README.html#server_fs>.
+tls_preempt_cipherlist = yes
 
 smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
 myhostname = {{ config.mail_domain }}

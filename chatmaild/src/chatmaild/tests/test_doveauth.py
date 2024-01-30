@@ -1,11 +1,17 @@
+import io
 import json
 import pytest
-import threading
 import queue
+import threading
 import traceback
 
 import chatmaild.doveauth
-from chatmaild.doveauth import get_user_data, lookup_passdb, handle_dovecot_request
+from chatmaild.doveauth import (
+    get_user_data,
+    lookup_passdb,
+    handle_dovecot_request,
+    handle_dovecot_protocol,
+)
 from chatmaild.database import DBError
 
 
@@ -67,6 +73,15 @@ def test_handle_dovecot_request(db, example_config):
     )
     assert userdata["uid"] == userdata["gid"] == "vmail"
     assert userdata["password"].startswith("{SHA512-CRYPT}")
+
+
+def test_handle_dovecot_protocol(db, example_config):
+    rfile = io.BytesIO(
+        b"H3\t2\t0\t\tauth\nLshared/userdb/foobar@chat.example.org\tfoobar@chat.example.org\n"
+    )
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    assert wfile.getvalue() == b"N\n"
 
 
 def test_50_concurrent_lookups_different_accounts(db, gencreds, example_config):

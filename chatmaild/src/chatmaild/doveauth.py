@@ -160,6 +160,19 @@ def handle_dovecot_request(msg, db, config: Config):
     return None
 
 
+def handle_dovecot_protocol(rfile, wfile, db: Database, config: Config):
+    while True:
+        msg = rfile.readline().strip().decode()
+        if not msg:
+            break
+        res = handle_dovecot_request(msg, db, config)
+        if res:
+            wfile.write(res.encode("ascii"))
+            wfile.flush()
+        else:
+            logging.warning("request had no answer: %r", msg)
+
+
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
     request_queue_size = 100
 
@@ -173,16 +186,7 @@ def main():
     class Handler(StreamRequestHandler):
         def handle(self):
             try:
-                while True:
-                    msg = self.rfile.readline().strip().decode()
-                    if not msg:
-                        break
-                    res = handle_dovecot_request(msg, db, config)
-                    if res:
-                        self.wfile.write(res.encode("ascii"))
-                        self.wfile.flush()
-                    else:
-                        logging.warn("request had no answer: %r", msg)
+                handle_dovecot_protocol(self.rfile, self.wfile, db, config)
             except Exception:
                 logging.exception("Exception in the handler")
                 raise

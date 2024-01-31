@@ -136,3 +136,15 @@ def test_hide_senders_ip_address(cmfactory):
     user2.direct_imap.select_folder("Inbox")
     msg = user2.direct_imap.get_all_messages()[0]
     assert public_ip not in msg.obj.as_string()
+
+
+def test_echobot(cmfactory, chatmail_config, lp):
+    ac = cmfactory.get_online_accounts(1)[0]
+
+    lp.sec(f"Send message to echo@{chatmail_config.mail_domain}")
+    chat = ac.create_chat(f'echo@{chatmail_config.mail_domain}')
+    text = "hi, I hope you text me back"
+    chat.send_text(text)
+    lp.sec("Wait for reply from echobot")
+    reply = ac.wait_next_incoming_message()
+    assert reply.text == text

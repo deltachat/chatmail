@@ -82,7 +82,6 @@ def show_dns(args, out) -> int:
             f.read()
             .format(
                 acme_account_url=acme_account_url,
-                email=f"root@{args.config.mail_domain}",
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,
@@ -102,7 +101,6 @@ def show_dns(args, out) -> int:
         for line in zonefile.splitlines():
             line = line.format(
                 acme_account_url=acme_account_url,
-                email=f"root@{args.config.mail_domain}",
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,

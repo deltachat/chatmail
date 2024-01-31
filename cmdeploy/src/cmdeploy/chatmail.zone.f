@@ -11,6 +11,5 @@ _dmarc.{chatmail_domain}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 _mta-sts.{chatmail_domain}.          TXT "v=STSv1; id={sts_id}"
 mta-sts.{chatmail_domain}.           CNAME {chatmail_domain}.
 www.{chatmail_domain}.               CNAME {chatmail_domain}.
-_smtp._tls.{chatmail_domain}.        TXT "v=TLSRPTv1;rua=mailto:{email}"
 {dkim_entry}
 _adsp._domainkey.{chatmail_domain}.  TXT "dkim=discardable"

@@ -1,6 +1,7 @@
 """
 Chat Mail pyinfra deploy.
 """
+
 import sys
 import importlib.resources
 import subprocess
@@ -9,12 +10,14 @@ import io
 from pathlib import Path
 
 from pyinfra import host
-from pyinfra.operations import apt, files, server, systemd, pip
+from pyinfra.operations import apt, files, server, systemd, pip, util
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from .acmetool import deploy_acmetool
 
 from chatmaild.config import read_config, Config
+
+from typing import Callable
 
 
 def _build_chatmaild(dist_dir) -> None:
@@ -126,10 +129,8 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         )
 
 
-def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
+def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> Callable[[], bool]:
     """Configures OpenDKIM"""
-    need_restart = False
-
     server.group(name="Create opendkim group", group="opendkim", system=True)
     server.user(
         name="Create opendkim user",
@@ -152,7 +153,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         mode="644",
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
-    need_restart |= main_config.changed
 
     screen_script = files.put(
         src=importlib.resources.files(__package__).joinpath("opendkim/screen.lua"),
@@ -161,7 +161,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= screen_script.changed
 
     final_script = files.put(
         src=importlib.resources.files(__package__).joinpath("opendkim/final.lua"),
@@ -170,7 +169,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= final_script.changed
 
     files.directory(
         name="Add opendkim directory to /etc",
@@ -189,7 +187,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         mode="644",
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
-    need_restart |= keytable.changed
 
     signing_table = files.template(
         src=importlib.resources.files(__package__).joinpath("opendkim/SigningTable"),
@@ -199,7 +196,7 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         mode="644",
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
-    need_restart |= signing_table.changed
+
     files.directory(
         name="Add opendkim socket directory to /var/spool/postfix",
         path="/var/spool/postfix/opendkim",
@@ -224,10 +221,12 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
             _sudo_user="opendkim",
         )
 
-    return need_restart
+    return util.any_changed(
+        main_config, screen_script, final_script, keytable, signing_table
+    )
 
 
-def _install_mta_sts_daemon() -> bool:
+def _install_mta_sts_daemon() -> Callable[[], bool]:
     need_restart = False
 
     config = files.put(
@@ -240,7 +239,6 @@ def _install_mta_sts_daemon() -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= config.changed
 
     server.shell(
         name="install postfix-mta-sts-resolver with pip",
@@ -260,15 +258,12 @@ def _install_mta_sts_daemon() -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= systemd_unit.changed
 
-    return need_restart
+    return util.any_changed(config, systemd_unit)
 
 
-def _configure_postfix(config: Config, debug: bool = False) -> bool:
+def _configure_postfix(config: Config, debug: bool = False) -> Callable[[], bool]:
     """Configures Postfix SMTP server."""
-    need_restart = False
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
         dest="/etc/postfix/main.cf",
@@ -277,7 +272,6 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         mode="644",
         config=config,
     )
-    need_restart |= main_config.changed
 
     master_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/master.cf.j2"),
@@ -288,7 +282,6 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         debug=debug,
         config=config,
     )
-    need_restart |= master_config.changed
 
     header_cleanup = files.put(
         src=importlib.resources.files(__package__).joinpath(
@@ -299,27 +292,21 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= header_cleanup.changed
 
     # Login map that 1:1 maps email address to login.
     login_map = files.put(
-        src=importlib.resources.files(__package__).joinpath(
-            "postfix/login_map"
-        ),
+        src=importlib.resources.files(__package__).joinpath("postfix/login_map"),
         dest="/etc/postfix/login_map",
         user="root",
         group="root",
         mode="644",
     )
-    need_restart |= login_map.changed
 
-    return need_restart
+    return util.any_changed(main_config, master_config, header_cleanup, login_map)
 
 
-def _configure_dovecot(config: Config, debug: bool = False) -> bool:
+def _configure_dovecot(config: Config, debug: bool = False) -> Callable[[], bool]:
     """Configures Dovecot IMAP server."""
-    need_restart = False
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
         dest="/etc/dovecot/dovecot.conf",
@@ -329,7 +316,6 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         config=config,
         debug=debug,
     )
-    need_restart |= main_config.changed
     auth_config = files.put(
         src=importlib.resources.files(__package__).joinpath("dovecot/auth.conf"),
         dest="/etc/dovecot/auth.conf",
@@ -337,7 +323,6 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
     )
-    need_restart |= auth_config.changed
 
     files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),
@@ -359,13 +344,11 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
             persist=True,
         )
 
-    return need_restart
+    return util.any_changed(main_config, auth_config)
 
 
-def _configure_nginx(domain: str, debug: bool = False) -> bool:
+def _configure_nginx(domain: str, debug: bool = False) -> Callable[[], bool]:
     """Configures nginx HTTP server."""
-    need_restart = False
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),
         dest="/etc/nginx/nginx.conf",
@@ -374,7 +357,6 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="644",
         config={"domain_name": domain},
     )
-    need_restart |= main_config.changed
 
     autoconfig = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/autoconfig.xml.j2"),
@@ -384,7 +366,6 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="644",
         config={"domain_name": domain},
     )
-    need_restart |= autoconfig.changed
 
     mta_sts_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/mta-sts.txt.j2"),
@@ -394,7 +375,6 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="644",
         config={"domain_name": domain},
     )
-    need_restart |= mta_sts_config.changed
 
     # install CGI newemail script
     #
@@ -415,7 +395,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         mode="755",
     )
 
-    return need_restart
+    return util.any_changed(main_config, autoconfig, mta_sts_config)
 
 
 def _remove_rspamd() -> None:
@@ -519,7 +499,12 @@ def deploy_chatmail(config_path: Path) -> None:
         service="opendkim.service",
         running=True,
         enabled=True,
-        restarted=opendkim_need_restart,
+    )
+    systemd.service(
+        name="Restart OpenDKIM",
+        service="opendkim.service",
+        restarted=True,
+        _if=opendkim_need_restart,
     )
 
     systemd.service(
@@ -528,7 +513,12 @@ def deploy_chatmail(config_path: Path) -> None:
         daemon_reload=True,
         running=True,
         enabled=True,
-        restarted=mta_sts_need_restart,
+    )
+    systemd.service(
+        name="Restart MTA-STS daemon",
+        service="mta-sts-daemon.service",
+        restarted=True,
+        _if=mta_sts_need_restart,
     )
 
     systemd.service(
@@ -536,7 +526,12 @@ def deploy_chatmail(config_path: Path) -> None:
         service="postfix.service",
         running=True,
         enabled=True,
-        restarted=postfix_need_restart,
+    )
+    systemd.service(
+        name="Restart Postfix",
+        service="postfix.service",
+        restarted=True,
+        _if=postfix_need_restart,
     )
 
     systemd.service(
@@ -544,7 +539,12 @@ def deploy_chatmail(config_path: Path) -> None:
         service="dovecot.service",
         running=True,
         enabled=True,
-        restarted=dovecot_need_restart,
+    )
+    systemd.service(
+        name="Restart Dovecot",
+        service="dovecot.service",
+        restarted=True,
+        _if=dovecot_need_restart,
     )
 
     systemd.service(
@@ -552,7 +552,12 @@ def deploy_chatmail(config_path: Path) -> None:
         service="nginx.service",
         running=True,
         enabled=True,
-        restarted=nginx_need_restart,
+    )
+    systemd.service(
+        name="Restart nginx",
+        service="nginx.service",
+        restarted=True,
+        _if=nginx_need_restart,
     )
 
     # This file is used by auth proxy.

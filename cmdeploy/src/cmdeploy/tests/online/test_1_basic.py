@@ -83,3 +83,18 @@ def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
             assert b"4.7.1: Too much mail from" in outcome[1]
             return
     pytest.fail("Rate limit was not exceeded")
+
+
+def test_expunged(remote, chatmail_config):
+    outdated_days = int(chatmail_config.delete_mails_after) + 1
+    find_cmds = [
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/cur/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/cur/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/new/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/new/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/tmp/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/tmp/*' -mtime +{outdated_days} -type f",
+    ]
+    for cmd in find_cmds:
+        for line in remote.iter_output(cmd):
+            assert not line

@@ -142,7 +142,7 @@ def test_echobot(cmfactory, chatmail_config, lp):
     ac = cmfactory.get_online_accounts(1)[0]
 
     lp.sec(f"Send message to echo@{chatmail_config.mail_domain}")
-    chat = ac.create_chat(f'echo@{chatmail_config.mail_domain}')
+    chat = ac.create_chat(f"echo@{chatmail_config.mail_domain}")
     text = "hi, I hope you text me back"
     chat.send_text(text)
     lp.sec("Wait for reply from echobot")

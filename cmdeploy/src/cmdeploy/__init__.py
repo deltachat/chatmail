@@ -1,6 +1,7 @@
 """
 Chat Mail pyinfra deploy.
 """
+
 import sys
 import importlib.resources
 import subprocess
@@ -303,9 +304,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
 
     # Login map that 1:1 maps email address to login.
     login_map = files.put(
-        src=importlib.resources.files(__package__).joinpath(
-            "postfix/login_map"
-        ),
+        src=importlib.resources.files(__package__).joinpath("postfix/login_map"),
         dest="/etc/postfix/login_map",
         user="root",
         group="root",

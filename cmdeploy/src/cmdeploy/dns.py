@@ -5,6 +5,8 @@ import importlib
 import subprocess
 import datetime
 
+from typing import Optional
+
 
 class DNS:
     def __init__(self, out, mail_domain):
@@ -34,7 +36,7 @@ class DNS:
         cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
         return self.shell(cmd).strip()
 
-    def get(self, typ: str, domain: str) -> str | None:
+    def get(self, typ: str, domain: str) -> Optional[str]:
         """Get a DNS entry"""
         dig_result = self.shell(f"dig -r -q {domain} -t {typ} +short")
         line = dig_result.partition("\n")[0]

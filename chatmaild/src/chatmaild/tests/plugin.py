@@ -1,4 +1,6 @@
 import random
+from pathlib import Path
+import os
 import importlib.resources
 import itertools
 from email.parser import BytesParser
@@ -57,7 +59,12 @@ def db(tmpdir):
 
 @pytest.fixture
 def maildata(request):
-    datadir = importlib.resources.files(__package__).joinpath("mail-data")
+    try:
+        datadir = importlib.resources.files(__package__).joinpath("mail-data")
+    except TypeError:
+        # in python3.9 or lower, the above doesn't work, so we get datadir this way:
+        datadir = Path(os.getcwd()).joinpath("chatmaild/src/chatmaild/tests/mail-data")
+
     assert datadir.exists(), datadir
 
     def maildata(name, from_addr, to_addr):

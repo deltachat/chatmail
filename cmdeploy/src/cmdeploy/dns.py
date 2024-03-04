@@ -36,12 +36,11 @@ class DNS:
         cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
         return self.shell(cmd).strip()
 
-    def get(self, typ: str, domain: str) -> Optional[str]:
-        """Get a DNS entry"""
+    def get(self, typ: str, domain: str) -> str:
+        """Get a DNS entry or empty string if there is none."""
         dig_result = self.shell(f"dig -r -q {domain} -t {typ} +short")
         line = dig_result.partition("\n")[0]
-        if line:
-            return line
+        return line
 
     def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""

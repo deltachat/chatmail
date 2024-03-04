@@ -63,6 +63,17 @@ def test_filtermail_encryption_detection(maildata):
     assert not check_encrypted(msg)
 
 
+def test_filtermail_encryption_detection_k9subject(maildata):
+    msg = maildata(
+        "encrypted-k9.eml", from_addr="1@example.org", to_addr="2@example.org"
+    )
+    assert check_encrypted(msg)
+
+    # if the subject is not "..." it is not considered ac-encrypted
+    msg.replace_header("Subject", "Click this link")
+    assert not check_encrypted(msg)
+
+
 def test_filtermail_is_mdn(maildata, gencreds, handler):
     from_addr = gencreds()[0]
     to_addr = gencreds()[0] + ".other"

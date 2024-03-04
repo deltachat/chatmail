@@ -17,7 +17,8 @@ def check_encrypted(message):
     """Check that the message is an OpenPGP-encrypted message."""
     if not message.is_multipart():
         return False
-    if message.get("subject") != "...":
+    subject = message.get("subject")
+    if subject not in ("...", "Encrypted Message"):
         return False
     if message.get_content_type() != "multipart/encrypted":
         return False

@@ -426,8 +426,9 @@ def check_config(config):
     mail_domain = config.mail_domain
     if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
         blocked_words = "merlinux schmieder testrun.org".split()
-        for value in config.__dict__.values():
-            if any(x in str(value) for x in blocked_words):
+        for key in config.__dict__:
+            value = config.__dict__[key]
+            if key.startswith("privacy") and any(x in str(value) for x in blocked_words):
                 raise ValueError(
                     f"please set your own privacy contacts/addresses in {config._inipath}"
                 )

@@ -1,4 +1,6 @@
 import pwd
+
+from queue import Queue
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
@@ -18,7 +20,35 @@ DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
 DICTPROXY_TRANSACTION_CHARS = "SBC"
 
 
-def handle_dovecot_protocol(rfile, wfile, tokens, notify_guid):
+class Notifier:
+    def __init__(self):
+        self.guid2token = {}
+        self.to_notify_queue = Queue()
+
+    def set_token(self, guid, token):
+        self.guid2token[guid] = token
+
+    def new_message_for_guid(self, guid):
+        self.to_notify_queue.put(guid)
+
+    def thread_run(self):
+        requests_session = requests.Session()
+        while 1:
+            guid = self.to_notify_queue.get()
+            token = self.guid2token.get(guid)
+            if token:
+                response = requests_session.post(
+                    "https://notifications.delta.chat/notify",
+                    data=token,
+                    timeout=60,
+                )
+                if response.status_code == 410:
+                    # 410 Gone status code
+                    # means the token is no longer valid.
+                    del self.guid2token[guid]
+
+
+def handle_dovecot_protocol(rfile, wfile, notifier):
     # HELLO message, ignored.
     msg = rfile.readline().strip().decode()
 
@@ -28,13 +58,13 @@ def handle_dovecot_protocol(rfile, wfile, tokens, notify_guid):
         if not msg:
             break
 
-        res = handle_dovecot_request(msg, transactions, tokens, notify_guid)
+        res = handle_dovecot_request(msg, transactions, notifier)
         if res:
             wfile.write(res.encode("ascii"))
             wfile.flush()
 
 
-def handle_dovecot_request(msg, transactions, tokens, notify_guid):
+def handle_dovecot_request(msg, transactions, notifier):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
     print("got", msg)
     short_command = msg[0]
@@ -68,10 +98,9 @@ def handle_dovecot_request(msg, transactions, tokens, notify_guid):
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
         if keyname[0] == "priv" and keyname[2] == "devicetoken":
-            tokens[keyname[1]] = value
+            notifier.set_token(keyname[1], value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
-            guid = keyname[1]
-            notify_guid(guid)
+            notifier.new_message_for_guid(keyname[1])
         else:
             # Transaction failed.
             transactions[transaction_id] = "F\n"
@@ -87,28 +116,12 @@ def main():
 
     # XXX config is not currently used
     config = read_config(config)
-    tokens = {}
-    requests_session = requests.Session()
-
-    def notify_guid(guid):
-        token = tokens.get(guid)
-        if token:
-            response = requests_session.post(
-                "https://notifications.delta.chat/notify",
-                data=tokens[guid],
-                timeout=60,
-            )
-            if response.status_code == 410:
-                # 410 Gone status code
-                # means the token is no longer valid.
-                del tokens[guid]
+    notifier = Notifier()
 
     class Handler(StreamRequestHandler):
         def handle(self):
             try:
-                handle_dovecot_protocol(
-                    self.rfile, self.wfile, tokens, requests_session
-                )
+                handle_dovecot_protocol(self.rfile, self.wfile, notifier)
             except Exception:
                 logging.exception("Exception in the handler")
                 raise

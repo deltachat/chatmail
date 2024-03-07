@@ -3,49 +3,52 @@ import io
 from chatmaild.metadata import (
     handle_dovecot_request,
     handle_dovecot_protocol,
+    Notifier,
 )
 
 
 def test_handle_dovecot_request_lookup_fails():
-    res = handle_dovecot_request("Lpriv/123/chatmail", {}, {}, None)
+    notifier = Notifier()
+    res = handle_dovecot_request("Lpriv/123/chatmail", {}, notifier)
     assert res == "N\n"
 
 
 def test_handle_dovecot_request_happy_path():
-    tokens = {}
+    notifier = Notifier()
     transactions = {}
 
     # lookups return the same NOTFOUND result
-    res = handle_dovecot_request("Lpriv/123/chatmail", transactions, tokens, None)
+    res = handle_dovecot_request("Lpriv/123/chatmail", transactions, notifier)
     assert res == "N\n"
-    assert not tokens and not transactions
+    assert not notifier.guid2token and not transactions
 
     # set device token in a transaction
     tx = "1111"
     msg = f"B{tx}\tuser"
-    res = handle_dovecot_request(msg, transactions, tokens, None)
-    assert not res and not tokens
+    res = handle_dovecot_request(msg, transactions, notifier)
+    assert not res and not notifier.guid2token
     assert transactions == {tx: "O\n"}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t01234"
-    res = handle_dovecot_request(msg, transactions, tokens, None)
+    res = handle_dovecot_request(msg, transactions, notifier)
     assert not res
     assert len(transactions) == 1
-    assert len(tokens) == 1 and tokens["guid00"] == "01234"
+    assert len(notifier.guid2token) == 1
+    assert notifier.guid2token["guid00"] == "01234"
 
     msg = f"C{tx}"
-    res = handle_dovecot_request(msg, transactions, tokens, None)
+    res = handle_dovecot_request(msg, transactions, notifier)
     assert res == "O\n"
     assert len(transactions) == 0
-    assert tokens["guid00"] == "01234"
+    assert notifier.guid2token["guid00"] == "01234"
 
     # trigger notification for incoming message
-    assert handle_dovecot_request(f"B{tx}\tuser", transactions, tokens, None) is None
+    assert handle_dovecot_request(f"B{tx}\tuser", transactions, notifier) is None
     msg = f"S{tx}\tpriv/guid00/messagenew"
-    requests = []
-    assert handle_dovecot_request(msg, transactions, tokens, requests.append) is None
-    assert requests == ["guid00"]
-    assert handle_dovecot_request(f"C{tx}\tuser", transactions, tokens, None) == "O\n"
+    assert handle_dovecot_request(msg, transactions, notifier) is None
+    assert notifier.to_notify_queue.get() == "guid00"
+    assert notifier.to_notify_queue.qsize() == 0
+    assert handle_dovecot_request(f"C{tx}\tuser", transactions, notifier) == "O\n"
     assert not transactions
 
 
@@ -60,10 +63,10 @@ def test_handle_dovecot_protocol_set_devicetoken():
             ]
         )
     )
-    tokens = {}
     wfile = io.BytesIO()
-    handle_dovecot_protocol(rfile, wfile, tokens, None)
-    assert tokens["guid00"] == "01234"
+    notifier = Notifier()
+    handle_dovecot_protocol(rfile, wfile, notifier)
+    assert notifier.guid2token["guid00"] == "01234"
     assert wfile.getvalue() == b"O\n"
 
 
@@ -78,9 +81,9 @@ def test_handle_dovecot_protocol_messagenew():
             ]
         )
     )
-    tokens = {"guid00": "01234"}
     wfile = io.BytesIO()
-    requests = []
-    handle_dovecot_protocol(rfile, wfile, tokens, requests.append)
+    notifier = Notifier()
+    handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"O\n"
-    assert requests == ["guid00"]
+    assert notifier.to_notify_queue.get() == "guid00"
+    assert notifier.to_notify_queue.qsize() == 0

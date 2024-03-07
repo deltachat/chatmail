@@ -87,3 +87,45 @@ def test_handle_dovecot_protocol_messagenew():
     assert wfile.getvalue() == b"O\n"
     assert notifier.to_notify_queue.get() == "guid00"
     assert notifier.to_notify_queue.qsize() == 0
+
+
+def test_notifier_thread_run():
+    requests = []
+
+    class ReqMock:
+        def post(self, url, data, timeout):
+            requests.append((url, data, timeout))
+
+            class Result:
+                status_code = 200
+
+            return Result()
+
+    notifier = Notifier()
+    notifier.set_token("guid00", "01234")
+    notifier.new_message_for_guid("guid00")
+    notifier.thread_run_one(ReqMock())
+    url, data, timeout = requests[0]
+    assert data == "01234"
+
+
+def test_notifier_thread_run_gone_removes_token():
+    requests = []
+
+    class ReqMock:
+        def post(self, url, data, timeout):
+            requests.append((url, data, timeout))
+
+            class Result:
+                status_code = 410
+
+            return Result()
+
+    notifier = Notifier()
+    notifier.set_token("guid00", "01234")
+    notifier.new_message_for_guid("guid00")
+    assert notifier.guid2token["guid00"] == "01234"
+    notifier.thread_run_one(ReqMock())
+    url, data, timeout = requests[0]
+    assert data == "01234"
+    assert len(notifier.guid2token) == 0

@@ -1,6 +1,7 @@
 import pwd
 
 from queue import Queue
+from threading import Thread
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
@@ -31,21 +32,24 @@ class Notifier:
     def new_message_for_guid(self, guid):
         self.to_notify_queue.put(guid)
 
-    def thread_run(self):
+    def thread_run_loop(self):
         requests_session = requests.Session()
         while 1:
-            guid = self.to_notify_queue.get()
-            token = self.guid2token.get(guid)
-            if token:
-                response = requests_session.post(
-                    "https://notifications.delta.chat/notify",
-                    data=token,
-                    timeout=60,
-                )
-                if response.status_code == 410:
-                    # 410 Gone status code
-                    # means the token is no longer valid.
-                    del self.guid2token[guid]
+            self.thread_run_one(requests_session)
+
+    def thread_run_one(self, requests_session):
+        guid = self.to_notify_queue.get()
+        token = self.guid2token.get(guid)
+        if token:
+            response = requests_session.post(
+                "https://notifications.delta.chat/notify",
+                data=token,
+                timeout=60,
+            )
+            if response.status_code == 410:
+                # 410 Gone status code
+                # means the token is no longer valid.
+                del self.guid2token[guid]
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -130,6 +134,13 @@ def main():
         os.unlink(socket)
     except FileNotFoundError:
         pass
+
+    # start notifier thread for signalling new messages to
+    # Delta Chat notification server
+
+    t = Thread(target=notifier.thread_run_loop)
+    t.setDaemon(1)
+    t.start()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
         os.chown(socket, uid=passwd_entry.pw_uid, gid=passwd_entry.pw_gid)

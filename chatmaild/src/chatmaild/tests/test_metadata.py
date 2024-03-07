@@ -107,6 +107,7 @@ def test_notifier_thread_run():
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
+    assert len(notifier.guid2token) == 1
 
 
 def test_notifier_thread_run_gone_removes_token():

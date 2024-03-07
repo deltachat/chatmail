@@ -70,7 +70,6 @@ def handle_dovecot_protocol(rfile, wfile, notifier):
 
 def handle_dovecot_request(msg, transactions, notifier):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
-    print("got", msg)
     short_command = msg[0]
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:

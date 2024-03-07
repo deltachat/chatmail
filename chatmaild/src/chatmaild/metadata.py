@@ -138,7 +138,7 @@ def main():
     # Delta Chat notification server
 
     t = Thread(target=notifier.thread_run_loop)
-    t.setDaemon(1)
+    t.setDaemon(True)
     t.start()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:

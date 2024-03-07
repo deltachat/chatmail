@@ -471,6 +471,10 @@ def deploy_chatmail(config_path: Path) -> None:
     apt.update(name="apt update", cache_time=24 * 3600)
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
+    apt.packages(
+        name="Install rsync",
+        packages=["rsync"],
+    )
 
     # Run local DNS resolver `unbound`.
     # `resolvconf` takes care of setting up /etc/resolv.conf

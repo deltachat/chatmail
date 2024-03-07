@@ -4,7 +4,7 @@ from socketserver import (
     StreamRequestHandler,
     ThreadingMixIn,
 )
-from .config import read_config, Config
+from .config import read_config
 import sys
 import logging
 import os
@@ -18,20 +18,9 @@ DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
 DICTPROXY_TRANSACTION_CHARS = "SBC"
 
 
-def handle_dovecot_protocol(rfile, wfile, tokens, requests_session, config: Config):
+def handle_dovecot_protocol(rfile, wfile, tokens, notify_guid):
     # HELLO message, ignored.
     msg = rfile.readline().strip().decode()
-
-    def post_with_token(token):
-        response = requests_session.post(
-            "https://notifications.delta.chat/notify",
-            data=token,
-            timeout=60,
-        )
-        if response.status_code == 410:
-            # 410 Gone status code
-            # means the token is no longer valid.
-            del tokens[guid]
 
     transactions = {}
     while True:
@@ -39,18 +28,19 @@ def handle_dovecot_protocol(rfile, wfile, tokens, requests_session, config: Conf
         if not msg:
             break
 
-        res = handle_dovecot_request(msg, transactions, tokens, post_with_token)
+        res = handle_dovecot_request(msg, transactions, tokens, notify_guid)
         if res:
             wfile.write(res.encode("ascii"))
             wfile.flush()
 
 
-def handle_dovecot_request(msg, transactions, tokens, post_with_token):
+def handle_dovecot_request(msg, transactions, tokens, notify_guid):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
+    print("got", msg)
     short_command = msg[0]
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:
-        return b"N\n"
+        return "N\n"
 
     if short_command not in (DICTPROXY_TRANSACTION_CHARS):
         return
@@ -58,10 +48,10 @@ def handle_dovecot_request(msg, transactions, tokens, post_with_token):
     transaction_id = parts[0]
 
     if short_command == DICTPROXY_BEGIN_TRANSACTION_CHAR:
-        transactions[transaction_id] = b"O\n"
+        transactions[transaction_id] = "O\n"
     elif short_command == DICTPROXY_COMMIT_TRANSACTION_CHAR:
         # returns whether it failed or succeeded.
-        return transactions.pop(transaction_id, b"N\n")
+        return transactions.pop(transaction_id, "N\n")
     elif short_command == DICTPROXY_SET_CHAR:
         # See header of
         # <https://github.com/dovecot/core/blob/5e7965632395793d9355eb906b173bf28d2a10ca/src/lib-storage/mailbox-attribute.h>
@@ -81,12 +71,10 @@ def handle_dovecot_request(msg, transactions, tokens, post_with_token):
             tokens[keyname[1]] = value
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
             guid = keyname[1]
-            token = tokens.get(guid)
-            if token:
-                post_with_token(token)
+            notify_guid(guid)
         else:
             # Transaction failed.
-            transactions[transaction_id] = b"F\n"
+            transactions[transaction_id] = "F\n"
 
 
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
@@ -102,11 +90,24 @@ def main():
     tokens = {}
     requests_session = requests.Session()
 
+    def notify_guid(guid):
+        token = tokens.get(guid)
+        if token:
+            response = requests_session.post(
+                "https://notifications.delta.chat/notify",
+                data=tokens[guid],
+                timeout=60,
+            )
+            if response.status_code == 410:
+                # 410 Gone status code
+                # means the token is no longer valid.
+                del tokens[guid]
+
     class Handler(StreamRequestHandler):
         def handle(self):
             try:
                 handle_dovecot_protocol(
-                    self.rfile, self.wfile, tokens, requests_session, config
+                    self.rfile, self.wfile, tokens, requests_session
                 )
             except Exception:
                 logging.exception("Exception in the handler")

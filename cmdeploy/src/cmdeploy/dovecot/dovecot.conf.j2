@@ -13,6 +13,12 @@ auth_cache_size = 100M
 mail_debug = yes
 {% endif %}
 
+# Prevent warnings similar to:
+#   config: Warning: service auth { client_limit=1000 } is lower than required under max. load (10200). Counted for protocol services with service_count != 1: service lmtp { process_limit=100 } + service imap-urlauth-login { process_limit=100 } + service imap-login { process_limit=10000 }
+#   config: Warning: service anvil { client_limit=1000 } is lower than required under max. load (10103). Counted with: service imap-urlauth-login { process_limit=100 } + service imap-login { process_limit=10000 } + service auth { process_limit=1 }
+#   master: Warning: service(stats): client_limit (1000) reached, client connections are being dropped
+default_client_limit = 20000
+
 mail_server_admin = mailto:root@{{ config.mail_domain }}
 mail_server_comment = Chatmail server
 

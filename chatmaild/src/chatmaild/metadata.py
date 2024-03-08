@@ -15,6 +15,7 @@ import requests
 
 
 DICTPROXY_LOOKUP_CHAR = "L"
+DICTPROXY_ITERATE_CHAR = "I"
 DICTPROXY_SET_CHAR = "S"
 DICTPROXY_BEGIN_TRANSACTION_CHAR = "B"
 DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
@@ -74,6 +75,10 @@ def handle_dovecot_request(msg, transactions, notifier):
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:
         return "N\n"
+    elif short_command == DICTPROXY_ITERATE_CHAR:
+        # Empty line means ITER_FINISHED.
+        # If we don't return empty line Dovecot will timeout.
+        return "\n"
 
     if short_command not in (DICTPROXY_TRANSACTION_CHARS):
         return

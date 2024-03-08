@@ -70,6 +70,21 @@ def test_handle_dovecot_protocol_set_devicetoken():
     assert wfile.getvalue() == b"O\n"
 
 
+def test_handle_dovecot_protocol_iterate():
+    rfile = io.BytesIO(
+        b"\n".join(
+            [
+                b"H",
+                b"I9\t0\tpriv/5cbe730f146fea6535be0d003dd4fc98/\tci-2dzsrs@nine.testrun.org",
+            ]
+        )
+    )
+    wfile = io.BytesIO()
+    notifier = Notifier()
+    handle_dovecot_protocol(rfile, wfile, notifier)
+    assert wfile.getvalue() == b"\n"
+
+
 def test_handle_dovecot_protocol_messagenew():
     rfile = io.BytesIO(
         b"\n".join(

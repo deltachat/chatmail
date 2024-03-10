@@ -8,3 +8,4 @@
 # or only temporary (but then they shouldn't be around after {{ config.delete_mails_after }} days anyway).
 2 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -path '*/tmp/*' -mtime +{{ config.delete_mails_after }} -type f -delete
 2 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -path '*/.*/tmp/*' -mtime +{{ config.delete_mails_after }} -type f -delete
+3 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -name 'maildirsize' -type f -delete

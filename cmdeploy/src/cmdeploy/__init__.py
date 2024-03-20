@@ -359,6 +359,13 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
     )
     need_restart |= sieve_script.changed
+    if sieve_script.changed:
+        server.shell(
+            name=f"compile sieve script",
+            commands=[
+                f"/usr/bin/sievec /etc/dovecot/default.sieve"
+            ],
+        )
 
     files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),

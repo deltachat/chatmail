@@ -1,4 +1,5 @@
 import io
+import pytest
 
 from chatmaild.metadata import (
     handle_dovecot_request,
@@ -7,14 +8,20 @@ from chatmaild.metadata import (
 )
 
 
-def test_handle_dovecot_request_lookup_fails():
-    notifier = Notifier()
+@pytest.fixture
+def notifier(tmp_path):
+    metadata_dir = tmp_path.joinpath("metadata")
+    if not metadata_dir.exists():
+        metadata_dir.mkdir()
+    return Notifier(metadata_dir)
+
+
+def test_handle_dovecot_request_lookup_fails(notifier):
     res = handle_dovecot_request("Lpriv/123/chatmail", {}, notifier)
     assert res == "N\n"
 
 
-def test_handle_dovecot_request_happy_path():
-    notifier = Notifier()
+def test_handle_dovecot_request_happy_path(notifier):
     transactions = {}
 
     # lookups return the same NOTFOUND result
@@ -52,7 +59,7 @@ def test_handle_dovecot_request_happy_path():
     assert not transactions
 
 
-def test_handle_dovecot_protocol_set_devicetoken():
+def test_handle_dovecot_protocol_set_devicetoken(notifier):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -64,13 +71,12 @@ def test_handle_dovecot_protocol_set_devicetoken():
         )
     )
     wfile = io.BytesIO()
-    notifier = Notifier()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert notifier.guid2token["guid00"] == "01234"
     assert wfile.getvalue() == b"O\n"
 
 
-def test_handle_dovecot_protocol_iterate():
+def test_handle_dovecot_protocol_iterate(notifier):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -80,12 +86,11 @@ def test_handle_dovecot_protocol_iterate():
         )
     )
     wfile = io.BytesIO()
-    notifier = Notifier()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"\n"
 
 
-def test_handle_dovecot_protocol_messagenew():
+def test_handle_dovecot_protocol_messagenew(notifier):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -97,14 +102,13 @@ def test_handle_dovecot_protocol_messagenew():
         )
     )
     wfile = io.BytesIO()
-    notifier = Notifier()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"O\n"
     assert notifier.to_notify_queue.get() == "guid00"
     assert notifier.to_notify_queue.qsize() == 0
 
 
-def test_notifier_thread_run():
+def test_notifier_thread_run(notifier):
     requests = []
 
     class ReqMock:
@@ -116,7 +120,6 @@ def test_notifier_thread_run():
 
             return Result()
 
-    notifier = Notifier()
     notifier.set_token("guid00", "01234")
     notifier.new_message_for_guid("guid00")
     notifier.thread_run_one(ReqMock())
@@ -125,7 +128,7 @@ def test_notifier_thread_run():
     assert len(notifier.guid2token) == 1
 
 
-def test_notifier_thread_run_gone_removes_token():
+def test_notifier_thread_run_gone_removes_token(notifier):
     requests = []
 
     class ReqMock:
@@ -137,7 +140,6 @@ def test_notifier_thread_run_gone_removes_token():
 
             return Result()
 
-    notifier = Notifier()
     notifier.set_token("guid00", "01234")
     notifier.new_message_for_guid("guid00")
     assert notifier.guid2token["guid00"] == "01234"

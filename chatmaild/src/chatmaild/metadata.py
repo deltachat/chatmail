@@ -1,5 +1,6 @@
 import pwd
 
+import pathlib
 from queue import Queue
 from threading import Thread
 from socketserver import (
@@ -145,12 +146,15 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket, username, config = sys.argv[1:]
+    socket, username, config, metadata_dir = sys.argv[1:]
     passwd_entry = pwd.getpwnam(username)
 
     # XXX config is not currently used
     config = read_config(config)
-    notifier = Notifier()
+    metadata_dir = pathlib.Path(metadata_dir)
+    if not metadata_dir.exists():
+        metadata_dir.mkdir()
+    notifier = Notifier(metadata_dir)
 
     class Handler(StreamRequestHandler):
         def handle(self):

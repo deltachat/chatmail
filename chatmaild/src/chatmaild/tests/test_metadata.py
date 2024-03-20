@@ -16,6 +16,22 @@ def notifier(tmp_path):
     return Notifier(metadata_dir)
 
 
+def test_notifier_persistence(tmp_path):
+    metadata_dir = tmp_path.joinpath("metadata")
+    metadata_dir.mkdir()
+    notifier1 = Notifier(metadata_dir)
+    notifier2 = Notifier(metadata_dir)
+    assert notifier1.get_token(guid="guid00") is None
+    assert notifier2.get_token(guid="guid00") is None
+
+    notifier1.set_token("guid00", "01234")
+    notifier1.set_token("guid03", "456")
+    assert notifier2.get_token("guid00") == "01234"
+    assert notifier2.get_token("guid03") == "456"
+    notifier2.del_token("guid00")
+    assert notifier1.get_token("guid00") is None
+
+
 def test_handle_dovecot_request_lookup_fails(notifier):
     res = handle_dovecot_request("Lpriv/123/chatmail", {}, notifier)
     assert res == "N\n"

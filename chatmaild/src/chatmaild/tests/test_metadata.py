@@ -27,27 +27,26 @@ def test_handle_dovecot_request_happy_path(notifier):
     # lookups return the same NOTFOUND result
     res = handle_dovecot_request("Lpriv/123/chatmail", transactions, notifier)
     assert res == "N\n"
-    assert not notifier.guid2token and not transactions
+    assert notifier.get_token("guid00") is None and not transactions
 
     # set device token in a transaction
     tx = "1111"
     msg = f"B{tx}\tuser"
     res = handle_dovecot_request(msg, transactions, notifier)
-    assert not res and not notifier.guid2token
+    assert not res and notifier.get_token("guid00") is None
     assert transactions == {tx: "O\n"}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t01234"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert not res
     assert len(transactions) == 1
-    assert len(notifier.guid2token) == 1
-    assert notifier.guid2token["guid00"] == "01234"
+    assert notifier.get_token("guid00") == "01234"
 
     msg = f"C{tx}"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert res == "O\n"
     assert len(transactions) == 0
-    assert notifier.guid2token["guid00"] == "01234"
+    assert notifier.get_token("guid00") == "01234"
 
     # trigger notification for incoming message
     assert handle_dovecot_request(f"B{tx}\tuser", transactions, notifier) is None
@@ -72,7 +71,7 @@ def test_handle_dovecot_protocol_set_devicetoken(notifier):
     )
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
-    assert notifier.guid2token["guid00"] == "01234"
+    assert notifier.get_token("guid00") == "01234"
     assert wfile.getvalue() == b"O\n"
 
 
@@ -125,7 +124,7 @@ def test_notifier_thread_run(notifier):
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert len(notifier.guid2token) == 1
+    assert notifier.get_token("guid00") == "01234"
 
 
 def test_notifier_thread_run_gone_removes_token(notifier):
@@ -142,8 +141,8 @@ def test_notifier_thread_run_gone_removes_token(notifier):
 
     notifier.set_token("guid00", "01234")
     notifier.new_message_for_guid("guid00")
-    assert notifier.guid2token["guid00"] == "01234"
+    assert notifier.get_token("guid00") == "01234"
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert len(notifier.guid2token) == 0
+    assert notifier.get_token("guid00") is None

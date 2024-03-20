@@ -12,6 +12,7 @@ import sys
 import logging
 import os
 import requests
+import marshal
 
 
 DICTPROXY_LOOKUP_CHAR = "L"
@@ -25,14 +26,35 @@ DICTPROXY_TRANSACTION_CHARS = "SBC"
 class Notifier:
     def __init__(self, metadata_dir):
         self.metadata_dir = metadata_dir
-        self.guid2token = {}
         self.to_notify_queue = Queue()
 
+    def get_metadata(self, guid):
+        guid_path = self.metadata_dir.joinpath(guid)
+        if guid_path.exists():
+            with guid_path.open("rb") as f:
+                return marshal.load(f)
+        return {}
+
+    def set_metadata(self, guid, guid_data):
+        guid_path = self.metadata_dir.joinpath(guid)
+        write_path = guid_path.with_suffix(".tmp")
+        with write_path.open("wb") as f:
+            marshal.dump(guid_data, f)
+        os.rename(write_path, guid_path)
+
     def set_token(self, guid, token):
-        self.guid2token[guid] = token
+        guid_data = self.get_metadata(guid)
+        guid_data["token"] = token
+        self.set_metadata(guid, guid_data)
+
+    def del_token(self, guid):
+        guid_data = self.get_metadata(guid)
+        if "token" in guid_data:
+            del guid_data["token"]
+            self.set_metadata(guid, guid_data)
 
     def get_token(self, guid):
-        return self.guid2token.get(guid)
+        return self.get_metadata(guid).get("token")
 
     def new_message_for_guid(self, guid):
         self.to_notify_queue.put(guid)
@@ -54,7 +76,7 @@ class Notifier:
             if response.status_code == 410:
                 # 410 Gone status code
                 # means the token is no longer valid.
-                del self.guid2token[guid]
+                self.del_token(guid)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

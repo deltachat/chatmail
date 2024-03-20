@@ -11,8 +11,7 @@ from chatmaild.metadata import (
 @pytest.fixture
 def notifier(tmp_path):
     metadata_dir = tmp_path.joinpath("metadata")
-    if not metadata_dir.exists():
-        metadata_dir.mkdir()
+    metadata_dir.mkdir()
     return Notifier(metadata_dir)
 
 

@@ -23,12 +23,16 @@ DICTPROXY_TRANSACTION_CHARS = "SBC"
 
 
 class Notifier:
-    def __init__(self):
+    def __init__(self, metadata_dir):
+        self.metadata_dir = metadata_dir
         self.guid2token = {}
         self.to_notify_queue = Queue()
 
     def set_token(self, guid, token):
         self.guid2token[guid] = token
+
+    def get_token(self, guid):
+        return self.guid2token.get(guid)
 
     def new_message_for_guid(self, guid):
         self.to_notify_queue.put(guid)
@@ -40,7 +44,7 @@ class Notifier:
 
     def thread_run_one(self, requests_session):
         guid = self.to_notify_queue.get()
-        token = self.guid2token.get(guid)
+        token = self.get_token(guid)
         if token:
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",

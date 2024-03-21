@@ -5,8 +5,6 @@ import importlib
 import subprocess
 import datetime
 
-from typing import Optional
-
 
 class DNS:
     def __init__(self, out, mail_domain):

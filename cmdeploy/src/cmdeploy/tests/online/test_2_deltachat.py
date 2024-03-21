@@ -63,7 +63,7 @@ class TestEndToEndDeltaChat:
 
         addr = ac2.get_config("addr").lower()
         saved_ok = 0
-        for line in remote.iter_output("journalctl -f -u dovecot"):
+        for line in remote.iter_output("journalctl -n0 -f -u dovecot"):
             if addr not in line:
                 # print(line)
                 continue
@@ -112,7 +112,7 @@ class TestEndToEndDeltaChat:
         lp.sec("ac1 sends a message and ac2 marks it as seen")
         chat = ac1.create_chat(ac2)
         msg = chat.send_text("hi")
-        m = ac2.wait_next_incoming_message()
+        m = ac2._evtracker.wait_next_incoming_message()
         m.mark_seen()
         # we can only indirectly wait for mark-seen to cause an smtp-error
         lp.sec("try to wait for markseen to complete and check error states")
@@ -132,7 +132,7 @@ def test_hide_senders_ip_address(cmfactory):
     chat = cmfactory.get_accepted_chat(user1, user2)
 
     chat.send_text("testing submission header cleanup")
-    user2.wait_next_incoming_message()
+    user2._evtracker.wait_next_incoming_message()
     user2.direct_imap.select_folder("Inbox")
     msg = user2.direct_imap.get_all_messages()[0]
     assert public_ip not in msg.obj.as_string()
@@ -146,5 +146,5 @@ def test_echobot(cmfactory, chatmail_config, lp):
     text = "hi, I hope you text me back"
     chat.send_text(text)
     lp.sec("Wait for reply from echobot")
-    reply = ac.wait_next_incoming_message()
+    reply = ac._evtracker.wait_next_incoming_message()
     assert reply.text == text

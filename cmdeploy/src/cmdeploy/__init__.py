@@ -350,9 +350,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     need_restart |= lua_push_notification_script.changed
 
     sieve_script = files.put(
-        src=importlib.resources.files(__package__).joinpath(
-            "dovecot/default.sieve"
-        ),
+        src=importlib.resources.files(__package__).joinpath("dovecot/default.sieve"),
         dest="/etc/dovecot/default.sieve",
         user="root",
         group="root",
@@ -361,10 +359,8 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     need_restart |= sieve_script.changed
     if sieve_script.changed:
         server.shell(
-            name=f"compile sieve script",
-            commands=[
-                f"/usr/bin/sievec /etc/dovecot/default.sieve"
-            ],
+            name="compile sieve script",
+            commands=["/usr/bin/sievec /etc/dovecot/default.sieve"],
         )
 
     files.template(
@@ -457,7 +453,9 @@ def check_config(config):
         blocked_words = "merlinux schmieder testrun.org".split()
         for key in config.__dict__:
             value = config.__dict__[key]
-            if key.startswith("privacy") and any(x in str(value) for x in blocked_words):
+            if key.startswith("privacy") and any(
+                x in str(value) for x in blocked_words
+            ):
                 raise ValueError(
                     f"please set your own privacy contacts/addresses in {config._inipath}"
                 )

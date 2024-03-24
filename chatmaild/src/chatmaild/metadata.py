@@ -1,6 +1,6 @@
 import pwd
 
-import pathlib
+from pathlib import Path
 from queue import Queue
 from threading import Thread
 from socketserver import (
@@ -13,7 +13,6 @@ import sys
 import logging
 import os
 import requests
-import marshal
 
 
 DICTPROXY_LOOKUP_CHAR = "L"
@@ -29,33 +28,19 @@ class Notifier:
         self.metadata_dir = metadata_dir
         self.to_notify_queue = Queue()
 
-    def get_metadata(self, guid):
-        guid_path = self.metadata_dir.joinpath(guid)
-        if guid_path.exists():
-            with guid_path.open("rb") as f:
-                return marshal.load(f)
-        return {}
-
-    def set_metadata(self, guid, guid_data):
+    def set_token(self, guid, token):
         guid_path = self.metadata_dir.joinpath(guid)
         write_path = guid_path.with_suffix(".tmp")
-        with write_path.open("wb") as f:
-            marshal.dump(guid_data, f)
-        os.rename(write_path, guid_path)
-
-    def set_token(self, guid, token):
-        guid_data = self.get_metadata(guid)
-        guid_data["token"] = token
-        self.set_metadata(guid, guid_data)
+        write_path.write_text(token)
+        write_path.rename(guid_path)
 
     def del_token(self, guid):
-        guid_data = self.get_metadata(guid)
-        if "token" in guid_data:
-            del guid_data["token"]
-            self.set_metadata(guid, guid_data)
+        self.metadata_dir.joinpath(guid).unlink(missing_ok=True)
 
     def get_token(self, guid):
-        return self.get_metadata(guid).get("token")
+        guid_path = self.metadata_dir / guid
+        if guid_path.exists():
+            return guid_path.read_text()
 
     def new_message_for_guid(self, guid):
         self.to_notify_queue.put(guid)
@@ -151,7 +136,7 @@ def main():
 
     # XXX config is not currently used
     config = read_config(config)
-    metadata_dir = pathlib.Path(metadata_dir)
+    metadata_dir = Path(metadata_dir)
     if not metadata_dir.exists():
         metadata_dir.mkdir()
     notifier = Notifier(metadata_dir)

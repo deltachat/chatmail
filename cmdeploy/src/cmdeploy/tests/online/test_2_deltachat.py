@@ -75,7 +75,7 @@ class TestEndToEndDeltaChat:
                         )
                     lp.indent("good, message sending failed because quota was exceeded")
                     return
-            if "saved mail to inbox" in line:
+            if "stored mail into mailbox 'inbox'" in line or "saved mail to inbox" in line:
                 saved_ok += 1
                 print(f"{saved_ok}: {line}")
                 if saved_ok >= num_to_send:

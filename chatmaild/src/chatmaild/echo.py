@@ -18,14 +18,14 @@ hooks = events.HookCollection()
 @hooks.on(events.RawEvent)
 def log_event(event):
     if event.kind == EventType.INFO:
-        logging.info(event.msg)
+        logging.info("%s", event.msg)
     elif event.kind == EventType.WARNING:
-        logging.warning(event.msg)
+        logging.warning("%s", event.msg)
 
 
 @hooks.on(events.RawEvent(EventType.ERROR))
 def log_error(event):
-    logging.error(event.msg)
+    logging.error("%s", event.msg)
 
 
 @hooks.on(events.MemberListChanged)
@@ -59,6 +59,7 @@ def help_command(event):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     path = os.environ.get("PATH")
     venv_path = sys.argv[0].strip("echobot")
     os.environ["PATH"] = path + ":" + venv_path
@@ -80,5 +81,4 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main()

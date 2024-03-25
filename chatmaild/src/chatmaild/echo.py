@@ -48,6 +48,9 @@ def on_group_name_changed(event):
 @hooks.on(events.NewMessage(func=lambda e: not e.command))
 def echo(event):
     snapshot = event.message_snapshot
+    if snapshot.is_info:
+        # Ignore info messages
+        return
     if snapshot.text or snapshot.file:
         snapshot.chat.send_message(text=snapshot.text, file=snapshot.file)
 

@@ -17,6 +17,10 @@ from .config import read_config, Config
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 
 
+class UnknownCommand(ValueError):
+    """dictproxy handler received an unkown command"""
+
+
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
     passhash = crypt.crypt(password, crypt.METHOD_SHA512)
@@ -127,8 +131,12 @@ def split_and_unescape(s):
 
 
 def handle_dovecot_request(msg, db, config: Config):
+    # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
     short_command = msg[0]
-    if short_command == "L":  # LOOKUP
+    if short_command == "H":  # HELLO
+        # we don't do any checking on versions and just return
+        return
+    elif short_command == "L":  # LOOKUP
         parts = msg[1:].split("\t")
 
         # Dovecot <2.3.17 has only one part,
@@ -159,7 +167,7 @@ def handle_dovecot_request(msg, db, config: Config):
                     reply_command = "N"
         json_res = json.dumps(res) if res else ""
         return f"{reply_command}{json_res}\n"
-    return None
+    raise UnknownCommand(msg)
 
 
 def handle_dovecot_protocol(rfile, wfile, db: Database, config: Config):
@@ -167,12 +175,14 @@ def handle_dovecot_protocol(rfile, wfile, db: Database, config: Config):
         msg = rfile.readline().strip().decode()
         if not msg:
             break
-        res = handle_dovecot_request(msg, db, config)
-        if res:
-            wfile.write(res.encode("ascii"))
-            wfile.flush()
+        try:
+            res = handle_dovecot_request(msg, db, config)
+        except UnknownCommand:
+            logging.warning("unknown command: %r", msg)
         else:
-            logging.warning("request had no answer: %r", msg)
+            if res:
+                wfile.write(res.encode("ascii"))
+                wfile.flush()
 
 
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):

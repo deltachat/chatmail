@@ -75,6 +75,14 @@ def test_handle_dovecot_request(db, example_config):
     assert userdata["password"].startswith("{SHA512-CRYPT}")
 
 
+def test_handle_dovecot_protocol_hello_is_skipped(db, example_config, caplog):
+    rfile = io.BytesIO(b"H3\t2\t0\t\tauth\n")
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    assert wfile.getvalue() == b""
+    assert not caplog.messages
+
+
 def test_handle_dovecot_protocol(db, example_config):
     rfile = io.BytesIO(
         b"H3\t2\t0\t\tauth\nLshared/userdb/foobar@chat.example.org\tfoobar@chat.example.org\n"

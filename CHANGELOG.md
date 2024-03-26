@@ -4,6 +4,9 @@
 
 ### Changes since March 15th, 2024
 
+- Avoid warning for regular doveauth protocol's hello message. 
+  ([#250](https://github.com/deltachat/chatmail/pull/250))
+
 - Fix various tests to pass again with "cmdeploy test". 
   ([#245](https://github.com/deltachat/chatmail/pull/245),
   [#242](https://github.com/deltachat/chatmail/pull/242)

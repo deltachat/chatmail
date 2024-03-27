@@ -5,6 +5,7 @@ from chatmaild.metadata import (
     handle_dovecot_request,
     handle_dovecot_protocol,
     Notifier,
+    PersistentDict,
 )
 
 
@@ -215,3 +216,28 @@ def test_notifier_thread_run_gone_removes_token(notifier):
     url, data, timeout = requests[1]
     assert data == "45678"
     assert notifier.get_tokens("user@example.org") == ["45678"]
+
+
+class TestPersistentDict:
+    @pytest.fixture
+    def store(self, tmp_path):
+        return PersistentDict(tmp_path.joinpath("metadata"))
+
+    def test_basic(self, store):
+        assert store.get() == {}
+        with store.modify() as d:
+            d["devicetoken"] = [1, 2, 3]
+            d["456"] = 4.2
+        new = store.get()
+        assert new["devicetoken"] == [1, 2, 3]
+        assert new["456"] == 4.2
+
+    def test_dying_lock(self, tmp_path, caplog):
+        store1 = PersistentDict(tmp_path.joinpath("metadata"))
+        store2 = PersistentDict(tmp_path.joinpath("metadata"), timeout=0.1)
+        with store1.modify() as d:
+            with store2.modify() as d2:
+                d2["1"] = "2"
+            assert "could not obtain" in caplog.records[0].msg
+            d["1"] = "3"
+        assert store1.get()["1"] == "3"

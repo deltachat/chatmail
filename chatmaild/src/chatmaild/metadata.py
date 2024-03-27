@@ -12,9 +12,8 @@ import sys
 import logging
 import os
 import requests
-import marshal
-from contextlib import contextmanager
-import filelock
+
+from .filedict import FileDict
 
 
 DICTPROXY_LOOKUP_CHAR = "L"
@@ -27,38 +26,6 @@ DICTPROXY_TRANSACTION_CHARS = "SBC"
 METADATA_TOKEN_KEY = "devicetoken"
 
 
-class PersistentDict:
-    """Concurrency-safe multi-reader-single-writer Persistent Dict."""
-
-    def __init__(self, path, timeout=5.0):
-        self.path = path
-        self.lock_path = path.with_name(path.name + ".lock")
-        self.timeout = timeout
-
-    @contextmanager
-    def modify(self):
-        try:
-            with filelock.FileLock(self.lock_path, timeout=self.timeout):
-                data = self.get()
-                yield data
-                write_path = self.path.with_suffix(".tmp")
-                with write_path.open("wb") as f:
-                    marshal.dump(data, f)
-                os.rename(write_path, self.path)
-        except filelock.Timeout:
-            logging.warning("could not obtain lock, removing: %r", self.lock_path)
-            os.remove(self.lock_path)
-            with self.modify() as d:
-                yield d
-
-    def get(self):
-        try:
-            with self.path.open("rb") as f:
-                return marshal.load(f)
-        except FileNotFoundError:
-            return {}
-
-
 class Notifier:
     def __init__(self, vmail_dir):
         self.vmail_dir = vmail_dir
@@ -68,7 +35,7 @@ class Notifier:
         mbox_path = self.vmail_dir.joinpath(mbox)
         if not mbox_path.exists():
             mbox_path.mkdir()
-        return PersistentDict(mbox_path / "metadata.marshalled")
+        return FileDict(mbox_path / "metadata.marshalled")
 
     def add_token(self, mbox, token):
         with self.get_metadata_dict(mbox).modify() as data:
@@ -78,7 +45,7 @@ class Notifier:
             if token not in tokens:
                 tokens.append(token)
 
-    def del_token(self, mbox, token):
+    def remove_token(self, mbox, token):
         with self.get_metadata_dict(mbox).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY)
             if tokens:
@@ -88,7 +55,7 @@ class Notifier:
                     pass
 
     def get_tokens(self, mbox):
-        return self.get_metadata_dict(mbox).get().get(METADATA_TOKEN_KEY, [])
+        return self.get_metadata_dict(mbox).read().get(METADATA_TOKEN_KEY, [])
 
     def new_message_for_mbox(self, mbox):
         self.to_notify_queue.put(mbox)
@@ -109,7 +76,7 @@ class Notifier:
             if response.status_code == 410:
                 # 410 Gone status code
                 # means the token is no longer valid.
-                self.del_token(mbox, token)
+                self.remove_token(mbox, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

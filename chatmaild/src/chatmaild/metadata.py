@@ -34,7 +34,7 @@ class Notifier:
         mbox_path = self.vmail_dir.joinpath(mbox)
         if not mbox_path.exists():
             mbox_path.mkdir()
-        metadata_dir = mbox_path / METADATA_TOKEN_KEY
+        metadata_dir = mbox_path / "metadata"
         if not metadata_dir.exists():
             metadata_dir.mkdir()
         return metadata_dir

@@ -47,8 +47,8 @@ class Notifier:
             if token_path.exists():
                 return token_path.read_text()
 
-    def new_message_for_guid(self, guid):
-        self.to_notify_queue.put(guid)
+    def new_message_for_mbox(self, mbox):
+        self.to_notify_queue.put(mbox)
 
     def thread_run_loop(self):
         requests_session = requests.Session()
@@ -56,8 +56,8 @@ class Notifier:
             self.thread_run_one(requests_session)
 
     def thread_run_one(self, requests_session):
-        guid = self.to_notify_queue.get()
-        token = self.get_token(guid)
+        mbox = self.to_notify_queue.get()
+        token = self.get_token(mbox)
         if token:
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",
@@ -67,7 +67,7 @@ class Notifier:
             if response.status_code == 410:
                 # 410 Gone status code
                 # means the token is no longer valid.
-                self.del_token(guid)
+                self.del_token(mbox)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -88,9 +88,19 @@ def handle_dovecot_protocol(rfile, wfile, notifier):
 
 def handle_dovecot_request(msg, transactions, notifier):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
+    logging.warning("handling request: %r", msg)
     short_command = msg[0]
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:
+        # Lpriv/43f5f508a7ea0366dff30200c15250e3/devicetoken\tlkj123poi@c2.testrun.org
+        keyparts = parts[0].split("/")
+        if keyparts[0] == "priv":
+            # guid = keyparts[1]
+            keyname = keyparts[2]
+            mbox = parts[1]
+            if keyname == "devicetoken":
+                return f"O{notifier.get_token(mbox)}\n"
+        logging.warning("lookup ignored: %r", msg)
         return "N\n"
     elif short_command == DICTPROXY_ITERATE_CHAR:
         # Empty line means ITER_FINISHED.
@@ -103,32 +113,25 @@ def handle_dovecot_request(msg, transactions, notifier):
     transaction_id = parts[0]
 
     if short_command == DICTPROXY_BEGIN_TRANSACTION_CHAR:
-        transactions[transaction_id] = "O\n"
+        mbox = parts[1]
+        transactions[transaction_id] = dict(mbox=mbox, res="O\n")
     elif short_command == DICTPROXY_COMMIT_TRANSACTION_CHAR:
         # returns whether it failed or succeeded.
-        return transactions.pop(transaction_id, "N\n")
+        return transactions.pop(transaction_id)["res"]
     elif short_command == DICTPROXY_SET_CHAR:
-        # See header of
+        # For documentation on key structure see
         # <https://github.com/dovecot/core/blob/5e7965632395793d9355eb906b173bf28d2a10ca/src/lib-storage/mailbox-attribute.h>
-        # for the documentation on the structure of the key.
-
-        # Request GETMETADATA "INBOX" /private/chatmail
-        # results in a query for
-        # priv/dd72550f05eadc65542a1200cac67ad7/chatmail
-        #
-        # Request GETMETADATA "" /private/chatmail
-        # results in
-        # priv/dd72550f05eadc65542a1200cac67ad7/vendor/vendor.dovecot/pvt/server/chatmail
 
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
+        mbox = transactions[transaction_id]["mbox"]
         if keyname[0] == "priv" and keyname[2] == "devicetoken":
-            notifier.set_token(keyname[1], value)
+            notifier.set_token(mbox, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
-            notifier.new_message_for_guid(keyname[1])
+            notifier.new_message_for_mbox(mbox)
         else:
             # Transaction failed.
-            transactions[transaction_id] = "F\n"
+            transactions[transaction_id]["res"] = "F\n"
 
 
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):

@@ -21,6 +21,8 @@ DICTPROXY_BEGIN_TRANSACTION_CHAR = "B"
 DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
 DICTPROXY_TRANSACTION_CHARS = "SBC"
 
+METADATA_TOKEN_KEY = "devicetoken"
+
 
 class Notifier:
     def __init__(self, vmail_dir):
@@ -28,17 +30,18 @@ class Notifier:
         self.to_notify_queue = Queue()
 
     def get_metadata_dir(self, mbox):
+        "get metadata directory inside mailbox directory"
         mbox_path = self.vmail_dir.joinpath(mbox)
         if not mbox_path.exists():
             mbox_path.mkdir()
-        metadata_dir = mbox_path / "metadata"
+        metadata_dir = mbox_path / METADATA_TOKEN_KEY
         if not metadata_dir.exists():
             metadata_dir.mkdir()
         return metadata_dir
 
     def set_token(self, mbox, token):
         metadata_dir = self.get_metadata_dir(mbox)
-        token_path = metadata_dir / "token"
+        token_path = metadata_dir / METADATA_TOKEN_KEY
         write_path = token_path.with_suffix(".tmp")
         write_path.write_text(token)
         write_path.rename(token_path)
@@ -46,12 +49,12 @@ class Notifier:
     def del_token(self, mbox):
         metadata_dir = self.get_metadata_dir(mbox)
         if metadata_dir is not None:
-            metadata_dir.joinpath("token").unlink(missing_ok=True)
+            metadata_dir.joinpath(METADATA_TOKEN_KEY).unlink(missing_ok=True)
 
     def get_token(self, mbox):
         metadata_dir = self.get_metadata_dir(mbox)
         if metadata_dir is not None:
-            token_path = metadata_dir / "token"
+            token_path = metadata_dir / METADATA_TOKEN_KEY
             if token_path.exists():
                 return token_path.read_text()
 
@@ -105,7 +108,7 @@ def handle_dovecot_request(msg, transactions, notifier):
         if keyparts[0] == "priv":
             keyname = keyparts[2]
             mbox = parts[1]
-            if keyname == "devicetoken":
+            if keyname == METADATA_TOKEN_KEY:
                 return f"O{notifier.get_token(mbox)}\n"
         logging.warning("lookup ignored: %r", msg)
         return "N\n"
@@ -132,7 +135,7 @@ def handle_dovecot_request(msg, transactions, notifier):
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
         mbox = transactions[transaction_id]["mbox"]
-        if keyname[0] == "priv" and keyname[2] == "devicetoken":
+        if keyname[0] == "priv" and keyname[2] == METADATA_TOKEN_KEY:
             notifier.set_token(mbox, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
             notifier.new_message_for_mbox(mbox)

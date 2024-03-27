@@ -37,44 +37,42 @@ def test_notifier_delete_without_set(notifier):
 
 
 def test_handle_dovecot_request_lookup_fails(notifier):
-    res = handle_dovecot_request("Lpriv/123/chatmail", {}, notifier)
+    res = handle_dovecot_request("Lpriv/123/chatmail\tuser@example.org", {}, notifier)
     assert res == "N\n"
 
 
 def test_handle_dovecot_request_happy_path(notifier):
     transactions = {}
 
-    # lookups return the same NOTFOUND result
-    res = handle_dovecot_request("Lpriv/123/chatmail", transactions, notifier)
-    assert res == "N\n"
-    assert notifier.get_token("guid00") is None and not transactions
-
     # set device token in a transaction
     tx = "1111"
-    msg = f"B{tx}\tuser"
+    msg = f"B{tx}\tuser@example.org"
     res = handle_dovecot_request(msg, transactions, notifier)
-    assert not res and notifier.get_token("guid00") is None
-    assert transactions == {tx: "O\n"}
+    assert not res and notifier.get_token("user@example.org") is None
+    assert transactions == {tx: dict(mbox="user@example.org", res="O\n")}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t01234"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert not res
     assert len(transactions) == 1
-    assert notifier.get_token("guid00") == "01234"
+    assert notifier.get_token("user@example.org") == "01234"
 
     msg = f"C{tx}"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert res == "O\n"
     assert len(transactions) == 0
-    assert notifier.get_token("guid00") == "01234"
+    assert notifier.get_token("user@example.org") == "01234"
 
     # trigger notification for incoming message
-    assert handle_dovecot_request(f"B{tx}\tuser", transactions, notifier) is None
+    assert (
+        handle_dovecot_request(f"B{tx}\tuser@example.org", transactions, notifier)
+        is None
+    )
     msg = f"S{tx}\tpriv/guid00/messagenew"
     assert handle_dovecot_request(msg, transactions, notifier) is None
-    assert notifier.to_notify_queue.get() == "guid00"
+    assert notifier.to_notify_queue.get() == "user@example.org"
     assert notifier.to_notify_queue.qsize() == 0
-    assert handle_dovecot_request(f"C{tx}\tuser", transactions, notifier) == "O\n"
+    assert handle_dovecot_request(f"C{tx}", transactions, notifier) == "O\n"
     assert not transactions
 
 
@@ -83,7 +81,7 @@ def test_handle_dovecot_protocol_set_devicetoken(notifier):
         b"\n".join(
             [
                 b"HELLO",
-                b"Btx00\tuser",
+                b"Btx00\tuser@example.org",
                 b"Stx00\tpriv/guid00/devicetoken\t01234",
                 b"Ctx00",
             ]
@@ -91,8 +89,32 @@ def test_handle_dovecot_protocol_set_devicetoken(notifier):
     )
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
-    assert notifier.get_token("guid00") == "01234"
     assert wfile.getvalue() == b"O\n"
+    assert notifier.get_token("user@example.org") == "01234"
+
+
+def test_handle_dovecot_protocol_set_get_devicetoken(notifier):
+    rfile = io.BytesIO(
+        b"\n".join(
+            [
+                b"HELLO",
+                b"Btx00\tuser@example.org",
+                b"Stx00\tpriv/guid00/devicetoken\t01234",
+                b"Ctx00",
+            ]
+        )
+    )
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, notifier)
+    assert notifier.get_token("user@example.org") == "01234"
+    assert wfile.getvalue() == b"O\n"
+
+    rfile = io.BytesIO(
+        b"\n".join([b"HELLO", b"Lpriv/0123/devicetoken\tuser@example.org"])
+    )
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, notifier)
+    assert wfile.getvalue() == b"O01234\n"
 
 
 def test_handle_dovecot_protocol_iterate(notifier):
@@ -114,7 +136,7 @@ def test_handle_dovecot_protocol_messagenew(notifier):
         b"\n".join(
             [
                 b"HELLO",
-                b"Btx01\tuser",
+                b"Btx01\tuser@example.org",
                 b"Stx01\tpriv/guid00/messagenew",
                 b"Ctx01",
             ]
@@ -123,7 +145,7 @@ def test_handle_dovecot_protocol_messagenew(notifier):
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"O\n"
-    assert notifier.to_notify_queue.get() == "guid00"
+    assert notifier.to_notify_queue.get() == "user@example.org"
     assert notifier.to_notify_queue.qsize() == 0
 
 
@@ -139,12 +161,12 @@ def test_notifier_thread_run(notifier):
 
             return Result()
 
-    notifier.set_token("guid00", "01234")
-    notifier.new_message_for_guid("guid00")
+    notifier.set_token("user@example.org", "01234")
+    notifier.new_message_for_mbox("user@example.org")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert notifier.get_token("guid00") == "01234"
+    assert notifier.get_token("user@example.org") == "01234"
 
 
 def test_notifier_thread_run_gone_removes_token(notifier):
@@ -159,10 +181,10 @@ def test_notifier_thread_run_gone_removes_token(notifier):
 
             return Result()
 
-    notifier.set_token("guid00", "01234")
-    notifier.new_message_for_guid("guid00")
-    assert notifier.get_token("guid00") == "01234"
+    notifier.set_token("user@example.org", "01234")
+    notifier.new_message_for_mbox("user@example.org")
+    assert notifier.get_token("user@example.org") == "01234"
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert notifier.get_token("guid00") is None
+    assert notifier.get_token("user@example.org") is None

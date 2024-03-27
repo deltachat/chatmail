@@ -24,14 +24,27 @@ class TestMetadataTokens:
     def test_set_get_metadata(self, imap_mailbox):
         "set and get metadata token for an account"
         client = imap_mailbox.client
-        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "l1kj23lk123" )\n')
+        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "1111" )\n')
         res = client.readline()
         assert b"OK Setmetadata completed" in res
+
         client.send(b"a02 GETMETADATA INBOX /private/devicetoken\n")
         res = client.readline()
         assert res[:1] == b"*"
-        res = client.readline().strip()[:-1]
-        assert res == b"l1kj23lk123"
+        res = client.readline().strip().rstrip(b")")
+        assert res == b"1111"
+        assert b"Getmetadata completed" in client.readline()
+
+        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "2222" )\n')
+        res = client.readline()
+        assert b"OK Setmetadata completed" in res
+
+        client.send(b"a02 GETMETADATA INBOX /private/devicetoken\n")
+        res = client.readline()
+        assert res[:1] == b"*"
+        res = client.readline().strip().rstrip(b")")
+        assert res == b"1111 2222"
+        assert b"Getmetadata completed" in client.readline()
 
 
 class TestEndToEndDeltaChat:

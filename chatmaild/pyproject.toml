@@ -10,6 +10,7 @@ dependencies = [
   "iniconfig",
   "deltachat-rpc-server",
   "deltachat-rpc-client",
+  "filelock",
   "requests",
 ]
 

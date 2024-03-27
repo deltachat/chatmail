@@ -26,8 +26,8 @@ def test_notifier_persistence(tmp_path):
     assert not notifier1.get_tokens("user1@example.org")
     assert not notifier2.get_tokens("user1@example.org")
 
-    notifier1.set_token("user1@example.org", "01234")
-    notifier1.set_token("user3@example.org", "456")
+    notifier1.add_token("user1@example.org", "01234")
+    notifier1.add_token("user3@example.org", "456")
     assert notifier2.get_tokens("user1@example.org") == ["01234"]
     assert notifier2.get_tokens("user3@example.org") == ["456"]
     notifier2.del_token("user1@example.org", "01234")
@@ -164,7 +164,7 @@ def test_notifier_thread_run(notifier):
 
             return Result()
 
-    notifier.set_token("user@example.org", "01234")
+    notifier.add_token("user@example.org", "01234")
     notifier.new_message_for_mbox("user@example.org")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
@@ -184,14 +184,15 @@ def test_multi_device_notifier(notifier):
 
             return Result()
 
-    notifier.set_token("user@example.org", "01234")
-    notifier.set_token("user@example.org", "56789")
+    notifier.add_token("user@example.org", "01234")
+    notifier.add_token("user@example.org", "56789")
     notifier.new_message_for_mbox("user@example.org")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
     url, data, timeout = requests[1]
     assert data == "56789"
+    assert notifier.get_tokens("user@example.org") == ["01234", "56789"]
 
 
 def test_notifier_thread_run_gone_removes_token(notifier):
@@ -206,10 +207,10 @@ def test_notifier_thread_run_gone_removes_token(notifier):
 
             return Result()
 
-    notifier.set_token("user@example.org", "01234")
+    notifier.add_token("user@example.org", "01234")
     notifier.new_message_for_mbox("user@example.org")
     assert notifier.get_tokens("user@example.org") == ["01234"]
-    notifier.set_token("user@example.org", "45678")
+    notifier.add_token("user@example.org", "45678")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"

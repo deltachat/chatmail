@@ -31,6 +31,11 @@ def test_notifier_persistence(tmp_path):
     assert notifier1.get_token("guid00") is None
 
 
+def test_notifier_delete_without_set(notifier):
+    notifier.del_token("guid00")
+    assert not notifier.get_token("guid00")
+
+
 def test_handle_dovecot_request_lookup_fails(notifier):
     res = handle_dovecot_request("Lpriv/123/chatmail", {}, notifier)
     assert res == "N\n"

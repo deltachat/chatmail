@@ -30,17 +30,22 @@ class Notifier:
 
     def set_token(self, guid, token):
         guid_path = self.metadata_dir.joinpath(guid)
-        write_path = guid_path.with_suffix(".tmp")
+        if not guid_path.exists():
+            guid_path.mkdir()
+        token_path = guid_path / "token"
+        write_path = token_path.with_suffix(".tmp")
         write_path.write_text(token)
-        write_path.rename(guid_path)
+        write_path.rename(token_path)
 
     def del_token(self, guid):
-        self.metadata_dir.joinpath(guid).unlink(missing_ok=True)
+        self.metadata_dir.joinpath(guid).joinpath("token").unlink(missing_ok=True)
 
     def get_token(self, guid):
         guid_path = self.metadata_dir / guid
         if guid_path.exists():
-            return guid_path.read_text()
+            token_path = guid_path / "token"
+            if token_path.exists():
+                return token_path.read_text()
 
     def new_message_for_guid(self, guid):
         self.to_notify_queue.put(guid)

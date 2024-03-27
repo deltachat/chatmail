@@ -64,44 +64,31 @@ class Notifier:
         self.vmail_dir = vmail_dir
         self.to_notify_queue = Queue()
 
-    def get_metadata_dir(self, mbox):
-        "get metadata directory inside mailbox directory"
+    def get_metadata_dict(self, mbox):
         mbox_path = self.vmail_dir.joinpath(mbox)
         if not mbox_path.exists():
             mbox_path.mkdir()
-        metadata_dir = mbox_path / "metadata"
-        if not metadata_dir.exists():
-            metadata_dir.mkdir()
-        return metadata_dir
+        return PersistentDict(mbox_path / "metadata.marshalled")
 
-    def set_token(self, mbox, token):
-        metadata_dir = self.get_metadata_dir(mbox)
-        token_path = metadata_dir / METADATA_TOKEN_KEY
-        write_path = token_path.with_suffix(".tmp")
-        tokens = []
-        if token_path.exists():
-            tokens = token_path.read_text().split() + [token]
-        if token not in tokens:
-            tokens.append(token)
-        write_path.write_text(" ".join(tokens))
-        write_path.rename(token_path)
+    def add_token(self, mbox, token):
+        with self.get_metadata_dict(mbox).modify() as data:
+            tokens = data.get(METADATA_TOKEN_KEY)
+            if tokens is None:
+                data[METADATA_TOKEN_KEY] = tokens = []
+            if token not in tokens:
+                tokens.append(token)
 
     def del_token(self, mbox, token):
-        tokens = self.get_tokens(mbox)
-        if token in tokens:
-            tokens.remove(token)
-            token_path = self.get_metadata_dir(mbox) / METADATA_TOKEN_KEY
-            write_path = token_path.with_suffix(".tmp")
-            write_path.write_text(" ".join(tokens))
-            write_path.rename(token_path)
+        with self.get_metadata_dict(mbox).modify() as data:
+            tokens = data.get(METADATA_TOKEN_KEY)
+            if tokens:
+                try:
+                    tokens.remove(token)
+                except KeyError:
+                    pass
 
     def get_tokens(self, mbox):
-        metadata_dir = self.get_metadata_dir(mbox)
-        if metadata_dir is not None:
-            token_path = metadata_dir / METADATA_TOKEN_KEY
-            if token_path.exists():
-                return token_path.read_text().split()
-        return []
+        return self.get_metadata_dict(mbox).get().get(METADATA_TOKEN_KEY, [])
 
     def new_message_for_mbox(self, mbox):
         self.to_notify_queue.put(mbox)
@@ -181,7 +168,7 @@ def handle_dovecot_request(msg, transactions, notifier):
         value = parts[2] if len(parts) > 2 else ""
         mbox = transactions[transaction_id]["mbox"]
         if keyname[0] == "priv" and keyname[2] == METADATA_TOKEN_KEY:
-            notifier.set_token(mbox, value)
+            notifier.add_token(mbox, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
             notifier.new_message_for_mbox(mbox)
         else:

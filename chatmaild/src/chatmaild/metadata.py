@@ -24,26 +24,35 @@ DICTPROXY_TRANSACTION_CHARS = "SBC"
 
 
 class Notifier:
-    def __init__(self, metadata_dir):
-        self.metadata_dir = metadata_dir
+    def __init__(self, vmail_dir):
+        self.vmail_dir = vmail_dir
         self.to_notify_queue = Queue()
 
-    def set_token(self, guid, token):
-        guid_path = self.metadata_dir.joinpath(guid)
-        if not guid_path.exists():
-            guid_path.mkdir()
-        token_path = guid_path / "token"
+    def get_metadata_dir(self, mbox):
+        mbox_path = self.vmail_dir.joinpath(mbox)
+        if not mbox_path.exists():
+            mbox_path.mkdir()
+        metadata_dir = mbox_path / "metadata"
+        if not metadata_dir.exists():
+            metadata_dir.mkdir()
+        return metadata_dir
+
+    def set_token(self, mbox, token):
+        metadata_dir = self.get_metadata_dir(mbox)
+        token_path = metadata_dir / "token"
         write_path = token_path.with_suffix(".tmp")
         write_path.write_text(token)
         write_path.rename(token_path)
 
-    def del_token(self, guid):
-        self.metadata_dir.joinpath(guid).joinpath("token").unlink(missing_ok=True)
+    def del_token(self, mbox):
+        metadata_dir = self.get_metadata_dir(mbox)
+        if metadata_dir is not None:
+            metadata_dir.joinpath("token").unlink(missing_ok=True)
 
-    def get_token(self, guid):
-        guid_path = self.metadata_dir / guid
-        if guid_path.exists():
-            token_path = guid_path / "token"
+    def get_token(self, mbox):
+        metadata_dir = self.get_metadata_dir(mbox)
+        if metadata_dir is not None:
+            token_path = metadata_dir / "token"
             if token_path.exists():
                 return token_path.read_text()
 
@@ -95,7 +104,6 @@ def handle_dovecot_request(msg, transactions, notifier):
         # Lpriv/43f5f508a7ea0366dff30200c15250e3/devicetoken\tlkj123poi@c2.testrun.org
         keyparts = parts[0].split("/")
         if keyparts[0] == "priv":
-            # guid = keyparts[1]
             keyname = keyparts[2]
             mbox = parts[1]
             if keyname == "devicetoken":

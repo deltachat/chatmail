@@ -10,30 +10,32 @@ from chatmaild.metadata import (
 
 @pytest.fixture
 def notifier(tmp_path):
-    metadata_dir = tmp_path.joinpath("metadata")
-    metadata_dir.mkdir()
-    return Notifier(metadata_dir)
+    vmail_dir = tmp_path.joinpath("vmaildir")
+    vmail_dir.mkdir()
+    return Notifier(vmail_dir)
 
 
 def test_notifier_persistence(tmp_path):
-    metadata_dir = tmp_path.joinpath("metadata")
-    metadata_dir.mkdir()
-    notifier1 = Notifier(metadata_dir)
-    notifier2 = Notifier(metadata_dir)
-    assert notifier1.get_token(guid="guid00") is None
-    assert notifier2.get_token(guid="guid00") is None
+    vmail_dir = tmp_path
+    vmail_dir.joinpath("user1@example.org").mkdir()
+    vmail_dir.joinpath("user3@example.org").mkdir()
 
-    notifier1.set_token("guid00", "01234")
-    notifier1.set_token("guid03", "456")
-    assert notifier2.get_token("guid00") == "01234"
-    assert notifier2.get_token("guid03") == "456"
-    notifier2.del_token("guid00")
-    assert notifier1.get_token("guid00") is None
+    notifier1 = Notifier(vmail_dir)
+    notifier2 = Notifier(vmail_dir)
+    assert notifier1.get_token("user1@example.org") is None
+    assert notifier2.get_token("user1@example.org") is None
+
+    notifier1.set_token("user1@example.org", "01234")
+    notifier1.set_token("user3@example.org", "456")
+    assert notifier2.get_token("user1@example.org") == "01234"
+    assert notifier2.get_token("user3@example.org") == "456"
+    notifier2.del_token("user1@example.org")
+    assert notifier1.get_token("user1@example.org") is None
 
 
 def test_notifier_delete_without_set(notifier):
-    notifier.del_token("guid00")
-    assert not notifier.get_token("guid00")
+    notifier.del_token("user@example.org")
+    assert not notifier.get_token("user@example.org")
 
 
 def test_handle_dovecot_request_lookup_fails(notifier):

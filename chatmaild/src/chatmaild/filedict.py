@@ -35,3 +35,6 @@ class FileDict:
                 return marshal.load(f)
         except FileNotFoundError:
             return {}
+        except Exception:
+            logging.warning("corrupt marshal data at: %r", self.path)
+            return {}

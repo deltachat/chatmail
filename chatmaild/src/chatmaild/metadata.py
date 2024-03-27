@@ -8,7 +8,6 @@ from socketserver import (
     StreamRequestHandler,
     ThreadingMixIn,
 )
-from .config import read_config
 import sys
 import logging
 import os
@@ -147,15 +146,16 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket, username, config, metadata_dir = sys.argv[1:]
+    socket, username, vmail_dir = sys.argv[1:]
     passwd_entry = pwd.getpwnam(username)
 
-    # XXX config is not currently used
-    config = read_config(config)
-    metadata_dir = Path(metadata_dir)
-    if not metadata_dir.exists():
-        metadata_dir.mkdir()
-    notifier = Notifier(metadata_dir)
+    vmail_dir = Path(vmail_dir)
+
+    if not vmail_dir.exists():
+        logging.error("vmail dir does not exist: %r", vmail_dir)
+        return 1
+
+    notifier = Notifier(vmail_dir)
 
     class Handler(StreamRequestHandler):
         def handle(self):

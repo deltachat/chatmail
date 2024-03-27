@@ -108,6 +108,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
             execpath=f"{remote_venv_dir}/bin/{fn}",
             config_path=remote_chatmail_inipath,
             remote_venv_dir=remote_venv_dir,
+            mail_domain=config.mail_domain,
         )
         source_path = importlib.resources.files("chatmaild").joinpath(f"{fn}.service.f")
         content = source_path.read_text().format(**params).encode()

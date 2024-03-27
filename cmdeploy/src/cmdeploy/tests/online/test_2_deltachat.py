@@ -5,6 +5,33 @@ import random
 import pytest
 import requests
 import ipaddress
+import imap_tools
+
+
+@pytest.fixture
+def imap_mailbox(cmfactory):
+    (ac1,) = cmfactory.get_online_accounts(1)
+    user = ac1.get_config("addr")
+    password = ac1.get_config("mail_pw")
+    mailbox = imap_tools.MailBox(user.split("@")[1])
+    mailbox.login(user, password)
+    return mailbox
+
+
+class TestMetadataTokens:
+    "Tests that use Metadata extension for storing tokens"
+
+    def test_set_get_metadata(self, imap_mailbox):
+        "set and get metadata token for an account"
+        client = imap_mailbox.client
+        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "l1kj23lk123" )\n')
+        res = client.readline()
+        assert b"OK Setmetadata completed" in res
+        client.send(b"a02 GETMETADATA INBOX /private/devicetoken\n")
+        res = client.readline()
+        assert res[:1] == b"*"
+        res = client.readline().strip()[:-1]
+        assert res == b"l1kj23lk123"
 
 
 class TestEndToEndDeltaChat:
@@ -75,7 +102,10 @@ class TestEndToEndDeltaChat:
                         )
                     lp.indent("good, message sending failed because quota was exceeded")
                     return
-            if "stored mail into mailbox 'inbox'" in line or "saved mail to inbox" in line:
+            if (
+                "stored mail into mailbox 'inbox'" in line
+                or "saved mail to inbox" in line
+            ):
                 saved_ok += 1
                 print(f"{saved_ok}: {line}")
                 if saved_ok >= num_to_send:

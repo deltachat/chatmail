@@ -19,6 +19,7 @@ dependencies = [
   "black",
   "pytest",
   "pytest-xdist", 
+  "imap_tools",
 ]
 
 [project.scripts]

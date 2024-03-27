@@ -97,7 +97,6 @@ def handle_dovecot_protocol(rfile, wfile, notifier):
 
 def handle_dovecot_request(msg, transactions, notifier):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
-    logging.warning("handling request: %r", msg)
     short_command = msg[0]
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:
@@ -164,7 +163,7 @@ def main():
             try:
                 handle_dovecot_protocol(self.rfile, self.wfile, notifier)
             except Exception:
-                logging.exception("Exception in the handler")
+                logging.exception("Exception in the dovecot dictproxy handler")
                 raise
 
     try:

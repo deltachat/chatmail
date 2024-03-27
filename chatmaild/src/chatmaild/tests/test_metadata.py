@@ -22,20 +22,20 @@ def test_notifier_persistence(tmp_path):
 
     notifier1 = Notifier(vmail_dir)
     notifier2 = Notifier(vmail_dir)
-    assert notifier1.get_token("user1@example.org") is None
-    assert notifier2.get_token("user1@example.org") is None
+    assert not notifier1.get_tokens("user1@example.org")
+    assert not notifier2.get_tokens("user1@example.org")
 
     notifier1.set_token("user1@example.org", "01234")
     notifier1.set_token("user3@example.org", "456")
-    assert notifier2.get_token("user1@example.org") == "01234"
-    assert notifier2.get_token("user3@example.org") == "456"
-    notifier2.del_token("user1@example.org")
-    assert notifier1.get_token("user1@example.org") is None
+    assert notifier2.get_tokens("user1@example.org") == ["01234"]
+    assert notifier2.get_tokens("user3@example.org") == ["456"]
+    notifier2.del_token("user1@example.org", "01234")
+    assert not notifier1.get_tokens("user1@example.org")
 
 
 def test_notifier_delete_without_set(notifier):
-    notifier.del_token("user@example.org")
-    assert not notifier.get_token("user@example.org")
+    notifier.del_token("user@example.org", "123")
+    assert not notifier.get_tokens("user@example.org")
 
 
 def test_handle_dovecot_request_lookup_fails(notifier):
@@ -50,20 +50,20 @@ def test_handle_dovecot_request_happy_path(notifier):
     tx = "1111"
     msg = f"B{tx}\tuser@example.org"
     res = handle_dovecot_request(msg, transactions, notifier)
-    assert not res and notifier.get_token("user@example.org") is None
+    assert not res and not notifier.get_tokens("user@example.org")
     assert transactions == {tx: dict(mbox="user@example.org", res="O\n")}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t01234"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert not res
     assert len(transactions) == 1
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
 
     msg = f"C{tx}"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert res == "O\n"
     assert len(transactions) == 0
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
 
     # trigger notification for incoming message
     assert (
@@ -92,7 +92,7 @@ def test_handle_dovecot_protocol_set_devicetoken(notifier):
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"O\n"
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
 
 
 def test_handle_dovecot_protocol_set_get_devicetoken(notifier):
@@ -108,7 +108,7 @@ def test_handle_dovecot_protocol_set_get_devicetoken(notifier):
     )
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
     assert wfile.getvalue() == b"O\n"
 
     rfile = io.BytesIO(
@@ -168,7 +168,29 @@ def test_notifier_thread_run(notifier):
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
+
+
+def test_multi_device_notifier(notifier):
+    requests = []
+
+    class ReqMock:
+        def post(self, url, data, timeout):
+            requests.append((url, data, timeout))
+
+            class Result:
+                status_code = 200
+
+            return Result()
+
+    notifier.set_token("user@example.org", "01234")
+    notifier.set_token("user@example.org", "56789")
+    notifier.new_message_for_mbox("user@example.org")
+    notifier.thread_run_one(ReqMock())
+    url, data, timeout = requests[0]
+    assert data == "01234"
+    url, data, timeout = requests[1]
+    assert data == "56789"
 
 
 def test_notifier_thread_run_gone_removes_token(notifier):
@@ -179,14 +201,17 @@ def test_notifier_thread_run_gone_removes_token(notifier):
             requests.append((url, data, timeout))
 
             class Result:
-                status_code = 410
+                status_code = 410 if data == "01234" else 200
 
             return Result()
 
     notifier.set_token("user@example.org", "01234")
     notifier.new_message_for_mbox("user@example.org")
-    assert notifier.get_token("user@example.org") == "01234"
+    assert notifier.get_tokens("user@example.org") == ["01234"]
+    notifier.set_token("user@example.org", "45678")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert notifier.get_token("user@example.org") is None
+    url, data, timeout = requests[1]
+    assert data == "45678"
+    assert notifier.get_tokens("user@example.org") == ["45678"]

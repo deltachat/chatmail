@@ -43,20 +43,30 @@ class Notifier:
         metadata_dir = self.get_metadata_dir(mbox)
         token_path = metadata_dir / METADATA_TOKEN_KEY
         write_path = token_path.with_suffix(".tmp")
-        write_path.write_text(token)
+        tokens = []
+        if token_path.exists():
+            tokens = token_path.read_text().split() + [token]
+        if token not in tokens:
+            tokens.append(token)
+        write_path.write_text(" ".join(tokens))
         write_path.rename(token_path)
 
-    def del_token(self, mbox):
-        metadata_dir = self.get_metadata_dir(mbox)
-        if metadata_dir is not None:
-            metadata_dir.joinpath(METADATA_TOKEN_KEY).unlink(missing_ok=True)
+    def del_token(self, mbox, token):
+        tokens = self.get_tokens(mbox)
+        if token in tokens:
+            tokens.remove(token)
+            token_path = self.get_metadata_dir(mbox) / METADATA_TOKEN_KEY
+            write_path = token_path.with_suffix(".tmp")
+            write_path.write_text(" ".join(tokens))
+            write_path.rename(token_path)
 
-    def get_token(self, mbox):
+    def get_tokens(self, mbox):
         metadata_dir = self.get_metadata_dir(mbox)
         if metadata_dir is not None:
             token_path = metadata_dir / METADATA_TOKEN_KEY
             if token_path.exists():
-                return token_path.read_text()
+                return token_path.read_text().split()
+        return []
 
     def new_message_for_mbox(self, mbox):
         self.to_notify_queue.put(mbox)
@@ -68,8 +78,7 @@ class Notifier:
 
     def thread_run_one(self, requests_session):
         mbox = self.to_notify_queue.get()
-        token = self.get_token(mbox)
-        if token:
+        for token in self.get_tokens(mbox):
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",
                 data=token,
@@ -78,7 +87,7 @@ class Notifier:
             if response.status_code == 410:
                 # 410 Gone status code
                 # means the token is no longer valid.
-                self.del_token(mbox)
+                self.del_token(mbox, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -109,7 +118,8 @@ def handle_dovecot_request(msg, transactions, notifier):
             keyname = keyparts[2]
             mbox = parts[1]
             if keyname == METADATA_TOKEN_KEY:
-                return f"O{notifier.get_token(mbox)}\n"
+                res = " ".join(notifier.get_tokens(mbox))
+                return f"O{res}\n"
         logging.warning("lookup ignored: %r", msg)
         return "N\n"
     elif short_command == DICTPROXY_ITERATE_CHAR:

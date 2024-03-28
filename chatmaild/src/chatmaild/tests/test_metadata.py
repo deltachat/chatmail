@@ -40,6 +40,13 @@ def test_notifier_persistence(tmp_path, testaddr, testaddr2):
     assert notifier1.get_tokens(testaddr2) == ["456"]
 
 
+def test_remove_nonexisting(tmp_path, testaddr):
+    notifier1 = Notifier(tmp_path)
+    notifier1.add_token(testaddr, "123")
+    notifier1.remove_token(testaddr, "1l23k1l2k3")
+    assert notifier1.get_tokens(testaddr) == ["123"]
+
+
 def test_notifier_delete_without_set(notifier, testaddr):
     notifier.remove_token(testaddr, "123")
     assert not notifier.get_tokens(testaddr)

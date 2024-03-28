@@ -35,25 +35,23 @@ class Notifier:
         self.to_notify_queue = Queue()
 
     def get_metadata_dict(self, addr):
-        addr_path = self.vmail_dir.joinpath(addr)
-        return FileDict(addr_path / "metadata.marshalled")
+        return FileDict(self.vmail_dir / addr / "metadata.marshalled")
 
     def add_token(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY)
             if tokens is None:
-                data[METADATA_TOKEN_KEY] = tokens = []
-            if token not in tokens:
+                data[METADATA_TOKEN_KEY] = [token]
+            elif token not in tokens:
                 tokens.append(token)
 
     def remove_token(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
-            tokens = data.get(METADATA_TOKEN_KEY)
-            if tokens:
-                try:
-                    tokens.remove(token)
-                except KeyError:
-                    pass
+            tokens = data.get(METADATA_TOKEN_KEY, [])
+            try:
+                tokens.remove(token)
+            except ValueError:
+                pass
 
     def get_tokens(self, addr):
         return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])

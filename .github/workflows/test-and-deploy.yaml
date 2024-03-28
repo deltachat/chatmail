@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  pull-request:
+  pull_request:
     paths-ignore:
       - 'scripts/**'
 
@@ -40,12 +40,6 @@ jobs:
       - name: append venv/bin to PATH
         run: echo venv/bin >>$GITHUB_PATH
 
-      - name: run formatting checks 
-        run: cmdeploy fmt -v 
-
-      - name: run deploy-chatmail offline tests 
-        run: pytest --pyargs cmdeploy 
-
       - name: upload TLS cert after rebuilding
         run: |
           echo " --- wait until staging.testrun.org VPS is rebuilt --- "
@@ -54,6 +48,12 @@ jobs:
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
           rsync -avz acme root@staging.testrun.org:/var/lib/ || true
           rsync -avz dkimkeys root@staging.testrun.org:/etc/ || true
+
+      - name: run formatting checks 
+        run: cmdeploy fmt -v 
+
+      - name: run deploy-chatmail offline tests 
+        run: pytest --pyargs cmdeploy 
 
       - run: cmdeploy init staging.testrun.org
 

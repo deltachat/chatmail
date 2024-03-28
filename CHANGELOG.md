@@ -1,5 +1,9 @@
 # Changelog for chatmail deployment 
 
+## unreleased 
+
+- XXX
+
 ## 1.1.0 - 2024-03-28
 
 ### The changelog starts to record changes from March 15th, 2024 

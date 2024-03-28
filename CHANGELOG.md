@@ -2,6 +2,9 @@
 
 ## untagged 
 
+- Apply systemd restrictions to echobot
+  ([#259](https://github.com/deltachat/chatmail/pull/259))
+
 - re-enable running the CI in pull requests, but not concurrently 
   ([#258](https://github.com/deltachat/chatmail/pull/258))
 

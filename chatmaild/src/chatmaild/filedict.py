@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 
 class FileDict:
-    """Concurrency-safe multi-reader-single-writer Persistent Dict."""
+    """Concurrency-safe multi-reader/single-writer persistent dict."""
 
     def __init__(self, path):
         self.path = path

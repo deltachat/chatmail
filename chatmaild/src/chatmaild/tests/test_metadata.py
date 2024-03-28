@@ -15,66 +15,71 @@ def notifier(tmp_path):
     return Notifier(vmail_dir)
 
 
-def test_notifier_persistence(tmp_path):
-    vmail_dir = tmp_path
-    vmail_dir.joinpath("user1@example.org").mkdir()
-    vmail_dir.joinpath("user3@example.org").mkdir()
-
-    notifier1 = Notifier(vmail_dir)
-    notifier2 = Notifier(vmail_dir)
-    assert not notifier1.get_tokens("user1@example.org")
-    assert not notifier2.get_tokens("user1@example.org")
-
-    notifier1.add_token("user1@example.org", "01234")
-    notifier1.add_token("user3@example.org", "456")
-    assert notifier2.get_tokens("user1@example.org") == ["01234"]
-    assert notifier2.get_tokens("user3@example.org") == ["456"]
-    notifier2.remove_token("user1@example.org", "01234")
-    assert not notifier1.get_tokens("user1@example.org")
+@pytest.fixture
+def testaddr():
+    return "user.name@example.org"
 
 
-def test_notifier_delete_without_set(notifier):
-    notifier.remove_token("user@example.org", "123")
-    assert not notifier.get_tokens("user@example.org")
+@pytest.fixture
+def testaddr2():
+    return "user2@example.org"
 
 
-def test_handle_dovecot_request_lookup_fails(notifier):
-    res = handle_dovecot_request("Lpriv/123/chatmail\tuser@example.org", {}, notifier)
+def test_notifier_persistence(tmp_path, testaddr, testaddr2):
+    notifier1 = Notifier(tmp_path)
+    notifier2 = Notifier(tmp_path)
+    assert not notifier1.get_tokens(testaddr)
+    assert not notifier2.get_tokens(testaddr)
+
+    notifier1.add_token(testaddr, "01234")
+    notifier1.add_token(testaddr2, "456")
+    assert notifier2.get_tokens(testaddr) == ["01234"]
+    assert notifier2.get_tokens(testaddr2) == ["456"]
+    notifier2.remove_token(testaddr, "01234")
+    assert not notifier1.get_tokens(testaddr)
+    assert notifier1.get_tokens(testaddr2) == ["456"]
+
+
+def test_notifier_delete_without_set(notifier, testaddr):
+    notifier.remove_token(testaddr, "123")
+    assert not notifier.get_tokens(testaddr)
+
+
+def test_handle_dovecot_request_lookup_fails(notifier, testaddr):
+    res = handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}", {}, notifier)
     assert res == "N\n"
 
 
-def test_handle_dovecot_request_happy_path(notifier):
+def test_handle_dovecot_request_happy_path(notifier, testaddr):
     transactions = {}
 
     # set device token in a transaction
     tx = "1111"
-    msg = f"B{tx}\tuser@example.org"
+    msg = f"B{tx}\t{testaddr}"
     res = handle_dovecot_request(msg, transactions, notifier)
-    assert not res and not notifier.get_tokens("user@example.org")
-    assert transactions == {tx: dict(mbox="user@example.org", res="O\n")}
+    assert not res and not notifier.get_tokens(testaddr)
+    assert transactions == {tx: dict(addr=testaddr, res="O\n")}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t01234"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert not res
     assert len(transactions) == 1
-    assert notifier.get_tokens("user@example.org") == ["01234"]
+    assert notifier.get_tokens(testaddr) == ["01234"]
 
     msg = f"C{tx}"
     res = handle_dovecot_request(msg, transactions, notifier)
     assert res == "O\n"
     assert len(transactions) == 0
-    assert notifier.get_tokens("user@example.org") == ["01234"]
+    assert notifier.get_tokens(testaddr) == ["01234"]
 
     # trigger notification for incoming message
-    assert (
-        handle_dovecot_request(f"B{tx}\tuser@example.org", transactions, notifier)
-        is None
-    )
-    msg = f"S{tx}\tpriv/guid00/messagenew"
+    tx2 = "2222"
+    assert handle_dovecot_request(f"B{tx2}\t{testaddr}", transactions, notifier) is None
+    msg = f"S{tx2}\tpriv/guid00/messagenew"
     assert handle_dovecot_request(msg, transactions, notifier) is None
-    assert notifier.to_notify_queue.get() == "user@example.org"
+    assert notifier.to_notify_queue.get() == testaddr
     assert notifier.to_notify_queue.qsize() == 0
-    assert handle_dovecot_request(f"C{tx}", transactions, notifier) == "O\n"
+    assert handle_dovecot_request(f"C{tx2}", transactions, notifier) == "O\n"
     assert not transactions
 
 
@@ -151,7 +156,7 @@ def test_handle_dovecot_protocol_messagenew(notifier):
     assert notifier.to_notify_queue.qsize() == 0
 
 
-def test_notifier_thread_run(notifier):
+def test_notifier_thread_run(notifier, testaddr):
     requests = []
 
     class ReqMock:
@@ -163,15 +168,15 @@ def test_notifier_thread_run(notifier):
 
             return Result()
 
-    notifier.add_token("user@example.org", "01234")
-    notifier.new_message_for_mbox("user@example.org")
+    notifier.add_token(testaddr, "01234")
+    notifier.new_message_for_addr(testaddr)
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
-    assert notifier.get_tokens("user@example.org") == ["01234"]
+    assert notifier.get_tokens(testaddr) == ["01234"]
 
 
-def test_multi_device_notifier(notifier):
+def test_multi_device_notifier(notifier, testaddr):
     requests = []
 
     class ReqMock:
@@ -183,18 +188,18 @@ def test_multi_device_notifier(notifier):
 
             return Result()
 
-    notifier.add_token("user@example.org", "01234")
-    notifier.add_token("user@example.org", "56789")
-    notifier.new_message_for_mbox("user@example.org")
+    notifier.add_token(testaddr, "01234")
+    notifier.add_token(testaddr, "56789")
+    notifier.new_message_for_addr(testaddr)
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
     url, data, timeout = requests[1]
     assert data == "56789"
-    assert notifier.get_tokens("user@example.org") == ["01234", "56789"]
+    assert notifier.get_tokens(testaddr) == ["01234", "56789"]
 
 
-def test_notifier_thread_run_gone_removes_token(notifier):
+def test_notifier_thread_run_gone_removes_token(notifier, testaddr):
     requests = []
 
     class ReqMock:
@@ -206,13 +211,13 @@ def test_notifier_thread_run_gone_removes_token(notifier):
 
             return Result()
 
-    notifier.add_token("user@example.org", "01234")
-    notifier.new_message_for_mbox("user@example.org")
-    assert notifier.get_tokens("user@example.org") == ["01234"]
-    notifier.add_token("user@example.org", "45678")
+    notifier.add_token(testaddr, "01234")
+    notifier.new_message_for_addr(testaddr)
+    assert notifier.get_tokens(testaddr) == ["01234"]
+    notifier.add_token(testaddr, "45678")
     notifier.thread_run_one(ReqMock())
     url, data, timeout = requests[0]
     assert data == "01234"
     url, data, timeout = requests[1]
     assert data == "45678"
-    assert notifier.get_tokens("user@example.org") == ["45678"]
+    assert notifier.get_tokens(testaddr) == ["45678"]

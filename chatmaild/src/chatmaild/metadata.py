@@ -16,13 +16,16 @@ import requests
 from .filedict import FileDict
 
 
+DICTPROXY_HELLO_CHAR = "H"
 DICTPROXY_LOOKUP_CHAR = "L"
 DICTPROXY_ITERATE_CHAR = "I"
-DICTPROXY_SET_CHAR = "S"
 DICTPROXY_BEGIN_TRANSACTION_CHAR = "B"
+DICTPROXY_SET_CHAR = "S"
 DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
-DICTPROXY_TRANSACTION_CHARS = "SBC"
+DICTPROXY_TRANSACTION_CHARS = "BSC"
 
+# each SETMETADATA on this key appends to a list of unique device tokens
+# which only ever get removed if the upstream indicates the token is invalid
 METADATA_TOKEN_KEY = "devicetoken"
 
 
@@ -31,22 +34,20 @@ class Notifier:
         self.vmail_dir = vmail_dir
         self.to_notify_queue = Queue()
 
-    def get_metadata_dict(self, mbox):
-        mbox_path = self.vmail_dir.joinpath(mbox)
-        if not mbox_path.exists():
-            mbox_path.mkdir()
-        return FileDict(mbox_path / "metadata.marshalled")
+    def get_metadata_dict(self, addr):
+        addr_path = self.vmail_dir.joinpath(addr)
+        return FileDict(addr_path / "metadata.marshalled")
 
-    def add_token(self, mbox, token):
-        with self.get_metadata_dict(mbox).modify() as data:
+    def add_token(self, addr, token):
+        with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY)
             if tokens is None:
                 data[METADATA_TOKEN_KEY] = tokens = []
             if token not in tokens:
                 tokens.append(token)
 
-    def remove_token(self, mbox, token):
-        with self.get_metadata_dict(mbox).modify() as data:
+    def remove_token(self, addr, token):
+        with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY)
             if tokens:
                 try:
@@ -54,11 +55,11 @@ class Notifier:
                 except KeyError:
                     pass
 
-    def get_tokens(self, mbox):
-        return self.get_metadata_dict(mbox).read().get(METADATA_TOKEN_KEY, [])
+    def get_tokens(self, addr):
+        return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])
 
-    def new_message_for_mbox(self, mbox):
-        self.to_notify_queue.put(mbox)
+    def new_message_for_addr(self, addr):
+        self.to_notify_queue.put(addr)
 
     def thread_run_loop(self):
         requests_session = requests.Session()
@@ -66,8 +67,8 @@ class Notifier:
             self.thread_run_one(requests_session)
 
     def thread_run_one(self, requests_session):
-        mbox = self.to_notify_queue.get()
-        for token in self.get_tokens(mbox):
+        addr = self.to_notify_queue.get()
+        for token in self.get_tokens(addr):
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",
                 data=token,
@@ -76,13 +77,10 @@ class Notifier:
             if response.status_code == 410:
                 # 410 Gone status code
                 # means the token is no longer valid.
-                self.remove_token(mbox, token)
+                self.remove_token(addr, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
-    # HELLO message, ignored.
-    msg = rfile.readline().strip().decode()
-
     transactions = {}
     while True:
         msg = rfile.readline().strip().decode()
@@ -104,9 +102,9 @@ def handle_dovecot_request(msg, transactions, notifier):
         keyparts = parts[0].split("/")
         if keyparts[0] == "priv":
             keyname = keyparts[2]
-            mbox = parts[1]
+            addr = parts[1]
             if keyname == METADATA_TOKEN_KEY:
-                res = " ".join(notifier.get_tokens(mbox))
+                res = " ".join(notifier.get_tokens(addr))
                 return f"O{res}\n"
         logging.warning("lookup ignored: %r", msg)
         return "N\n"
@@ -114,29 +112,35 @@ def handle_dovecot_request(msg, transactions, notifier):
         # Empty line means ITER_FINISHED.
         # If we don't return empty line Dovecot will timeout.
         return "\n"
+    elif short_command == DICTPROXY_HELLO_CHAR:
+        return  # no version checking
 
     if short_command not in (DICTPROXY_TRANSACTION_CHARS):
+        logging.warning("unknown dictproxy request: %r", msg)
         return
 
     transaction_id = parts[0]
 
     if short_command == DICTPROXY_BEGIN_TRANSACTION_CHAR:
-        mbox = parts[1]
-        transactions[transaction_id] = dict(mbox=mbox, res="O\n")
+        addr = parts[1]
+        transactions[transaction_id] = dict(addr=addr, res="O\n")
     elif short_command == DICTPROXY_COMMIT_TRANSACTION_CHAR:
-        # returns whether it failed or succeeded.
+        # each set devicetoken operation persists directly
+        # and does not wait until a "commit" comes
+        # because our dovecot config does not involve
+        # multiple set-operations in a single commit
         return transactions.pop(transaction_id)["res"]
     elif short_command == DICTPROXY_SET_CHAR:
         # For documentation on key structure see
-        # <https://github.com/dovecot/core/blob/5e7965632395793d9355eb906b173bf28d2a10ca/src/lib-storage/mailbox-attribute.h>
+        # https://github.com/dovecot/core/blob/main/src/lib-storage/mailbox-attribute.h
 
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
-        mbox = transactions[transaction_id]["mbox"]
+        addr = transactions[transaction_id]["addr"]
         if keyname[0] == "priv" and keyname[2] == METADATA_TOKEN_KEY:
-            notifier.add_token(mbox, value)
+            notifier.add_token(addr, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
-            notifier.new_message_for_mbox(mbox)
+            notifier.new_message_for_addr(addr)
         else:
             # Transaction failed.
             transactions[transaction_id]["res"] = "F\n"

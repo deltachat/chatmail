@@ -1,8 +1,7 @@
 import pwd
 
 from pathlib import Path
-from queue import Queue
-from threading import Thread
+from threading import Thread, Event
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
@@ -32,7 +31,10 @@ METADATA_TOKEN_KEY = "devicetoken"
 class Notifier:
     def __init__(self, vmail_dir):
         self.vmail_dir = vmail_dir
-        self.to_notify_queue = Queue()
+        self.notification_dir = vmail_dir / "pending_notifications"
+        if not self.notification_dir.exists():
+            self.notification_dir.mkdir()
+        self.message_arrived_event = Event()
 
     def get_metadata_dict(self, addr):
         return FileDict(self.vmail_dir / addr / "metadata.json")
@@ -57,25 +59,32 @@ class Notifier:
         return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])
 
     def new_message_for_addr(self, addr):
-        self.to_notify_queue.put(addr)
+        self.notification_dir.joinpath(addr).touch()
+        self.message_arrived_event.set()
 
     def thread_run_loop(self):
         requests_session = requests.Session()
         while 1:
+            self.message_arrived_event.wait()
+            self.message_arrived_event.clear()
             self.thread_run_one(requests_session)
 
     def thread_run_one(self, requests_session):
-        addr = self.to_notify_queue.get()
-        for token in self.get_tokens(addr):
-            response = requests_session.post(
-                "https://notifications.delta.chat/notify",
-                data=token,
-                timeout=60,
-            )
-            if response.status_code == 410:
-                # 410 Gone status code
-                # means the token is no longer valid.
-                self.remove_token(addr, token)
+        for addr_path in self.notification_dir.iterdir():
+            addr = addr_path.name
+            if "@" not in addr:
+                continue
+            for token in self.get_tokens(addr):
+                response = requests_session.post(
+                    "https://notifications.delta.chat/notify",
+                    data=token,
+                    timeout=60,
+                )
+                if response.status_code == 410:
+                    # 410 Gone status code
+                    # means the token is no longer valid.
+                    self.remove_token(addr, token)
+            addr_path.unlink()
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -179,6 +188,8 @@ def main():
     t = Thread(target=notifier.thread_run_loop)
     t.setDaemon(True)
     t.start()
+    # let notifier thread run once for any pending notifications from last run
+    notifier.message_arrived_event.set()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
         os.chown(socket, uid=passwd_entry.pw_uid, gid=passwd_entry.pw_gid)

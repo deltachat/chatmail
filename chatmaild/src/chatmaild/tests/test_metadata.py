@@ -84,10 +84,10 @@ def test_handle_dovecot_request_happy_path(notifier, testaddr):
     assert handle_dovecot_request(f"B{tx2}\t{testaddr}", transactions, notifier) is None
     msg = f"S{tx2}\tpriv/guid00/messagenew"
     assert handle_dovecot_request(msg, transactions, notifier) is None
-    assert notifier.to_notify_queue.get() == testaddr
-    assert notifier.to_notify_queue.qsize() == 0
+    assert notifier.message_arrived_event.is_set()
     assert handle_dovecot_request(f"C{tx2}", transactions, notifier) == "O\n"
     assert not transactions
+    assert notifier.notification_dir.joinpath(testaddr).exists()
 
 
 def test_handle_dovecot_protocol_set_devicetoken(notifier):
@@ -159,8 +159,8 @@ def test_handle_dovecot_protocol_messagenew(notifier):
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, notifier)
     assert wfile.getvalue() == b"O\n"
-    assert notifier.to_notify_queue.get() == "user@example.org"
-    assert notifier.to_notify_queue.qsize() == 0
+    assert notifier.message_arrived_event.is_set()
+    assert notifier.notification_dir.joinpath("user@example.org").exists()
 
 
 def test_notifier_thread_run(notifier, testaddr):

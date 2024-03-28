@@ -19,7 +19,7 @@ class FileDict:
         with filelock.FileLock(self.lock_path):
             data = self.read()
             yield data
-            write_path = self.path.with_suffix(".tmp")
+            write_path = self.path.with_name(self.path.name + ".tmp")
             with write_path.open("w") as f:
                 json.dump(data, f)
             os.rename(write_path, self.path)

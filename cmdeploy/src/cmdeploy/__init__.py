@@ -135,20 +135,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
     """Configures OpenDKIM"""
     need_restart = False
 
-    server.group(name="Create opendkim group", group="opendkim", system=True)
-    server.user(
-        name="Create opendkim user",
-        user="opendkim",
-        groups=["opendkim"],
-        system=True,
-    )
-    server.user(
-        name="Add postfix user to opendkim group for socket access",
-        user="postfix",
-        groups=["opendkim"],
-        system=True,
-    )
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("opendkim/opendkim.conf"),
         dest="/etc/opendkim.conf",
@@ -476,9 +462,24 @@ def deploy_chatmail(config_path: Path) -> None:
 
     from .www import build_webpages
 
-    apt.update(name="apt update", cache_time=24 * 3600)
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
+    server.group(name="Create opendkim group", group="opendkim", system=True)
+    server.user(
+        name="Create opendkim user",
+        user="opendkim",
+        groups=["opendkim"],
+        system=True,
+    )
+    server.user(
+        name="Add postfix user to opendkim group for socket access",
+        user="postfix",
+        groups=["opendkim"],
+        system=True,
+    )
+
+    apt.update(name="apt update", cache_time=24 * 3600)
+
     apt.packages(
         name="Install rsync",
         packages=["rsync"],

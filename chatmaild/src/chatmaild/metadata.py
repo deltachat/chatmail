@@ -35,7 +35,7 @@ class Notifier:
         self.to_notify_queue = Queue()
 
     def get_metadata_dict(self, addr):
-        return FileDict(self.vmail_dir / addr / "metadata.marshalled")
+        return FileDict(self.vmail_dir / addr / "metadata.json")
 
     def add_token(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:

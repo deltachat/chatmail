@@ -110,7 +110,9 @@ def _install_remote_venv_with_chatmaild(config) -> None:
             remote_venv_dir=remote_venv_dir,
             mail_domain=config.mail_domain,
         )
-        source_path = importlib.resources.files("chatmaild").joinpath(f"{fn}.service.f")
+        source_path = importlib.resources.files(__package__).joinpath(
+            "service", f"{fn}.service.f"
+        )
         content = source_path.read_text().format(**params).encode()
 
         files.put(

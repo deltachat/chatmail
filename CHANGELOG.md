@@ -1,8 +1,11 @@
 # Changelog for chatmail deployment 
 
-## unreleased
+## 1.1.0 - 2024-03-28
 
-### Changes since March 15th, 2024
+### The changelog starts to record changes from March 15th, 2024 
+
+- Move systemd unit templates to cmdeploy package 
+  ([#255](https://github.com/deltachat/chatmail/pull/255))
 
 - Persist push tokens and support multiple device per address 
   ([#254](https://github.com/deltachat/chatmail/pull/254))

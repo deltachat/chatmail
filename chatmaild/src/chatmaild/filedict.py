@@ -1,6 +1,6 @@
 import os
 import logging
-import marshal
+import json
 import filelock
 from contextlib import contextmanager
 
@@ -20,14 +20,14 @@ class FileDict:
             data = self.read()
             yield data
             write_path = self.path.with_suffix(".tmp")
-            with write_path.open("wb") as f:
-                marshal.dump(data, f)
+            with write_path.open("w") as f:
+                json.dump(data, f)
             os.rename(write_path, self.path)
 
     def read(self):
         try:
-            with self.path.open("rb") as f:
-                return marshal.load(f)
+            with self.path.open("r") as f:
+                return json.load(f)
         except FileNotFoundError:
             return {}
         except Exception:

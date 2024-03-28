@@ -4,6 +4,9 @@
 
 ### Changes since March 15th, 2024
 
+- Persist push tokens and support multiple device per address 
+  ([#254](https://github.com/deltachat/chatmail/pull/254))
+
 - Avoid warning for regular doveauth protocol's hello message. 
   ([#250](https://github.com/deltachat/chatmail/pull/250))
 

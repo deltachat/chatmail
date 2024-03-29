@@ -46,8 +46,8 @@ jobs:
           rm ~/.ssh/known_hosts
           while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
-          rsync -avz acme root@staging.testrun.org:/var/lib/ || true
-          rsync -avz dkimkeys root@staging.testrun.org:/etc/ || true
+          rsync -avz acme/ root@staging.testrun.org:/var/lib/acme || true
+          rsync -avz dkimkeys/ root@staging.testrun.org:/etc/dkimkeys || true
 
       - name: run formatting checks 
         run: cmdeploy fmt -v 

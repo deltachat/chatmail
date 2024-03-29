@@ -566,20 +566,23 @@ def deploy_chatmail(config_path: Path) -> None:
         restarted=mta_sts_need_restart,
     )
 
-    systemd.service(
-        name="Start and enable Postfix",
-        service="postfix.service",
-        running=True,
-        enabled=True,
-        restarted=postfix_need_restart,
-    )
-
+    # Dovecot should be started before Postfix
+    # because it creates authentication socket
+    # required by Postfix.
     systemd.service(
         name="Start and enable Dovecot",
         service="dovecot.service",
         running=True,
         enabled=True,
         restarted=dovecot_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable Postfix",
+        service="postfix.service",
+        running=True,
+        enabled=True,
+        restarted=postfix_need_restart,
     )
 
     systemd.service(

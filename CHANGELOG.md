@@ -2,6 +2,9 @@
 
 ## untagged 
 
+- Run chatmail-metadata and doveauth as vmail
+  ([#261](https://github.com/deltachat/chatmail/pull/261))
+
 - re-enable running the CI in pull requests, but not concurrently 
   ([#258](https://github.com/deltachat/chatmail/pull/258))
 

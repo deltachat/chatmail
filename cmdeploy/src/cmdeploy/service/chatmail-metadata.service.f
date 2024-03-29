@@ -5,6 +5,7 @@ Description=Chatmail dict proxy for IMAP METADATA
 ExecStart={execpath} /run/dovecot/metadata.socket vmail /home/vmail/mail/{mail_domain}
 Restart=always
 RestartSec=30
+User=vmail
 
 [Install]
 WantedBy=multi-user.target

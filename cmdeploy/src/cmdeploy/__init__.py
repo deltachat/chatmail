@@ -478,6 +478,11 @@ def deploy_chatmail(config_path: Path) -> None:
         system=True,
     )
 
+    server.shell(
+        name="Fix file owner in /home/vmail",
+        commands=["test -d /home/vmail && chown -R vmail:vmail /home/vmail"],
+    )
+
     apt.update(name="apt update", cache_time=24 * 3600)
 
     apt.packages(

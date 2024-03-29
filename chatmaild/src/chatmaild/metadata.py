@@ -1,5 +1,3 @@
-import pwd
-
 from pathlib import Path
 from threading import Thread, Event
 from socketserver import (
@@ -158,8 +156,7 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket, username, vmail_dir = sys.argv[1:]
-    passwd_entry = pwd.getpwnam(username)
+    socket, vmail_dir = sys.argv[1:]
 
     vmail_dir = Path(vmail_dir)
 
@@ -192,7 +189,6 @@ def main():
     notifier.message_arrived_event.set()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
-        os.chown(socket, uid=passwd_entry.pw_uid, gid=passwd_entry.pw_gid)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

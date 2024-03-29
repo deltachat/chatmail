@@ -78,7 +78,7 @@ mail_privileged_group = vmail
 ##
 
 # Pass all IMAP METADATA requests to the server implementing Dovecot's dict protocol.
-mail_attribute_dict = proxy:/run/dovecot/metadata.socket:metadata
+mail_attribute_dict = proxy:/run/chatmail-metadata/metadata.socket:metadata
 
 # Enable IMAP COMPRESS (RFC 4978).
 # <https://datatracker.ietf.org/doc/html/rfc4978.html>

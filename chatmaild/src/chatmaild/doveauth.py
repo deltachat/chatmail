@@ -9,7 +9,6 @@ from socketserver import (
     StreamRequestHandler,
     ThreadingMixIn,
 )
-import pwd
 
 from .database import Database
 from .config import read_config, Config
@@ -191,9 +190,8 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 def main():
     socket = sys.argv[1]
-    passwd_entry = pwd.getpwnam(sys.argv[2])
-    db = Database(sys.argv[3])
-    config = read_config(sys.argv[4])
+    db = Database(sys.argv[2])
+    config = read_config(sys.argv[3])
 
     class Handler(StreamRequestHandler):
         def handle(self):
@@ -209,7 +207,6 @@ def main():
         pass
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
-        os.chown(socket, uid=passwd_entry.pw_uid, gid=passwd_entry.pw_gid)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -2,6 +2,9 @@
 
 ## untagged 
 
+- Run chatmail-metadata and doveauth as vmail
+  ([#261](https://github.com/deltachat/chatmail/pull/261))
+
 - Apply systemd restrictions to echobot
   ([#259](https://github.com/deltachat/chatmail/pull/259))
 

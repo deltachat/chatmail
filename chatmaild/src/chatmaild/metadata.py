@@ -1,6 +1,7 @@
+import time
 from pathlib import Path
 from threading import Thread
-from queue import Queue
+from queue import PriorityQueue
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
@@ -28,12 +29,16 @@ METADATA_TOKEN_KEY = "devicetoken"
 
 
 class Notifier:
+    CONNECTION_TIMEOUT = 60.0  # seconds
+    NOTIFICATION_RETRY_DELAY = 10.0  # seconds
+    MAX_NUMBER_OF_TRIES = 10
+
     def __init__(self, vmail_dir):
         self.vmail_dir = vmail_dir
         self.notification_dir = vmail_dir / "pending_notifications"
         if not self.notification_dir.exists():
             self.notification_dir.mkdir()
-        self.notification_queue = Queue()
+        self.retry_queues = [PriorityQueue() for i in range(self.MAX_NUMBER_OF_TRIES)]
 
     def get_metadata_dict(self, addr):
         return FileDict(self.vmail_dir / addr / "metadata.json")
@@ -58,38 +63,64 @@ class Notifier:
         return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])
 
     def new_message_for_addr(self, addr):
-        self.notification_dir.joinpath(addr).touch()
-        self.notification_queue.put(addr)
-
-    def thread_run_loop(self):
-        requests_session = requests.Session()
-        # on startup deliver all persisted notifications from last process run
-        self.notification_queue.put(None)
-        while 1:
-            self.thread_run_one(requests_session)
-
-    def thread_run_one(self, requests_session):
-        addr = self.notification_queue.get()
-        if addr is None:
-            # startup, notify any "pending" notifications from last run
-            for addr_path in self.notification_dir.iterdir():
-                if "@" in addr_path.name:
-                    self.notify_tokens_for(requests_session, addr_path.name)
-        else:
-            self.notify_tokens_for(requests_session, addr)
-
-    def notify_tokens_for(self, requests_session, addr):
         for token in self.get_tokens(addr):
+            self.notification_dir.joinpath(token).write_text(addr)
+            self.add_token_for_retry(token)
+
+    def add_token_for_retry(self, token, numtries=0):
+        # backup exponentially with number of retries
+        when = time.time() + pow(self.NOTIFICATION_RETRY_DELAY, numtries)
+        self.retry_queues[numtries].put((when, token))
+
+    def start_notification_threads(self):
+        for token_path in self.notification_dir.iterdir():
+            self.add_token_for_retry(token_path.name)
+
+        for numtries in range(len(self.retry_queues)):
+            t = Thread(target=self.thread_retry_loop, args=(numtries,))
+            t.setDaemon(True)
+            t.start()
+
+    def thread_retry_loop(self, numtries):
+        requests_session = requests.Session()
+        while True:
+            retry_queue = self.retry_queues[numtries]
+            when, token = retry_queue.get()
+            wait_time = when - time.time()
+            if wait_time > 0:
+                time.sleep(wait_time)
+            self.notify_one(requests_session, token, numtries)
+
+    def notify_one(self, requests_session, token, numtries=0):
+        try:
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",
                 data=token,
-                timeout=60,
+                timeout=self.CONNECTION_TIMEOUT,
             )
-            if response.status_code == 410:
-                # 410 Gone status code
-                # means the token is no longer valid.
-                self.remove_token(addr, token)
-        self.notification_dir.joinpath(addr).unlink(missing_ok=True)
+        except requests.exceptions.RequestException as e:
+            response = e
+        else:
+            if response.status_code in (200, 410):
+                token_path = self.notification_dir.joinpath(token)
+                if response.status_code == 410:
+                    # 410 Gone: means the token is no longer valid.
+                    try:
+                        addr = token_path.read_text()
+                    except FileNotFoundError:
+                        logging.warning(
+                            "could not determine address for token %r:", token
+                        )
+                        return
+                    self.remove_token(addr, token)
+                token_path.unlink(missing_ok=True)
+                return
+
+        logging.warning("Notification request failed: %r", response)
+        if numtries < self.MAX_NUMBER_OF_TRIES:
+            self.add_token_for_retry(token, numtries=numtries + 1)
+        else:
+            logging.warning("giving up on token after %d tries: %r", numtries, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -186,14 +217,7 @@ def main():
     except FileNotFoundError:
         pass
 
-    # start notifier thread for signalling new messages to
-    # Delta Chat notification server
-
-    t = Thread(target=notifier.thread_run_loop)
-    t.setDaemon(True)
-    t.start()
-    # let notifier thread run once for any pending notifications from last run
-    notifier.message_arrived_event.set()
+    notifier.start_notification_threads()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
         try:

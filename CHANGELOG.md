@@ -2,6 +2,9 @@
 
 ## untagged 
 
+- better preserve notification order 
+  ([#263](https://github.com/deltachat/chatmail/pull/263))
+
 - re-enable running the CI in pull requests, but not concurrently 
   ([#258](https://github.com/deltachat/chatmail/pull/258))
 

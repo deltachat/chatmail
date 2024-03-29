@@ -1,8 +1,10 @@
 # Changelog for chatmail deployment 
 
-## unreleased 
+## untagged 
 
-- XXX
+- re-enable running the CI in pull requests, but not concurrently 
+  ([#258](https://github.com/deltachat/chatmail/pull/258))
+
 
 ## 1.1.0 - 2024-03-28
 

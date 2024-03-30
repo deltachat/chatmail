@@ -55,24 +55,24 @@ def test_notifier_persistence(tmp_path, testaddr, testaddr2):
     assert not notifier1.get_tokens(testaddr)
     assert not notifier2.get_tokens(testaddr)
 
-    notifier1.add_token(testaddr, "01234")
-    notifier1.add_token(testaddr2, "456")
+    notifier1.add_token_to_addr(testaddr, "01234")
+    notifier1.add_token_to_addr(testaddr2, "456")
     assert notifier2.get_tokens(testaddr) == ["01234"]
     assert notifier2.get_tokens(testaddr2) == ["456"]
-    notifier2.remove_token(testaddr, "01234")
+    notifier2.remove_token_from_addr(testaddr, "01234")
     assert not notifier1.get_tokens(testaddr)
     assert notifier1.get_tokens(testaddr2) == ["456"]
 
 
 def test_remove_nonexisting(tmp_path, testaddr):
     notifier1 = Notifier(tmp_path)
-    notifier1.add_token(testaddr, "123")
-    notifier1.remove_token(testaddr, "1l23k1l2k3")
+    notifier1.add_token_to_addr(testaddr, "123")
+    notifier1.remove_token_from_addr(testaddr, "1l23k1l2k3")
     assert notifier1.get_tokens(testaddr) == ["123"]
 
 
-def test_notifier_delete_without_set(notifier, testaddr):
-    notifier.remove_token(testaddr, "123")
+def test_notifier_remove_without_set(notifier, testaddr):
+    notifier.remove_token_from_addr(testaddr, "123")
     assert not notifier.get_tokens(testaddr)
 
 
@@ -171,7 +171,7 @@ def test_handle_dovecot_protocol_iterate(notifier):
 
 def test_notifier_thread_firstrun(notifier, testaddr):
     reqmock = get_mocked_requests([200])
-    notifier.add_token(testaddr, "01234")
+    notifier.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
     notifier.thread_retry_one(reqmock, numtries=0)
     url, data, timeout = reqmock.requests[0]
@@ -182,7 +182,7 @@ def test_notifier_thread_firstrun(notifier, testaddr):
 
 
 def test_notifier_thread_run(notifier, testaddr):
-    notifier.add_token(testaddr, "01234")
+    notifier.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
     reqmock = get_mocked_requests([200])
     notifier.thread_retry_one(reqmock, numtries=0)
@@ -196,7 +196,7 @@ def test_notifier_thread_run(notifier, testaddr):
 @pytest.mark.parametrize("status", [requests.exceptions.RequestException(), 404, 500])
 def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog):
     """ test that tokens keep getting retried until they are given up. """
-    notifier.add_token(testaddr, "01234")
+    notifier.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
     notifier.NOTIFICATION_RETRY_DELAY = 5
     for i in range(notifier.MAX_NUMBER_OF_TRIES):
@@ -213,14 +213,14 @@ def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog)
             assert len(caplog.records) == 1
         else:
             assert len(caplog.records) == 2
-            assert "giving up" in caplog.records[1].msg
+            assert "dropping token" in caplog.records[1].msg
     notifier.requeue_persistent_pending_tokens()
     assert notifier.retry_queues[0].qsize() == 0
 
 
 def test_multi_device_notifier(notifier, testaddr):
-    notifier.add_token(testaddr, "01234")
-    notifier.add_token(testaddr, "56789")
+    notifier.add_token_to_addr(testaddr, "01234")
+    notifier.add_token_to_addr(testaddr, "56789")
     notifier.new_message_for_addr(testaddr)
 
     reqmock = get_mocked_requests([200, 200])
@@ -236,8 +236,8 @@ def test_multi_device_notifier(notifier, testaddr):
 
 
 def test_notifier_thread_run_gone_removes_token(notifier, testaddr):
-    notifier.add_token(testaddr, "01234")
-    notifier.add_token(testaddr, "45678")
+    notifier.add_token_to_addr(testaddr, "01234")
+    notifier.add_token_to_addr(testaddr, "45678")
     notifier.new_message_for_addr(testaddr)
     reqmock = get_mocked_requests([410, 200])
     notifier.thread_retry_one(reqmock, numtries=0)

@@ -44,7 +44,7 @@ class Notifier:
     def get_metadata_dict(self, addr):
         return FileDict(self.vmail_dir / addr / "metadata.json")
 
-    def add_token(self, addr, token):
+    def add_token_to_addr(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY)
             if tokens is None:
@@ -52,7 +52,7 @@ class Notifier:
             elif token not in tokens:
                 tokens.append(token)
 
-    def remove_token(self, addr, token):
+    def remove_token_from_addr(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY, [])
             try:
@@ -69,11 +69,15 @@ class Notifier:
             self.add_token_for_retry(token)
 
     def add_token_for_retry(self, token, numtries=0):
+        if numtries >= self.MAX_NUMBER_OF_TRIES:
+            return False
+
         when = time.time()
         if numtries > 0:
             # backup exponentially with number of retries
             when += pow(self.NOTIFICATION_RETRY_DELAY, numtries)
         self.retry_queues[numtries].put((when, token))
+        return True
 
     def requeue_persistent_pending_tokens(self):
         for token_path in self.notification_dir.iterdir():
@@ -120,19 +124,14 @@ class Notifier:
                     except FileNotFoundError:
                         logging.warning("no address for token %r:", token)
                         return
-                    self.remove_token(addr, token)
+                    self.remove_token_from_addr(addr, token)
                 token_path.unlink(missing_ok=True)
                 return
 
         logging.warning("Notification request failed: %r", response)
-        numtries += 1
-        if numtries < self.MAX_NUMBER_OF_TRIES:
-            self.add_token_for_retry(token, numtries=numtries)
-        else:
+        if not self.add_token_for_retry(token, numtries=numtries + 1):
             token_path.unlink(missing_ok=True)
-            logging.warning(
-                "giving up on token after %d tries: %r", numtries - 1, token
-            )
+            logging.warning("dropping token after %d tries: %r", numtries - 1, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

@@ -30,8 +30,9 @@ METADATA_TOKEN_KEY = "devicetoken"
 
 class Notifier:
     CONNECTION_TIMEOUT = 60.0  # seconds
-    NOTIFICATION_RETRY_DELAY = 10.0  # seconds
-    MAX_NUMBER_OF_TRIES = 10
+    NOTIFICATION_RETRY_DELAY = 8.0  # seconds
+    MAX_NUMBER_OF_TRIES = 6
+    # exponential backoff means we try for 8^5 seconds, approximately 10 hours
 
     def __init__(self, vmail_dir):
         self.vmail_dir = vmail_dir
@@ -76,6 +77,7 @@ class Notifier:
         for token_path in self.notification_dir.iterdir():
             self.add_token_for_retry(token_path.name)
 
+        # we start a thread for each retry-queue
         for numtries in range(len(self.retry_queues)):
             t = Thread(target=self.thread_retry_loop, args=(numtries,))
             t.setDaemon(True)
@@ -117,10 +119,11 @@ class Notifier:
                 return
 
         logging.warning("Notification request failed: %r", response)
+        numtries += 1
         if numtries < self.MAX_NUMBER_OF_TRIES:
-            self.add_token_for_retry(token, numtries=numtries + 1)
+            self.add_token_for_retry(token, numtries=numtries)
         else:
-            logging.warning("giving up on token after %d tries: %r", numtries, token)
+            logging.warning("giving up on token after %d tries: %r", numtries - 1, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

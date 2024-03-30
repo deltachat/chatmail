@@ -177,6 +177,8 @@ def test_notifier_thread_firstrun(notifier, testaddr):
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     assert notifier.get_tokens(testaddr) == ["01234"]
+    notifier.requeue_persistent_pending_tokens()
+    assert notifier.retry_queues[0].qsize() == 0
 
 
 def test_notifier_thread_run(notifier, testaddr):
@@ -187,6 +189,8 @@ def test_notifier_thread_run(notifier, testaddr):
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     assert notifier.get_tokens(testaddr) == ["01234"]
+    notifier.requeue_persistent_pending_tokens()
+    assert notifier.retry_queues[0].qsize() == 0
 
 
 @pytest.mark.parametrize("status", [requests.exceptions.RequestException(), 404, 500])
@@ -210,6 +214,8 @@ def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog)
         else:
             assert len(caplog.records) == 2
             assert "giving up" in caplog.records[1].msg
+    notifier.requeue_persistent_pending_tokens()
+    assert notifier.retry_queues[0].qsize() == 0
 
 
 def test_multi_device_notifier(notifier, testaddr):

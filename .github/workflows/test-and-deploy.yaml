@@ -24,8 +24,12 @@ jobs:
           echo "${{ secrets.STAGING_SSH_KEY }}" >> ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan staging.testrun.org > ~/.ssh/known_hosts
+          # save previous acme & dkim state
           rsync -avz root@staging.testrun.org:/var/lib/acme . || true
           rsync -avz root@staging.testrun.org:/etc/dkimkeys . || true
+          # store previous acme & dkim state on ns.testrun.org, if it contains useful certs
+          if test -f dkimkeys/opendkim.private; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/dkimkeys || true; fi
+          if [ -z "$(ls -A acme/certs)" ]; then rsync -avz acme -e "ssh -o StrictHostKeyChecking=accept-new" root@ns.testrun.org:/tmp/acme || true; fi
 
       - name: rebuild staging.testrun.org to have a clean VPS
         run: |
@@ -46,8 +50,12 @@ jobs:
           rm ~/.ssh/known_hosts
           while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
-          rsync -avz acme/ root@staging.testrun.org:/var/lib/acme || true
-          rsync -avz dkimkeys/ root@staging.testrun.org:/etc/dkimkeys || true
+          # download acme & dkim state from ns.testrun.org
+          rsync -e "ssh -o StrictHostKeyChecking=accept-new" -avz root@ns.testrun.org:/tmp/acme acme-restore || true
+          rsync -avz root@ns.testrun.org:/tmp/dkimkeys dkimkeys-restore || true
+          # restore acme & dkim state to staging.testrun.org
+          rsync -avz acme-restore/ root@staging.testrun.org:/var/lib/acme || true
+          rsync -avz dkimkeys-restore/ root@staging.testrun.org:/etc/dkimkeys || true
           ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown root:root -R /var/lib/acme
 
       - name: run formatting checks 
@@ -66,7 +74,7 @@ jobs:
           cmdeploy dns --zonefile staging-generated.zone
           cat staging-generated.zone >> .github/workflows/staging.testrun.org-default.zone
           cat .github/workflows/staging.testrun.org-default.zone
-          scp -o StrictHostKeyChecking=accept-new .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
+          scp .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org nsd-checkzone staging.testrun.org /etc/nsd/staging.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 

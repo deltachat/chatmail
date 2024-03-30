@@ -131,7 +131,7 @@ class Notifier:
         logging.warning("Notification request failed: %r", response)
         if not self.add_token_for_retry(token, numtries=numtries + 1):
             token_path.unlink(missing_ok=True)
-            logging.warning("dropping token after %d tries: %r", numtries - 1, token)
+            logging.warning("dropping token after %d tries: %r", numtries, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

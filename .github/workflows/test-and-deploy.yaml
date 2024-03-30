@@ -28,8 +28,8 @@ jobs:
           rsync -avz root@staging.testrun.org:/var/lib/acme . || true
           rsync -avz root@staging.testrun.org:/etc/dkimkeys . || true
           # store previous acme & dkim state on ns.testrun.org, if it contains useful certs
-          if test -f dkimkeys/opendkim.private; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/dkimkeys || true; fi
-          if [ -z "$(ls -A acme/certs)" ]; then rsync -avz acme -e "ssh -o StrictHostKeyChecking=accept-new" root@ns.testrun.org:/tmp/acme || true; fi
+          if test -f dkimkeys/opendkim.private; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/ || true; fi
+          if [ -z "$(ls -A acme/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme root@ns.testrun.org:/tmp/ || true; fi
 
       - name: rebuild staging.testrun.org to have a clean VPS
         run: |

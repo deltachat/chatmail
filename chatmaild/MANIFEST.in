@@ -1,4 +1,3 @@
-include src/chatmaild/*.f 
 include src/chatmaild/ini/*.ini.f
 include src/chatmaild/ini/*.ini
 include src/chatmaild/tests/mail-data/*

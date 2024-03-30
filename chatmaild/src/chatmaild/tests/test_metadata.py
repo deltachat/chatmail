@@ -190,14 +190,26 @@ def test_notifier_thread_run(notifier, testaddr):
 
 
 @pytest.mark.parametrize("status", [requests.exceptions.RequestException(), 404, 500])
-def test_notifier_thread_connection_failures(notifier, testaddr, status):
+def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog):
+    """ test that tokens keep getting retried until they are given up. """
     notifier.add_token(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
-    reqmock = get_mocked_requests([status])
-    notifier.NOTIFICATION_RETRY_DELAY = 0.1
-    notifier.thread_retry_one(reqmock, numtries=0)
-    assert notifier.retry_queues[1].get()[1] == "01234"
-    assert notifier.retry_queues[0].qsize() == 0
+    notifier.NOTIFICATION_RETRY_DELAY = 5
+    for i in range(notifier.MAX_NUMBER_OF_TRIES):
+        caplog.clear()
+        reqmock = get_mocked_requests([status])
+        sleep_calls = []
+        notifier.thread_retry_one(reqmock, numtries=i, sleepfunc=sleep_calls.append)
+        assert notifier.retry_queues[i].qsize() == 0
+        assert "request failed" in caplog.records[0].msg
+        if i > 0:
+            assert len(sleep_calls) == 1
+        if i + 1 < notifier.MAX_NUMBER_OF_TRIES:
+            assert notifier.retry_queues[i + 1].qsize() == 1
+            assert len(caplog.records) == 1
+        else:
+            assert len(caplog.records) == 2
+            assert "giving up" in caplog.records[1].msg
 
 
 def test_multi_device_notifier(notifier, testaddr):

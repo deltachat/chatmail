@@ -90,12 +90,12 @@ class Notifier:
         while True:
             self.thread_retry_one(requests_session, numtries)
 
-    def thread_retry_one(self, requests_session, numtries):
+    def thread_retry_one(self, requests_session, numtries, sleepfunc=time.sleep):
         retry_queue = self.retry_queues[numtries]
         when, token = retry_queue.get()
         wait_time = when - time.time()
         if wait_time > 0:
-            time.sleep(wait_time)
+            sleepfunc(wait_time)
         self.notify_one(requests_session, token, numtries)
 
     def notify_one(self, requests_session, token, numtries=0):

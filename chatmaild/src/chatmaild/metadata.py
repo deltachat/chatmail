@@ -60,11 +60,11 @@ class Notifier:
             except ValueError:
                 pass
 
-    def get_tokens(self, addr):
+    def get_tokens_for_addr(self, addr):
         return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])
 
     def new_message_for_addr(self, addr):
-        for token in self.get_tokens(addr):
+        for token in self.get_tokens_for_addr(addr):
             self.notification_dir.joinpath(token).write_text(addr)
             self.add_token_for_retry(token)
 
@@ -158,7 +158,7 @@ def handle_dovecot_request(msg, transactions, notifier):
             keyname = keyparts[2]
             addr = parts[1]
             if keyname == METADATA_TOKEN_KEY:
-                res = " ".join(notifier.get_tokens(addr))
+                res = " ".join(notifier.get_tokens_for_addr(addr))
                 return f"O{res}\n"
         logging.warning("lookup ignored: %r", msg)
         return "N\n"
@@ -192,7 +192,7 @@ def handle_dovecot_request(msg, transactions, notifier):
         value = parts[2] if len(parts) > 2 else ""
         addr = transactions[transaction_id]["addr"]
         if keyname[0] == "priv" and keyname[2] == METADATA_TOKEN_KEY:
-            notifier.add_token(addr, value)
+            notifier.add_token_to_addr(addr, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
             notifier.new_message_for_addr(addr)
         else:

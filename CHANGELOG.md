@@ -5,6 +5,10 @@
 - Install dig on the server to resolve DNS records
   ([#267](https://github.com/deltachat/chatmail/pull/267))
 
+- preserve notification order and exponentially backoff with 
+  retries for tokens where we didn't get a successful return
+  ([#265](https://github.com/deltachat/chatmail/pull/263))
+
 - Run chatmail-metadata and doveauth as vmail
   ([#261](https://github.com/deltachat/chatmail/pull/261))
 

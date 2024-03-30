@@ -75,11 +75,14 @@ class Notifier:
             when += pow(self.NOTIFICATION_RETRY_DELAY, numtries)
         self.retry_queues[numtries].put((when, token))
 
-    def start_notification_threads(self):
+    def requeue_persistent_pending_tokens(self):
         for token_path in self.notification_dir.iterdir():
             self.add_token_for_retry(token_path.name)
 
-        # we start a thread for each retry-queue bucket
+    def start_notification_threads(self):
+        self.requeue_persistent_pending_tokens()
+
+        # start a thread for each retry-queue bucket
         for numtries in range(len(self.retry_queues)):
             t = Thread(target=self.thread_retry_loop, args=(numtries,))
             t.setDaemon(True)
@@ -99,6 +102,7 @@ class Notifier:
         self.notify_one(requests_session, token, numtries)
 
     def notify_one(self, requests_session, token, numtries=0):
+        token_path = self.notification_dir.joinpath(token)
         try:
             response = requests_session.post(
                 "https://notifications.delta.chat/notify",
@@ -109,15 +113,12 @@ class Notifier:
             response = e
         else:
             if response.status_code in (200, 410):
-                token_path = self.notification_dir.joinpath(token)
                 if response.status_code == 410:
                     # 410 Gone: means the token is no longer valid.
                     try:
                         addr = token_path.read_text()
                     except FileNotFoundError:
-                        logging.warning(
-                            "could not determine address for token %r:", token
-                        )
+                        logging.warning("no address for token %r:", token)
                         return
                     self.remove_token(addr, token)
                 token_path.unlink(missing_ok=True)
@@ -128,6 +129,7 @@ class Notifier:
         if numtries < self.MAX_NUMBER_OF_TRIES:
             self.add_token_for_retry(token, numtries=numtries)
         else:
+            token_path.unlink(missing_ok=True)
             logging.warning(
                 "giving up on token after %d tries: %r", numtries - 1, token
             )

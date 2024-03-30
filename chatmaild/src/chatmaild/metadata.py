@@ -30,7 +30,7 @@ METADATA_TOKEN_KEY = "devicetoken"
 
 class Notifier:
     CONNECTION_TIMEOUT = 60.0  # seconds
-    NOTIFICATION_RETRY_DELAY = 8.0  # seconds
+    NOTIFICATION_RETRY_DELAY = 8.0  # seconds, with exponential backoff
     MAX_NUMBER_OF_TRIES = 6
     # exponential backoff means we try for 8^5 seconds, approximately 10 hours
 
@@ -69,15 +69,17 @@ class Notifier:
             self.add_token_for_retry(token)
 
     def add_token_for_retry(self, token, numtries=0):
-        # backup exponentially with number of retries
-        when = time.time() + pow(self.NOTIFICATION_RETRY_DELAY, numtries)
+        when = time.time()
+        if numtries > 0:
+            # backup exponentially with number of retries
+            when += pow(self.NOTIFICATION_RETRY_DELAY, numtries)
         self.retry_queues[numtries].put((when, token))
 
     def start_notification_threads(self):
         for token_path in self.notification_dir.iterdir():
             self.add_token_for_retry(token_path.name)
 
-        # we start a thread for each retry-queue
+        # we start a thread for each retry-queue bucket
         for numtries in range(len(self.retry_queues)):
             t = Thread(target=self.thread_retry_loop, args=(numtries,))
             t.setDaemon(True)
@@ -86,12 +88,15 @@ class Notifier:
     def thread_retry_loop(self, numtries):
         requests_session = requests.Session()
         while True:
-            retry_queue = self.retry_queues[numtries]
-            when, token = retry_queue.get()
-            wait_time = when - time.time()
-            if wait_time > 0:
-                time.sleep(wait_time)
-            self.notify_one(requests_session, token, numtries)
+            self.thread_retry_one(requests_session, numtries)
+
+    def thread_retry_one(self, requests_session, numtries):
+        retry_queue = self.retry_queues[numtries]
+        when, token = retry_queue.get()
+        wait_time = when - time.time()
+        if wait_time > 0:
+            time.sleep(wait_time)
+        self.notify_one(requests_session, token, numtries)
 
     def notify_one(self, requests_session, token, numtries=0):
         try:
@@ -123,7 +128,9 @@ class Notifier:
         if numtries < self.MAX_NUMBER_OF_TRIES:
             self.add_token_for_retry(token, numtries=numtries)
         else:
-            logging.warning("giving up on token after %d tries: %r", numtries - 1, token)
+            logging.warning(
+                "giving up on token after %d tries: %r", numtries - 1, token
+            )
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):

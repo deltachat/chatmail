@@ -10,6 +10,7 @@ from chatmaild.metadata import (
 from chatmaild.notifier import (
     Notifier,
     NotifyThread,
+    PersistentQueueItem,
 )
 
 
@@ -123,10 +124,11 @@ def test_handle_dovecot_request_happy_path(notifier, metadata, testaddr, token):
     )
     msg = f"S{tx2}\tpriv/guid00/messagenew"
     assert handle_dovecot_request(msg, transactions, notifier, metadata) is None
-    assert notifier.retry_queues[0].get()[1] == token
+    queue_item = notifier.retry_queues[0].get()[1]
+    assert queue_item.token == token
     assert handle_dovecot_request(f"C{tx2}", transactions, notifier, metadata) == "O\n"
     assert not transactions
-    assert notifier.notification_dir.joinpath(token).exists()
+    assert queue_item.path.exists()
 
 
 def test_handle_dovecot_protocol_set_devicetoken(metadata, notifier):
@@ -192,7 +194,7 @@ def test_notifier_thread_deletes_persistent_file(metadata, notifier, testaddr):
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     assert metadata.get_tokens_for_addr(testaddr) == ["01234"]
-    notifier.requeue_persistent_pending_tokens()
+    notifier.requeue_persistent_queue_items()
     assert notifier.retry_queues[0].qsize() == 0
 
 
@@ -218,8 +220,8 @@ def test_notifier_thread_connection_failures(
             assert len(caplog.records) == 1
         else:
             assert len(caplog.records) == 2
-            assert "dropping token" in caplog.records[1].msg
-    notifier.requeue_persistent_pending_tokens()
+            assert "dropping" in caplog.records[1].msg
+    notifier.requeue_persistent_queue_items()
     assert notifier.retry_queues[0].qsize() == 0
 
 
@@ -262,3 +264,15 @@ def test_notifier_thread_run_gone_removes_token(metadata, notifier, testaddr):
     assert metadata.get_tokens_for_addr(testaddr) == ["45678"]
     assert notifier.retry_queues[0].qsize() == 0
     assert notifier.retry_queues[1].qsize() == 0
+
+
+def test_persistent_queue_items(tmp_path, testaddr, token):
+    queue_item = PersistentQueueItem.create(tmp_path, testaddr, token)
+    assert queue_item.addr == testaddr
+    assert queue_item.token == token
+    item2 = PersistentQueueItem.read_from_path(queue_item.path)
+    assert item2.addr == testaddr
+    assert item2.token == token
+    assert item2 == queue_item
+    item2.delete()
+    assert not item2.path.exists()

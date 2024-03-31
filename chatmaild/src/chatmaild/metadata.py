@@ -125,7 +125,6 @@ def main():
     socket, vmail_dir = sys.argv[1:]
 
     vmail_dir = Path(vmail_dir)
-
     if not vmail_dir.exists():
         logging.error("vmail dir does not exist: %r", vmail_dir)
         return 1

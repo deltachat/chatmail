@@ -1,3 +1,28 @@
+"""
+This modules provides notification machinery for transmitting device tokens to
+a central notification server which in turns contacts a phone's notification server
+to trigger Delta Chat apps to retrieve messages and provide instant notifications to users.
+
+The Notifier class arranges the queuing of tokens in separate PriorityQueues
+from which NotifyThreads take and transmit them via HTTPS
+to the `notifications.delta.chat` service
+which in turns contacts a phone's providers's notification service
+which in turn ewakes up the Delta Chat app on user devices.
+The lack of proper HTTP2-support in Python lets us
+use multiple threads and connections to the Rust-implemented `notifications.delta.chat`
+which however uses HTTP2 and thus only a single connection to phone-notification providers.
+
+If a token fails to cause a successful notification
+it is moved to a retry-number specific PriorityQueue
+which handles all tokens that failed a particular number of times
+and which are scheduled for retry using exponential back-off timing.
+If a token exceeds MAX_NUMBER_OF_TRIES it is dropped with a log warning.
+
+Note that tokens are completely opaque to the notification machinery here
+and will in the future be encrypted foreclosing all ability to distinguish
+which device token ultimately goes to which phone-provider notification service.
+"""
+
 import time
 import logging
 from threading import Thread
@@ -65,11 +90,6 @@ class NotifyThread(Thread):
             pass
 
     def retry_one(self, requests_session, sleep=time.sleep):
-        # takes the next token from the per-retry-number PriorityQueue
-        # which is ordered by "when" (as set by add_token_for_retry()).
-        # If the request to notification server fails the token is
-        # queued to the next retry-number's PriorityQueue
-        # until it finally is dropped if MAX_NUMBER_OF_TRIES is exceeded
         when, token = self.notifier.retry_queues[self.retry_num].get()
         if when is None:
             return False

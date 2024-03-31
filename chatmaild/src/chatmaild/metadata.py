@@ -134,7 +134,7 @@ def main():
     if not notification_dir.exists():
         notification_dir.mkdir()
     metadata = Metadata(vmail_dir)
-    notifier = Notifier(metadata, notification_dir)
+    notifier = Notifier(notification_dir)
     notifier.start_notification_threads(metadata.remove_token_from_addr)
 
     class Handler(StreamRequestHandler):

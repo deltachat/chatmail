@@ -6,6 +6,7 @@ from chatmaild.metadata import (
     handle_dovecot_request,
     handle_dovecot_protocol,
     Notifier,
+    NotifyThread,
 )
 
 
@@ -173,7 +174,7 @@ def test_notifier_thread_firstrun(notifier, testaddr):
     reqmock = get_mocked_requests([200])
     notifier.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
-    notifier.thread_retry_one(reqmock, numtries=0)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     assert notifier.get_tokens_for_addr(testaddr) == ["01234"]
@@ -185,7 +186,7 @@ def test_notifier_thread_run(notifier, testaddr):
     notifier.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr)
     reqmock = get_mocked_requests([200])
-    notifier.thread_retry_one(reqmock, numtries=0)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     assert notifier.get_tokens_for_addr(testaddr) == ["01234"]
@@ -203,7 +204,7 @@ def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog)
         caplog.clear()
         reqmock = get_mocked_requests([status])
         sleep_calls = []
-        notifier.thread_retry_one(reqmock, numtries=i, sleepfunc=sleep_calls.append)
+        NotifyThread(notifier, retry_num=i).retry_one(reqmock, sleep=sleep_calls.append)
         assert notifier.retry_queues[i].qsize() == 0
         assert "request failed" in caplog.records[0].msg
         if i > 0:
@@ -218,14 +219,22 @@ def test_notifier_thread_connection_failures(notifier, testaddr, status, caplog)
     assert notifier.retry_queues[0].qsize() == 0
 
 
+def test_start_and_stop_notification_threads(notifier, testaddr):
+    threads = notifier.start_notification_threads()
+    for retry_num, threadlist in threads.items():
+        for t in threadlist:
+            t.stop()
+            t.join()
+
+
 def test_multi_device_notifier(notifier, testaddr):
     notifier.add_token_to_addr(testaddr, "01234")
     notifier.add_token_to_addr(testaddr, "56789")
     notifier.new_message_for_addr(testaddr)
 
     reqmock = get_mocked_requests([200, 200])
-    notifier.thread_retry_one(reqmock, numtries=0)
-    notifier.thread_retry_one(reqmock, numtries=0)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
     assert notifier.retry_queues[0].qsize() == 0
     assert notifier.retry_queues[1].qsize() == 0
     url, data, timeout = reqmock.requests[0]
@@ -240,8 +249,8 @@ def test_notifier_thread_run_gone_removes_token(notifier, testaddr):
     notifier.add_token_to_addr(testaddr, "45678")
     notifier.new_message_for_addr(testaddr)
     reqmock = get_mocked_requests([410, 200])
-    notifier.thread_retry_one(reqmock, numtries=0)
-    notifier.thread_retry_one(reqmock, numtries=0)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
+    NotifyThread(notifier, retry_num=0).retry_one(reqmock)
     url, data, timeout = reqmock.requests[0]
     assert data == "01234"
     url, data, timeout = reqmock.requests[1]

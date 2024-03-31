@@ -29,8 +29,9 @@ METADATA_TOKEN_KEY = "devicetoken"
 
 
 class Notifier:
-    CONNECTION_TIMEOUT = 60.0  # seconds
-    NOTIFICATION_RETRY_DELAY = 8.0  # seconds, with exponential backoff
+    URL = "https://notifications.delta.chat/notify"
+    CONNECTION_TIMEOUT = 60.0       # seconds until http-request is given up
+    NOTIFICATION_RETRY_DELAY = 8.0  # seconds with exponential backoff
     MAX_NUMBER_OF_TRIES = 6
     # exponential backoff means we try for 8^5 seconds, approximately 10 hours
 
@@ -39,7 +40,7 @@ class Notifier:
         self.notification_dir = vmail_dir / "pending_notifications"
         if not self.notification_dir.exists():
             self.notification_dir.mkdir()
-        self.retry_queues = [PriorityQueue() for i in range(self.MAX_NUMBER_OF_TRIES)]
+        self.retry_queues = [PriorityQueue() for _ in range(self.MAX_NUMBER_OF_TRIES)]
 
     def get_metadata_dict(self, addr):
         return FileDict(self.vmail_dir / addr / "metadata.json")
@@ -55,10 +56,8 @@ class Notifier:
     def remove_token_from_addr(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
             tokens = data.get(METADATA_TOKEN_KEY, [])
-            try:
+            if token in tokens:
                 tokens.remove(token)
-            except ValueError:
-                pass
 
     def get_tokens_for_addr(self, addr):
         return self.get_metadata_dict(addr).read().get(METADATA_TOKEN_KEY, [])
@@ -68,15 +67,15 @@ class Notifier:
             self.notification_dir.joinpath(token).write_text(addr)
             self.add_token_for_retry(token)
 
-    def add_token_for_retry(self, token, numtries=0):
-        if numtries >= self.MAX_NUMBER_OF_TRIES:
+    def add_token_for_retry(self, token, retry_num=0):
+        if retry_num >= self.MAX_NUMBER_OF_TRIES:
             return False
 
         when = time.time()
-        if numtries > 0:
+        if retry_num > 0:
             # backup exponentially with number of retries
-            when += pow(self.NOTIFICATION_RETRY_DELAY, numtries)
-        self.retry_queues[numtries].put((when, token))
+            when += pow(self.NOTIFICATION_RETRY_DELAY, retry_num)
+        self.retry_queues[retry_num].put((when, token))
         return True
 
     def requeue_persistent_pending_tokens(self):
@@ -85,53 +84,69 @@ class Notifier:
 
     def start_notification_threads(self):
         self.requeue_persistent_pending_tokens()
+        threads = {}
+        for retry_num in range(len(self.retry_queues)):
+            num_threads = {0: 4}.get(retry_num, 2)
+            threads[retry_num] = []
+            for _ in range(num_threads):
+                threads[retry_num].append(NotifyThread(self, retry_num))
+                threads[retry_num][-1].start()
+        return threads
 
-        # start a thread for each retry-queue bucket
-        for numtries in range(len(self.retry_queues)):
-            t = Thread(target=self.thread_retry_loop, args=(numtries,))
-            t.setDaemon(True)
-            t.start()
 
-    def thread_retry_loop(self, numtries):
+class NotifyThread(Thread):
+    def __init__(self, notifier, retry_num):
+        super().__init__(daemon=True)
+        self.notifier = notifier
+        self.retry_num = retry_num
+
+    def stop(self):
+        self.notifier.retry_queues[self.retry_num].put((None, None))
+
+    def run(self):
         requests_session = requests.Session()
-        while True:
-            self.thread_retry_one(requests_session, numtries)
+        while self.retry_one(requests_session):
+            pass
 
-    def thread_retry_one(self, requests_session, numtries, sleepfunc=time.sleep):
-        retry_queue = self.retry_queues[numtries]
-        when, token = retry_queue.get()
+    def retry_one(self, requests_session, sleep=time.sleep):
+        # takes the next token from the per-retry-number PriorityQueue
+        # which is ordered by "when" (as set by add_token_for_retry()).
+        # If the request to notification server fails the token is
+        # queued to the next retry-number's PriorityQueue
+        # until it finally is dropped if MAX_NUMBER_OF_TRIES is exceeded
+        when, token = self.notifier.retry_queues[self.retry_num].get()
+        if when is None:
+            return False
         wait_time = when - time.time()
         if wait_time > 0:
-            sleepfunc(wait_time)
-        self.notify_one(requests_session, token, numtries)
+            sleep(wait_time)
+        self.perform_request_to_notification_server(requests_session, token)
+        return True
 
-    def notify_one(self, requests_session, token, numtries=0):
-        token_path = self.notification_dir.joinpath(token)
+    def perform_request_to_notification_server(self, requests_session, token):
+        token_path = self.notifier.notification_dir.joinpath(token)
         try:
-            response = requests_session.post(
-                "https://notifications.delta.chat/notify",
-                data=token,
-                timeout=self.CONNECTION_TIMEOUT,
-            )
+            timeout = self.notifier.CONNECTION_TIMEOUT
+            res = requests_session.post(self.notifier.URL, data=token, timeout=timeout)
         except requests.exceptions.RequestException as e:
-            response = e
+            res = e
         else:
-            if response.status_code in (200, 410):
-                if response.status_code == 410:
+            if res.status_code in (200, 410):
+                if res.status_code == 410:
                     # 410 Gone: means the token is no longer valid.
                     try:
                         addr = token_path.read_text()
                     except FileNotFoundError:
                         logging.warning("no address for token %r:", token)
                         return
-                    self.remove_token_from_addr(addr, token)
+                    self.notifier.remove_token_from_addr(addr, token)
                 token_path.unlink(missing_ok=True)
                 return
 
-        logging.warning("Notification request failed: %r", response)
-        if not self.add_token_for_retry(token, numtries=numtries + 1):
+        logging.warning("Notification request failed: %r", res)
+        if not self.notifier.add_token_for_retry(token, retry_num=self.retry_num + 1):
             token_path.unlink(missing_ok=True)
-            logging.warning("dropping token after %d tries: %r", numtries, token)
+            logging.warning("dropping token after %d tries: %r", self.retry_num, token)
 
 
 def handle_dovecot_protocol(rfile, wfile, notifier):
@@ -214,6 +229,7 @@ def main():
         return 1
 
     notifier = Notifier(vmail_dir)
+    notifier.start_notification_threads()
 
     class Handler(StreamRequestHandler):
         def handle(self):
@@ -227,8 +243,6 @@ def main():
         os.unlink(socket)
     except FileNotFoundError:
         pass
-
-    notifier.start_notification_threads()
 
     with ThreadedUnixStreamServer(socket, Handler) as server:
         try:

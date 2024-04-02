@@ -34,10 +34,8 @@ class Metadata:
 
     def add_token_to_addr(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
-            tokens = data.get(self.DEVICETOKEN_KEY)
-            if tokens is None:
-                data[self.DEVICETOKEN_KEY] = [token]
-            elif token not in tokens:
+            tokens = data.setdefault(self.DEVICETOKEN_KEY, [])
+            if token not in tokens:
                 tokens.append(token)
 
     def remove_token_from_addr(self, addr, token):
@@ -130,8 +128,7 @@ def main():
         return 1
 
     notification_dir = vmail_dir / "pending_notifications"
-    if not notification_dir.exists():
-        notification_dir.mkdir()
+    notification_dir.mkdir(exist_ok=True)
     metadata = Metadata(vmail_dir)
     notifier = Notifier(notification_dir)
     notifier.start_notification_threads(metadata.remove_token_from_addr)

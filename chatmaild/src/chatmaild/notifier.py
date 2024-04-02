@@ -1,16 +1,14 @@
 """
 This modules provides notification machinery for transmitting device tokens to
-a central notification server which in turns contacts a phone provider's notification server
+a central notification server which in turn contacts a phone provider's notification server
 to trigger Delta Chat apps to retrieve messages and provide instant notifications to users.
 
 The Notifier class arranges the queuing of tokens in separate PriorityQueues
 from which NotifyThreads take and transmit them via HTTPS
-to the `notifications.delta.chat` service
-which in turn contacts a phone's providers's notification service
-which in turn wakes up the Delta Chat app on user devices.
-The lack of proper HTTP2-support in Python lets us
-use multiple threads and connections to the Rust-implemented `notifications.delta.chat`
-which however uses HTTP2 and thus only a single connection to phone-notification providers.
+to the `notifications.delta.chat` service.
+The current lack of proper HTTP/2-support in Python leads us
+to use multiple threads and connections to the Rust-implemented `notifications.delta.chat`
+which itself uses HTTP/2 and thus only a single connection to phone-notification providers.
 
 If a token fails to cause a successful notification
 it is moved to a retry-number specific PriorityQueue
@@ -87,7 +85,7 @@ class Notifier:
 
         when = time.time()
         if retry_num > 0:
-            # backup exponentially with number of retries
+            # back off exponentially with number of retries
             when += pow(self.NOTIFICATION_RETRY_DELAY, retry_num)
         self.retry_queues[retry_num].put((when, queue_item))
 
@@ -96,7 +94,7 @@ class Notifier:
         threads = {}
         for retry_num in range(len(self.retry_queues)):
             # use 4 threads for first-try tokens and less for subsequent tries
-            num_threads = {0: 4}.get(retry_num, 2)
+            num_threads = 4 if retry_num == 0 else 2
             threads[retry_num] = []
             for _ in range(num_threads):
                 thread = NotifyThread(self, retry_num, remove_token_from_addr)

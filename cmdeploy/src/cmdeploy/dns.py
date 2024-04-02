@@ -12,6 +12,11 @@ class DNS:
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
         try:
+            self.shell(f"apt update")
+            self.shell(f"apt install -y dnsutils")
+        except subprocess.CalledProcessError:
+            pass
+        try:
             self.shell(f"unbound-control flush_zone {mail_domain}")
         except subprocess.CalledProcessError:
             pass

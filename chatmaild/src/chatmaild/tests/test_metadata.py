@@ -206,7 +206,8 @@ def test_notifier_thread_connection_failures(
     metadata.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr, metadata)
     notifier.NOTIFICATION_RETRY_DELAY = 5
-    for i in range(notifier.MAX_NUMBER_OF_TRIES):
+    max_tries = len(notifier.retry_queues)
+    for i in range(max_tries):
         caplog.clear()
         reqmock = get_mocked_requests([status])
         sleep_calls = []
@@ -215,12 +216,12 @@ def test_notifier_thread_connection_failures(
         assert "request failed" in caplog.records[0].msg
         if i > 0:
             assert len(sleep_calls) == 1
-        if i + 1 < notifier.MAX_NUMBER_OF_TRIES:
+        if i + 1 < max_tries:
             assert notifier.retry_queues[i + 1].qsize() == 1
             assert len(caplog.records) == 1
         else:
             assert len(caplog.records) == 2
-            assert "dropping" in caplog.records[1].msg
+            assert "deadline" in caplog.records[1].msg
     notifier.requeue_persistent_queue_items()
     assert notifier.retry_queues[0].qsize() == 0
 
@@ -267,11 +268,13 @@ def test_notifier_thread_run_gone_removes_token(metadata, notifier, testaddr):
 
 
 def test_persistent_queue_items(tmp_path, testaddr, token):
-    queue_item = PersistentQueueItem.create(tmp_path, testaddr, token)
+    queue_item = PersistentQueueItem.create(tmp_path, testaddr, 432.0, token)
     assert queue_item.addr == testaddr
+    assert queue_item.start_ts == 432.0
     assert queue_item.token == token
     item2 = PersistentQueueItem.read_from_path(queue_item.path)
     assert item2.addr == testaddr
+    assert item2.start_ts == 432.0
     assert item2.token == token
     assert item2 == queue_item
     item2.delete()

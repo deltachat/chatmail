@@ -11,7 +11,11 @@ class DNS:
         self.session = requests.Session()
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
-        self.out.shell_output(f"{ self.ssh }'apt-get update && apt-get install -y dnsutils'", timeout=60, no_print=True)
+        self.out.shell_output(
+            f"{ self.ssh }'apt-get update && apt-get install -y dnsutils'",
+            timeout=60,
+            no_print=True,
+        )
         try:
             self.shell(f"unbound-control flush_zone {mail_domain}")
         except subprocess.CalledProcessError:

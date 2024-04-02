@@ -14,7 +14,8 @@ If a token fails to cause a successful notification
 it is moved to a retry-number specific PriorityQueue
 which handles all tokens that failed a particular number of times
 and which are scheduled for retry using exponential back-off timing.
-If a token exceeds MAX_NUMBER_OF_TRIES it is dropped with a log warning.
+If a token notification would be scheduled more than DROP_DEADLINE seconds
+after its first attempt, it is dropped with a log error.
 
 Note that tokens are completely opaque to the notification machinery here
 and will in the future be encrypted foreclosing all ability to distinguish
@@ -25,6 +26,7 @@ the `notification.delta.chat` service.
 """
 
 import time
+import math
 import logging
 from uuid import uuid4
 from threading import Thread
@@ -38,38 +40,45 @@ import requests
 class PersistentQueueItem:
     path: Path
     addr: str
+    start_ts: float
     token: str
 
     def delete(self):
         self.path.unlink(missing_ok=True)
 
     @classmethod
-    def create(cls, queue_dir, addr, token):
+    def create(cls, queue_dir, addr, start_ts, token):
         queue_id = uuid4().hex
         path = queue_dir.joinpath(queue_id)
-        path.write_text(f"{addr}\n{token}")
-        return cls(path, addr, token)
+        path.write_text(f"{addr}\n{start_ts}\n{token}")
+        return cls(path, addr, start_ts, token)
 
     @classmethod
     def read_from_path(cls, path):
-        addr, token = path.read_text().split("\n", maxsplit=1)
-        return cls(path, addr, token)
+        addr, start_ts, token = path.read_text().split("\n", maxsplit=2)
+        return cls(path, addr, float(start_ts), token)
 
 
 class Notifier:
     URL = "https://notifications.delta.chat/notify"
     CONNECTION_TIMEOUT = 60.0  # seconds until http-request is given up
-    NOTIFICATION_RETRY_DELAY = 8.0  # seconds with exponential backoff
-    MAX_NUMBER_OF_TRIES = 6
-    # exponential backoff means we try for 8^5 seconds, approximately 10 hours
+    BASE_DELAY = 8.0  # base seconds for exponential back-off delay
+    DROP_DEADLINE = 5 * 60 * 60  #  drop notifications after 5 hours
 
     def __init__(self, notification_dir):
         self.notification_dir = notification_dir
-        self.retry_queues = [PriorityQueue() for _ in range(self.MAX_NUMBER_OF_TRIES)]
+        max_tries = int(math.log(self.DROP_DEADLINE, self.BASE_DELAY)) + 1
+        self.retry_queues = [PriorityQueue() for _ in range(max_tries)]
+
+    def compute_delay(self, retry_num):
+        return 0 if retry_num == 0 else pow(self.BASE_DELAY, retry_num)
 
     def new_message_for_addr(self, addr, metadata):
+        start_ts = time.time()
         for token in metadata.get_tokens_for_addr(addr):
-            queue_item = PersistentQueueItem.create(self.notification_dir, addr, token)
+            queue_item = PersistentQueueItem.create(
+                self.notification_dir, addr, start_ts, token
+            )
             self.queue_for_retry(queue_item)
 
     def requeue_persistent_queue_items(self):
@@ -78,15 +87,14 @@ class Notifier:
             self.queue_for_retry(queue_item)
 
     def queue_for_retry(self, queue_item, retry_num=0):
-        if retry_num >= self.MAX_NUMBER_OF_TRIES:
+        delay = self.compute_delay(retry_num)
+        when = time.time() + delay
+        deadline = queue_item.start_ts + self.DROP_DEADLINE
+        if retry_num >= len(self.retry_queues) or when > deadline:
             queue_item.delete()
-            logging.warning("dropping after %d tries: %r", retry_num, queue_item.token)
+            logging.error("notification exceeded deadline: %r", queue_item.token)
             return
 
-        when = time.time()
-        if retry_num > 0:
-            # back off exponentially with number of retries
-            when += pow(self.NOTIFICATION_RETRY_DELAY, retry_num)
         self.retry_queues[retry_num].put((when, queue_item))
 
     def start_notification_threads(self, remove_token_from_addr):

@@ -127,10 +127,10 @@ def main():
         logging.error("vmail dir does not exist: %r", vmail_dir)
         return 1
 
-    notification_dir = vmail_dir / "pending_notifications"
-    notification_dir.mkdir(exist_ok=True)
+    queue_dir = vmail_dir / "pending_notifications"
+    queue_dir.mkdir(exist_ok=True)
     metadata = Metadata(vmail_dir)
-    notifier = Notifier(notification_dir)
+    notifier = Notifier(queue_dir)
     notifier.start_notification_threads(metadata.remove_token_from_addr)
 
     class Handler(StreamRequestHandler):

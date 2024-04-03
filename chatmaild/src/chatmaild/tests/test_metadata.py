@@ -17,9 +17,9 @@ from chatmaild.notifier import (
 
 @pytest.fixture
 def notifier(metadata):
-    notification_dir = metadata.vmail_dir.joinpath("pending_notifications")
-    notification_dir.mkdir()
-    return Notifier(notification_dir)
+    queue_dir = metadata.vmail_dir.joinpath("pending_notifications")
+    queue_dir.mkdir()
+    return Notifier(queue_dir)
 
 
 @pytest.fixture
@@ -230,9 +230,9 @@ def test_notifier_thread_connection_failures(
 def test_requeue_removes_tmp_files(notifier, metadata, testaddr, caplog):
     metadata.add_token_to_addr(testaddr, "01234")
     notifier.new_message_for_addr(testaddr, metadata)
-    p = notifier.notification_dir.joinpath("1203981203.tmp")
+    p = notifier.queue_dir.joinpath("1203981203.tmp")
     p.touch()
-    notifier2 = notifier.__class__(notifier.notification_dir)
+    notifier2 = notifier.__class__(notifier.queue_dir)
     notifier2.requeue_persistent_queue_items()
     assert "spurious" in caplog.records[0].msg
     assert not p.exists()

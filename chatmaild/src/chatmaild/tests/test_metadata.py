@@ -238,7 +238,7 @@ def test_requeue_removes_tmp_files(notifier, metadata, testaddr, caplog):
     assert not p.exists()
     assert notifier2.retry_queues[0].qsize() == 1
     when, queue_item = notifier2.retry_queues[0].get()
-    assert when >= int(time.time())
+    assert when <= int(time.time())
     assert queue_item.addr == testaddr
 
 
@@ -295,3 +295,4 @@ def test_persistent_queue_items(tmp_path, testaddr, token):
     assert item2 == queue_item
     item2.delete()
     assert not item2.path.exists()
+    assert not queue_item < item2 and not item2 < queue_item

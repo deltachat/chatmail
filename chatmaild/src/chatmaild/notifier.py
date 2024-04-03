@@ -25,6 +25,7 @@ The meaning and format of tokens is basically a matter of Delta-Chat Core and
 the `notification.delta.chat` service.
 """
 
+import os
 import time
 import math
 import logging
@@ -40,7 +41,7 @@ import requests
 class PersistentQueueItem:
     path: Path
     addr: str
-    start_ts: float
+    start_ts: int
     token: str
 
     def delete(self):
@@ -50,13 +51,15 @@ class PersistentQueueItem:
     def create(cls, queue_dir, addr, start_ts, token):
         queue_id = uuid4().hex
         path = queue_dir.joinpath(queue_id)
-        path.write_text(f"{addr}\n{start_ts}\n{token}")
+        tmp_path = path.with_name(path.name + ".tmp")
+        tmp_path.write_text(f"{addr}\n{start_ts}\n{token}")
+        os.rename(tmp_path, path)
         return cls(path, addr, start_ts, token)
 
     @classmethod
     def read_from_path(cls, path):
         addr, start_ts, token = path.read_text().split("\n", maxsplit=2)
-        return cls(path, addr, float(start_ts), token)
+        return cls(path, addr, int(start_ts), token)
 
 
 class Notifier:
@@ -74,7 +77,7 @@ class Notifier:
         return 0 if retry_num == 0 else pow(self.BASE_DELAY, retry_num)
 
     def new_message_for_addr(self, addr, metadata):
-        start_ts = time.time()
+        start_ts = int(time.time())
         for token in metadata.get_tokens_for_addr(addr):
             queue_item = PersistentQueueItem.create(
                 self.notification_dir, addr, start_ts, token
@@ -130,7 +133,7 @@ class NotifyThread(Thread):
         when, queue_item = self.notifier.retry_queues[self.retry_num].get()
         if when is None:
             return False
-        wait_time = when - time.time()
+        wait_time = when - int(time.time())
         if wait_time > 0:
             sleep(wait_time)
         self.perform_request_to_notification_server(requests_session, queue_item)

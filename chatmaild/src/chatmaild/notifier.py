@@ -68,8 +68,8 @@ class Notifier:
     BASE_DELAY = 8.0  # base seconds for exponential back-off delay
     DROP_DEADLINE = 5 * 60 * 60  #  drop notifications after 5 hours
 
-    def __init__(self, notification_dir):
-        self.notification_dir = notification_dir
+    def __init__(self, queue_dir):
+        self.queue_dir = queue_dir
         max_tries = int(math.log(self.DROP_DEADLINE, self.BASE_DELAY)) + 1
         self.retry_queues = [PriorityQueue() for _ in range(max_tries)]
 
@@ -80,12 +80,12 @@ class Notifier:
         start_ts = int(time.time())
         for token in metadata.get_tokens_for_addr(addr):
             queue_item = PersistentQueueItem.create(
-                self.notification_dir, addr, start_ts, token
+                self.queue_dir, addr, start_ts, token
             )
             self.queue_for_retry(queue_item)
 
     def requeue_persistent_queue_items(self):
-        for queue_path in self.notification_dir.iterdir():
+        for queue_path in self.queue_dir.iterdir():
             if queue_path.name.endswith(".tmp"):
                 logging.warning("removing spurious queue item: %r", queue_path)
                 queue_path.unlink()

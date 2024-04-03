@@ -1,0 +1,86 @@
+paketliste
+
+apt install fail2ban rkhunter -y
+apt install debsums apt-show-versions unattended-upgrades apt-listchanges -y
+apt install needrestart apt-listchanges apt-listbugs -y
+apt install ufw
+
+ /etc/ufw/applications.d/chatmail
+
+[Chatmail SMTP]
+title=MTA (Postfix, SMTP, SMTPS, SUBMISSION)
+description=All Ports used by Postfix and mta-sts
+ports=25,465,587/tcp
+
+[Chatmail IMAP]
+title=MUA(Dovecot, IMAP, IMAPS)
+description=All Ports used by Dovecot
+ports=143,993/tcp
+
+[Chatmail Nginx]
+title=Web Server (Nginx, HTTPS only)
+description=Small, but very powerful and efficient web server
+ports=443/tcp
+
+[Chatmail acme]
+title=Service for TLS-Cerifiates (Web-Challenge, HTTP)
+description=only used for generate Let'sencrypt cetrificates
+ports=80/tcp
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] Chatmail acme              ALLOW IN    Anywhere
+[ 2] 22022/tcp                  ALLOW IN    Anywhere
+[ 3] Chatmail Nginx             ALLOW IN    Anywhere
+[ 4] Chatmail SMTP              ALLOW IN    Anywhere
+[ 5] Chatmail IMAP              ALLOW IN    Anywhere
+[ 6] Chatmail acme (v6)         ALLOW IN    Anywhere (v6)
+[ 7] 22022/tcp (v6)             ALLOW IN    Anywhere (v6)
+[ 8] Chatmail Nginx (v6)        ALLOW IN    Anywhere (v6)
+[ 9] Chatmail SMTP (v6)         ALLOW IN    Anywhere (v6)
+[10] Chatmail IMAP (v6)         ALLOW IN    Anywhere (v6)
+
+apt install git
+apt install python3.11-venv
+
+apt install libpam-tmpdir
+apt install libpam-passwdqc
+apt install libpam-pwquality
+apt install cracklib-runtime
+apt install wordlist
+apt install wngerman
+
+/etc/lingin.defs
+
+SHA_CRYPT_MIN_ROUNDS 20000
+SHA_CRYPT_MAX_ROUNDS 80000
+UMASK           027
+PASS_MAX_DAYS   99
+PASS_MIN_DAYS   7
+PASS_WARN_AGE   5
+LOGIN_RETRIES           2
+
+#
+# Max time in seconds for login
+#
+LOGIN_TIMEOUT           20
+
+/etc/pam.d/common-password
+
+password        requisite                       pam_pwquality.so retry=3 #hier kann auch die Stärke des Passwortes bestimmt werden
+password        requisite                       pam_passwdqc.so
+password        [success=1 default=ignore]      pam_unix.so obscure use_authtok try_first_pass yescrypt sha512 rounds=800000
+
+pam.script
+
+#!/bin/sh
+cd /etc/pam.d
+for i in *; do
+  sed ´/[^#].*pam_console.so/s/^/#/´ < $i >foo && mv foo $i
+done
+rm -rf /etc/security/console.apps/*
+
+sudo chage --mindays 7 --maxdays 90 --warndays 5 root
+
+apt install auditd
+apt install ncdu

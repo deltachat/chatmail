@@ -2,6 +2,9 @@
 
 ## untagged 
 
+- Install dig on the server to resolve DNS records
+  ([#267](https://github.com/deltachat/chatmail/pull/267))
+
 - Run chatmail-metadata and doveauth as vmail
   ([#261](https://github.com/deltachat/chatmail/pull/261))
 

@@ -50,6 +50,7 @@ class PersistentQueueItem:
     @classmethod
     def create(cls, queue_dir, addr, start_ts, token):
         queue_id = uuid4().hex
+        start_ts = int(start_ts)
         path = queue_dir.joinpath(queue_id)
         tmp_path = path.with_name(path.name + ".tmp")
         tmp_path.write_text(f"{addr}\n{start_ts}\n{token}")
@@ -60,6 +61,9 @@ class PersistentQueueItem:
     def read_from_path(cls, path):
         addr, start_ts, token = path.read_text().split("\n", maxsplit=2)
         return cls(path, addr, int(start_ts), token)
+
+    def __lt__(self, other):
+        return self.start_ts < other.start_ts
 
 
 class Notifier:
@@ -95,7 +99,7 @@ class Notifier:
 
     def queue_for_retry(self, queue_item, retry_num=0):
         delay = self.compute_delay(retry_num)
-        when = time.time() + delay
+        when = int(time.time()) + delay
         deadline = queue_item.start_ts + self.DROP_DEADLINE
         if retry_num >= len(self.retry_queues) or when > deadline:
             queue_item.delete()

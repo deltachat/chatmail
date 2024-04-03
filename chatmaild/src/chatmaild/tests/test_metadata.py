@@ -1,6 +1,7 @@
 import io
 import pytest
 import requests
+import time
 
 from chatmaild.metadata import (
     handle_dovecot_request,
@@ -226,6 +227,21 @@ def test_notifier_thread_connection_failures(
     assert notifier.retry_queues[0].qsize() == 0
 
 
+def test_requeue_removes_tmp_files(notifier, metadata, testaddr, caplog):
+    metadata.add_token_to_addr(testaddr, "01234")
+    notifier.new_message_for_addr(testaddr, metadata)
+    p = notifier.notification_dir.joinpath("1203981203.tmp")
+    p.touch()
+    notifier2 = notifier.__class__(notifier.notification_dir)
+    notifier2.requeue_persistent_queue_items()
+    assert "spurious" in caplog.records[0].msg
+    assert not p.exists()
+    assert notifier2.retry_queues[0].qsize() == 1
+    when, queue_item = notifier2.retry_queues[0].get()
+    assert when >= int(time.time())
+    assert queue_item.addr == testaddr
+
+
 def test_start_and_stop_notification_threads(notifier, testaddr):
     threads = notifier.start_notification_threads(None)
     for retry_num, threadlist in threads.items():
@@ -268,13 +284,13 @@ def test_notifier_thread_run_gone_removes_token(metadata, notifier, testaddr):
 
 
 def test_persistent_queue_items(tmp_path, testaddr, token):
-    queue_item = PersistentQueueItem.create(tmp_path, testaddr, 432.0, token)
+    queue_item = PersistentQueueItem.create(tmp_path, testaddr, 432, token)
     assert queue_item.addr == testaddr
-    assert queue_item.start_ts == 432.0
+    assert queue_item.start_ts == 432
     assert queue_item.token == token
     item2 = PersistentQueueItem.read_from_path(queue_item.path)
     assert item2.addr == testaddr
-    assert item2.start_ts == 432.0
+    assert item2.start_ts == 432
     assert item2.token == token
     assert item2 == queue_item
     item2.delete()

@@ -86,6 +86,10 @@ class Notifier:
 
     def requeue_persistent_queue_items(self):
         for queue_path in self.notification_dir.iterdir():
+            if queue_path.name.endswith(".tmp"):
+                logging.warning("removing spurious queue item: %r", queue_path)
+                queue_path.unlink()
+                continue
             queue_item = PersistentQueueItem.read_from_path(queue_path)
             self.queue_for_retry(queue_item)
 

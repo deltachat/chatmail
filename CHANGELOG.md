@@ -1,5 +1,7 @@
 # Changelog for chatmail deployment 
 
+## untagged
+
 ## 1.2.0 - 2024-04-04
 
 - Install dig on the server to resolve DNS records

@@ -483,6 +483,23 @@ def deploy_chatmail(config_path: Path) -> None:
         commands=["test -d /home/vmail && chown -R vmail:vmail /home/vmail"],
     )
 
+    # Add our OBS repository for dovecot_no_delay
+    files.put(
+        name = "Add Deltachat OBS GPG key to apt keyring",
+        src = importlib.resources.files(__package__).joinpath("obs-home-deltachat.gpg"),
+        dest = "/etc/apt/keyrings/obs-home-deltachat.gpg",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
+    files.line(
+        name = "Add DeltaChat OBS home repository to sources.list",
+        path = "/etc/apt/sources.list",
+        line = "deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
+        ensure_newline = True,
+    )
+
     apt.update(name="apt update", cache_time=24 * 3600)
 
     apt.packages(
@@ -521,25 +538,6 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Install Postfix",
         packages="postfix",
     )
-
-    # Add our OBS repository for dovecot_no_delay
-    files.put(
-        name = "Add Deltachat OBS GPG key to apt keyring",
-        src = importlib.resources.files(__package__).joinpath("obs-home-deltachat.gpg"),
-        dest = "/etc/apt/keyrings/obs-home-deltachat.gpg",
-        user="root",
-        group="root",
-        mode="644",
-    )
-
-    files.line(
-        name = "Add DeltaChat OBS home repository to sources.list",
-        path = "/etc/apt/sources.list",
-        line = "deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
-        ensure_newline = True,
-    )
-
-    apt.update(name="apt update")
 
     apt.packages(
         name="Install Dovecot",

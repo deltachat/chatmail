@@ -539,6 +539,8 @@ def deploy_chatmail(config_path: Path) -> None:
         ensure_newline = True,
     )
 
+    apt.update(name="apt update")
+
     apt.packages(
         name="Install Dovecot",
         packages=["dovecot-imapd", "dovecot-lmtpd", "dovecot-sieve"],

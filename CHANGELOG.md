@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Use forked version of dovecot without hardcoded delays
+  ([#270](https://github.com/deltachat/chatmail/pull/270))
+
 ## 1.2.0 - 2024-04-04
 
 - Install dig on the server to resolve DNS records

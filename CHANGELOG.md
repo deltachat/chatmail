@@ -2,7 +2,7 @@
 
 ## untagged
 
-- Restart Dovecot and Postfix when TLS certificate updates
+- Reload Dovecot and Postfix when TLS certificate updates
   ([#271](https://github.com/deltachat/chatmail/pull/271))
 
 - Use forked version of dovecot without hardcoded delays

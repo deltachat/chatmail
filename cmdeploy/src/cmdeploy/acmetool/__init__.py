@@ -5,7 +5,7 @@ from pyinfra import host
 from pyinfra.facts.systemd import SystemdStatus
 
 
-def deploy_acmetool(nginx_hook=False, email="", domains=[]):
+def deploy_acmetool(email="", domains=[]):
     """Deploy acmetool."""
     apt.packages(
         name="Install acmetool",
@@ -20,16 +20,13 @@ def deploy_acmetool(nginx_hook=False, email="", domains=[]):
         mode="644",
     )
 
-    if nginx_hook:
-        files.put(
-            src=importlib.resources.files(__package__)
-            .joinpath("acmetool.hook")
-            .open("rb"),
-            dest="/usr/lib/acme/hooks/nginx",
-            user="root",
-            group="root",
-            mode="744",
-        )
+    files.put(
+        src=importlib.resources.files(__package__).joinpath("acmetool.hook").open("rb"),
+        dest="/usr/lib/acme/hooks/nginx",
+        user="root",
+        group="root",
+        mode="744",
+    )
 
     files.template(
         src=importlib.resources.files(__package__).joinpath("response-file.yaml.j2"),

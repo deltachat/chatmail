@@ -40,10 +40,11 @@ and is described in the [official documentation](https://openbuildservice.org/he
 
 ### How to built the dovecot debian package for all platforms 
 
-XXX As is, i am not sure i understand the instructions and how the patches are actually applied
-XXX during building. 
-XXX I'd prefer we have a full github repository with our dovecot-fork as submodule
-XXX and then execute "osc" commands there, if possible. 
+XXX suggested: transform this paragraph by providing a script to
+XXX - download precise files from https://packages.debian.org/unstable/dovecot-core 
+XXX - clone the chatmail/dovecot repo
+XXX - running `debuild` 
+XXX - do `osc add PRECISE_FILE_PATTERN` or so 
 
 On a Debian machine (for exampe [distrobox](https://distrobox.it/)),
 clone the [chatmail dovecot fork](https://github.com/chatmail/dovecot). 
@@ -62,9 +63,11 @@ The OBS will now build the deb files for aarch64, armv7l, i586 and x86_64.
 
 ### Adding the resulting OBS repository to Debian
 
-XXX maybe better link to the deployment code adding the key (https://github.com/deltachat/chatmail/blob/main/cmdeploy/src/cmdeploy/__init__.py) and not spell out the download links here 
+XXX suggested: 
+XXX - use the in-repo key for addition (if OBS key changes, we also need to update i in our repo anyway)
+XXX - also link to the deployment code adding the key (https://github.com/deltachat/chatmail/blob/main/cmdeploy/src/cmdeploy/__init__.py) 
 
-XXX is there no standard "apt-add-repository" possible? 
+XXX (question: what is missing/why is "apt-add-repository" not possible?) 
 
 To add the OBS-managed signing key to your local install: 
 

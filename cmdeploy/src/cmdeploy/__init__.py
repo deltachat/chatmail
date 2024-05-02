@@ -477,6 +477,7 @@ def deploy_chatmail(config_path: Path) -> None:
         groups=["opendkim"],
         system=True,
     )
+    server.user(name="Create echobot user", user="echobot", system=True)
 
     server.shell(
         name="Fix file owner in /home/vmail",

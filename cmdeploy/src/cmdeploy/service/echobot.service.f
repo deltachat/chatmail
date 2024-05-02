@@ -7,6 +7,14 @@ Environment="PATH={remote_venv_dir}:$PATH"
 Restart=always
 RestartSec=30
 
+User=echobot
+Group=echobot
+
+# Create /var/lib/echobot
+StateDirectory=echobot
+
+WorkingDirectory=/var/lib/echobot
+
 # Apply security restrictions suggested by
 #   systemd-analyze security echobot.service
 CapabilityBoundingSet=

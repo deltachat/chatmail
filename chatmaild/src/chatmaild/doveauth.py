@@ -45,23 +45,32 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
         return False
     localpart, domain = parts
 
+    if localpart == "echo":
+        # echobot account should not be created in the database
+        return False
+
     if (
         len(localpart) > config.username_max_length
         or len(localpart) < config.username_min_length
     ):
-        if localpart != "echo":
-            logging.warning(
-                "localpart %s has to be between %s and %s chars long",
-                localpart,
-                config.username_min_length,
-                config.username_max_length,
-            )
-            return False
+        logging.warning(
+            "localpart %s has to be between %s and %s chars long",
+            localpart,
+            config.username_min_length,
+            config.username_max_length,
+        )
 
     return True
 
 
 def get_user_data(db, config: Config, user):
+    if user == f"echo@{config.mail_domain}":
+        return dict(
+            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            uid="vmail",
+            gid="vmail",
+        )
+
     with db.read_connection() as conn:
         result = conn.get_user(user)
     if result:
@@ -76,6 +85,14 @@ def lookup_userdb(db, config: Config, user):
 
 
 def lookup_passdb(db, config: Config, user, cleartext_password):
+    if user == f"echo@{config.mail_domain}":
+        return dict(
+            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            uid="vmail",
+            gid="vmail",
+            password=encrypt_password("eiPhiez0eo8raighoh0C"),  # FIXME read from config
+        )
+
     with db.write_transaction() as conn:
         userdata = conn.get_user(user)
         if userdata:

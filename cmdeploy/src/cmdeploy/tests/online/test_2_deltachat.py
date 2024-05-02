@@ -182,7 +182,6 @@ def test_hide_senders_ip_address(cmfactory):
 
 
 def test_echobot(cmfactory, chatmail_config, lp):
-    pytest.skip("doesn't work right now #277")
     ac = cmfactory.get_online_accounts(1)[0]
 
     lp.sec(f"Send message to echo@{chatmail_config.mail_domain}")

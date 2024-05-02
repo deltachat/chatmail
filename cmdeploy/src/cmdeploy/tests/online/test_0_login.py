@@ -2,6 +2,7 @@ import pytest
 import threading
 import queue
 import socket
+import time
 
 from chatmaild.config import read_config
 from cmdeploy.cmdeploy import main
@@ -81,7 +82,14 @@ def test_concurrent_logins_same_account(
         assert login_results.get()
 
 
-def test_no_vrfy(chatmail_config):
+def test_no_vrfy(chatmail_config, remote):
+    found = False
+    while not found:
+        for line in remote.iter_output(logcmd="journalctl -u echobot"):
+            print(line)
+            if "successfully logged into imap server" in line:
+                found = True
+                break
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((chatmail_config.mail_domain, 25))
     banner = sock.recv(1024)

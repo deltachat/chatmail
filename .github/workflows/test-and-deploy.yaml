@@ -79,7 +79,7 @@ jobs:
           ssh root@ns.testrun.org systemctl reload nsd
 
       - name: cmdeploy test
-        run: sleep 60; CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
+        run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
 
       - name: cmdeploy dns (try 3 times)
         run: cmdeploy dns || cmdeploy dns || cmdeploy dns

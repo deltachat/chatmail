@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Accept Let's Encrypt's new Terms of Services
+  ([#275](https://github.com/deltachat/chatmail/pull/276))
+
 - Reload Dovecot and Postfix when TLS certificate updates
   ([#271](https://github.com/deltachat/chatmail/pull/271))
 

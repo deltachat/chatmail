@@ -3,13 +3,13 @@
 
 it will echo back any message that has non-empty text and also supports the /help command.
 """
+
 import logging
 import os
 import sys
 
 from deltachat_rpc_client import Bot, DeltaChat, EventType, Rpc, events
 
-from chatmaild.newemail import create_newemail_dict
 from chatmaild.config import read_config
 
 hooks = events.HookCollection()
@@ -77,7 +77,7 @@ def main():
         bot = Bot(account, hooks)
         if not bot.is_configured():
             config = read_config(sys.argv[1])
-            password = create_newemail_dict(config).get("password")
+            password = "eiPhiez0eo8raighoh0C"  # FIXME read from config
             email = "echo@" + config.mail_domain
             bot.configure(email, password)
         bot.run_forever()

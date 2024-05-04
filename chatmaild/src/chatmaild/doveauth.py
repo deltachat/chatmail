@@ -4,6 +4,7 @@ import time
 import sys
 import json
 import crypt
+from pathlib import Path
 from socketserver import (
     UnixStreamServer,
     StreamRequestHandler,
@@ -86,11 +87,18 @@ def lookup_userdb(db, config: Config, user):
 
 def lookup_passdb(db, config: Config, user, cleartext_password):
     if user == f"echo@{config.mail_domain}":
+        # Echobot writes password it wants to log in with into /run/echobot/password
+        try:
+            password = Path("/run/echobot/password").read_text()
+        except Exception:
+            logging.exception("Exception when trying to read /run/echobot/password")
+            return None
+
         return dict(
             home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
             uid="vmail",
             gid="vmail",
-            password=encrypt_password("eiPhiez0eo8raighoh0C"),  # FIXME read from config
+            password=encrypt_password(password),
         )
 
     with db.write_transaction() as conn:

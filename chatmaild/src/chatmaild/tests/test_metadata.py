@@ -296,3 +296,17 @@ def test_persistent_queue_items(tmp_path, testaddr, token):
     item2.delete()
     assert not item2.path.exists()
     assert not queue_item < item2 and not item2 < queue_item
+
+
+def test_iroh_relay(metadata):
+    rfile = io.BytesIO(
+        b"\n".join(
+            [
+                b"H",
+                b"Lshared/0123/vendor/vendor.dovecot/pvt/server/vendor/deltachat/irohrelay\tuser@example.org",
+            ]
+        )
+    )
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, notifier, metadata, "https://example.org/")
+    assert wfile.getvalue() == b"Ohttps://example.org/\n"

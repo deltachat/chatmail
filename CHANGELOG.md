@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Move echobot `into /var/lib/echobot`
+  ([#281](https://github.com/deltachat/chatmail/pull/281))
+
 - Accept Let's Encrypt's new Terms of Services
   ([#275](https://github.com/deltachat/chatmail/pull/276))
 

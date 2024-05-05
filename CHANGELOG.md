@@ -2,6 +2,9 @@
 
 ## untagged
 
+- metadata: add support for `/shared/vendor/deltachat/irohrelay`
+  ([#284](https://github.com/deltachat/chatmail/pull/284))
+
 - Emit "XCHATMAIL" capability from IMAP server 
   ([#278](https://github.com/deltachat/chatmail/pull/278))
 

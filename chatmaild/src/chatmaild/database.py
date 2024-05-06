@@ -1,5 +1,5 @@
-import sqlite3
 import contextlib
+import sqlite3
 import time
 from pathlib import Path
 

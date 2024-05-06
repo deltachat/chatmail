@@ -1,8 +1,8 @@
 import importlib.resources
 
-from pyinfra.operations import apt, files, systemd, server
 from pyinfra import host
 from pyinfra.facts.systemd import SystemdStatus
+from pyinfra.operations import apt, files, server, systemd
 
 
 def deploy_acmetool(email="", domains=[]):

@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from cmdeploy.cmdeploy import get_parser, main
 
 

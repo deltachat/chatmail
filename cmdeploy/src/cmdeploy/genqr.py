@@ -1,8 +1,9 @@
 import importlib
-import qrcode
-import os
-from PIL import ImageFont, ImageDraw, Image
 import io
+import os
+
+import qrcode
+from PIL import Image, ImageDraw, ImageFont
 
 
 def gen_qr_png_data(maildomain):

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-import time
 import sys
-from email.parser import BytesParser
+import time
 from email import policy
+from email.parser import BytesParser
 from email.utils import parseaddr
+from smtplib import SMTP as SMTPClient
 
 from aiosmtpd.controller import Controller
-from smtplib import SMTP as SMTPClient
 
 from .config import read_config
 

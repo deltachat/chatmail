@@ -6,11 +6,11 @@ it will echo back any message that has non-empty text and also supports the /hel
 
 import logging
 import os
-import sys
 import subprocess
+import sys
+from pathlib import Path
 
 from deltachat_rpc_client import Bot, DeltaChat, EventType, Rpc, events
-from pathlib import Path
 
 from chatmaild.config import read_config
 from chatmaild.newemail import create_newemail_dict

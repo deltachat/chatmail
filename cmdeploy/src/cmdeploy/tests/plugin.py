@@ -1,17 +1,16 @@
-import os
-import io
-import time
-import random
-import subprocess
 import imaplib
-import smtplib
+import io
 import itertools
+import os
+import random
+import smtplib
+import subprocess
+import time
 from pathlib import Path
+
 import pytest
-
-from chatmaild.database import Database
 from chatmaild.config import read_config
-
+from chatmaild.database import Database
 
 conftestdir = Path(__file__).parent
 

@@ -25,15 +25,16 @@ The meaning and format of tokens is basically a matter of Delta-Chat Core and
 the `notification.delta.chat` service.
 """
 
+import logging
+import math
 import os
 import time
-import math
-import logging
-from uuid import uuid4
-from threading import Thread
+from dataclasses import dataclass
 from pathlib import Path
 from queue import PriorityQueue
-from dataclasses import dataclass
+from threading import Thread
+from uuid import uuid4
+
 import requests
 
 

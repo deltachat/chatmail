@@ -1,16 +1,15 @@
-from pathlib import Path
-from socketserver import (
-    UnixStreamServer,
-    StreamRequestHandler,
-    ThreadingMixIn,
-)
-import sys
 import logging
 import os
+import sys
+from pathlib import Path
+from socketserver import (
+    StreamRequestHandler,
+    ThreadingMixIn,
+    UnixStreamServer,
+)
 
 from .filedict import FileDict
 from .notifier import Notifier
-
 
 DICTPROXY_HELLO_CHAR = "H"
 DICTPROXY_LOOKUP_CHAR = "L"

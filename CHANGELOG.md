@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Emit "XCHATMAIL" capability from IMAP server 
+  ([#278](https://github.com/deltachat/chatmail/pull/278))
+
 - Move echobot `into /var/lib/echobot`
   ([#281](https://github.com/deltachat/chatmail/pull/281))
 

@@ -2,6 +2,8 @@
 
 # Privacy Policy for {{ config.mail_domain }} 
 
+{{ config.privacy_intro }}
+
 We want to show you in a fair and transparent way
 what personal data is processed by us.
 We follow a strict privacy-by-design approach

@@ -61,3 +61,4 @@ privacy_pdo =
 # postal address of the privacy supervisor
 privacy_supervisor =
 
+privacy_intro =

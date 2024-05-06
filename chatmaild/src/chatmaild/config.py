@@ -24,6 +24,7 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+        self.privacy_intro = params.get("privacy_intro")
 
     def _getbytefile(self):
         return open(self._inipath, "rb")

@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Added a config option for an intro to the privacy policy
+  ([#285](https://github.com/deltachat/chatmail/pull/285))
+
 - Move echobot `into /var/lib/echobot`
   ([#281](https://github.com/deltachat/chatmail/pull/281))
 

@@ -1,12 +1,12 @@
 import io
-import pytest
-import requests
 import time
 
+import pytest
+import requests
 from chatmaild.metadata import (
-    handle_dovecot_request,
-    handle_dovecot_protocol,
     Metadata,
+    handle_dovecot_protocol,
+    handle_dovecot_request,
 )
 from chatmaild.notifier import (
     Notifier,

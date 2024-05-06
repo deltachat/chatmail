@@ -1,18 +1,18 @@
+import crypt
+import json
 import logging
 import os
-import time
 import sys
-import json
-import crypt
+import time
 from pathlib import Path
 from socketserver import (
-    UnixStreamServer,
     StreamRequestHandler,
     ThreadingMixIn,
+    UnixStreamServer,
 )
 
+from .config import Config, read_config
 from .database import Database
-from .config import read_config, Config
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 

@@ -1,9 +1,10 @@
-import pytest
-import threading
 import queue
 import socket
+import threading
 
+import pytest
 from chatmaild.config import read_config
+
 from cmdeploy.cmdeploy import main
 
 

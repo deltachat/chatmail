@@ -1,9 +1,9 @@
+import datetime
+import importlib
+import subprocess
 import sys
 
 import requests
-import importlib
-import subprocess
-import datetime
 
 
 class DNS:
@@ -104,8 +104,8 @@ def show_dns(args, out) -> int:
             return 0
         except TypeError:
             pass
-        for line in zonefile.splitlines():
-            line = line.format(
+        for raw_line in zonefile.splitlines():
+            line = raw_line.format(
                 acme_account_url=acme_account_url,
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,

@@ -16,7 +16,6 @@ dependencies = [
   "build",
   "tox",
   "ruff",
-  "black",
   "pytest",
   "pytest-xdist", 
   "imap_tools",
@@ -31,3 +30,13 @@ cmdeploy = "cmdeploy.cmdeploy:main"
 
 [tool.pytest.ini_options]
 addopts = "-v -ra --strict-markers"
+
+[tool.ruff]
+lint.select = [
+  "F", # Pyflakes
+  "I", # isort
+
+  "PLC", # Pylint Convention
+  "PLE", # Pylint Error
+  "PLW", # Pylint Warning
+]

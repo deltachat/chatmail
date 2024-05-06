@@ -1,11 +1,11 @@
-import time
-import re
+import ipaddress
 import random
+import re
+import time
 
+import imap_tools
 import pytest
 import requests
-import ipaddress
-import imap_tools
 
 
 @pytest.fixture

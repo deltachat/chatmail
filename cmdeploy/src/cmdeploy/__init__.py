@@ -2,20 +2,20 @@
 Chat Mail pyinfra deploy.
 """
 
-import sys
 import importlib.resources
-import subprocess
-import shutil
 import io
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
+from chatmaild.config import Config, read_config
 from pyinfra import host
-from pyinfra.operations import apt, files, server, systemd, pip
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
-from .acmetool import deploy_acmetool
+from pyinfra.operations import apt, files, pip, server, systemd
 
-from chatmaild.config import read_config, Config
+from .acmetool import deploy_acmetool
 
 
 def _build_chatmaild(dist_dir) -> None:
@@ -486,19 +486,19 @@ def deploy_chatmail(config_path: Path) -> None:
 
     # Add our OBS repository for dovecot_no_delay
     files.put(
-        name = "Add Deltachat OBS GPG key to apt keyring",
-        src = importlib.resources.files(__package__).joinpath("obs-home-deltachat.gpg"),
-        dest = "/etc/apt/keyrings/obs-home-deltachat.gpg",
+        name="Add Deltachat OBS GPG key to apt keyring",
+        src=importlib.resources.files(__package__).joinpath("obs-home-deltachat.gpg"),
+        dest="/etc/apt/keyrings/obs-home-deltachat.gpg",
         user="root",
         group="root",
         mode="644",
     )
 
     files.line(
-        name = "Add DeltaChat OBS home repository to sources.list",
-        path = "/etc/apt/sources.list",
-        line = "deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
-        ensure_newline = True,
+        name="Add DeltaChat OBS home repository to sources.list",
+        path="/etc/apt/sources.list",
+        line="deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
+        ensure_newline=True,
     )
 
     apt.update(name="apt update", cache_time=24 * 3600)

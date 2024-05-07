@@ -1,17 +1,23 @@
+import io
 import json
-import pytest
-import threading
 import queue
+import threading
 import traceback
 
 import chatmaild.doveauth
-from chatmaild.doveauth import get_user_data, lookup_passdb, handle_dovecot_request
+import pytest
 from chatmaild.database import DBError
+from chatmaild.doveauth import (
+    get_user_data,
+    handle_dovecot_protocol,
+    handle_dovecot_request,
+    lookup_passdb,
+)
 
 
 def test_basic(db, example_config):
     lookup_passdb(db, example_config, "asdf12345@chat.example.org", "q9mr3faue")
-    data = get_user_data(db, "asdf12345@chat.example.org")
+    data = get_user_data(db, example_config, "asdf12345@chat.example.org")
     assert data
     data2 = lookup_passdb(
         db, example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
@@ -37,7 +43,7 @@ def test_nocreate_file(db, monkeypatch, tmpdir, example_config):
     lookup_passdb(
         db, example_config, "newuser12@chat.example.org", "zequ0Aimuchoodaechik"
     )
-    assert not get_user_data(db, "newuser12@chat.example.org")
+    assert not get_user_data(db, example_config, "newuser12@chat.example.org")
 
 
 def test_db_version(db):
@@ -67,6 +73,23 @@ def test_handle_dovecot_request(db, example_config):
     )
     assert userdata["uid"] == userdata["gid"] == "vmail"
     assert userdata["password"].startswith("{SHA512-CRYPT}")
+
+
+def test_handle_dovecot_protocol_hello_is_skipped(db, example_config, caplog):
+    rfile = io.BytesIO(b"H3\t2\t0\t\tauth\n")
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    assert wfile.getvalue() == b""
+    assert not caplog.messages
+
+
+def test_handle_dovecot_protocol(db, example_config):
+    rfile = io.BytesIO(
+        b"H3\t2\t0\t\tauth\nLshared/userdb/foobar@chat.example.org\tfoobar@chat.example.org\n"
+    )
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    assert wfile.getvalue() == b"N\n"
 
 
 def test_50_concurrent_lookups_different_accounts(db, gencreds, example_config):

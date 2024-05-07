@@ -1,20 +1,21 @@
 """
 Chat Mail pyinfra deploy.
 """
-import sys
+
 import importlib.resources
-import subprocess
-import shutil
 import io
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
+from chatmaild.config import Config, read_config
 from pyinfra import host
-from pyinfra.operations import apt, files, server, systemd, pip
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
-from .acmetool import deploy_acmetool
+from pyinfra.operations import apt, files, pip, server, systemd
 
-from chatmaild.config import read_config, Config
+from .acmetool import deploy_acmetool
 
 
 def _build_chatmaild(dist_dir) -> None:
@@ -101,13 +102,17 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         "doveauth",
         "filtermail",
         "echobot",
+        "chatmail-metadata",
     ):
         params = dict(
             execpath=f"{remote_venv_dir}/bin/{fn}",
             config_path=remote_chatmail_inipath,
             remote_venv_dir=remote_venv_dir,
+            mail_domain=config.mail_domain,
         )
-        source_path = importlib.resources.files("chatmaild").joinpath(f"{fn}.service.f")
+        source_path = importlib.resources.files(__package__).joinpath(
+            "service", f"{fn}.service.f"
+        )
         content = source_path.read_text().format(**params).encode()
 
         files.put(
@@ -140,6 +145,24 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
     )
     need_restart |= main_config.changed
 
+    screen_script = files.put(
+        src=importlib.resources.files(__package__).joinpath("opendkim/screen.lua"),
+        dest="/etc/opendkim/screen.lua",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= screen_script.changed
+
+    final_script = files.put(
+        src=importlib.resources.files(__package__).joinpath("opendkim/final.lua"),
+        dest="/etc/opendkim/final.lua",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= final_script.changed
+
     files.directory(
         name="Add opendkim directory to /etc",
         path="/etc/opendkim",
@@ -168,7 +191,6 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         config={"domain_name": domain, "opendkim_selector": dkim_selector},
     )
     need_restart |= signing_table.changed
-
     files.directory(
         name="Add opendkim socket directory to /var/spool/postfix",
         path="/var/spool/postfix/opendkim",
@@ -176,6 +198,11 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         group="opendkim",
         mode="750",
         present=True,
+    )
+
+    apt.packages(
+        name="apt install opendkim opendkim-tools",
+        packages=["opendkim", "opendkim-tools"],
     )
 
     if not host.get_fact(File, f"/etc/dkimkeys/{dkim_selector}.private"):
@@ -255,13 +282,25 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     need_restart |= master_config.changed
 
     header_cleanup = files.put(
-        src=importlib.resources.files(__package__).joinpath("postfix/submission_header_cleanup"),
+        src=importlib.resources.files(__package__).joinpath(
+            "postfix/submission_header_cleanup"
+        ),
         dest="/etc/postfix/submission_header_cleanup",
         user="root",
         group="root",
         mode="644",
     )
     need_restart |= header_cleanup.changed
+
+    # Login map that 1:1 maps email address to login.
+    login_map = files.put(
+        src=importlib.resources.files(__package__).joinpath("postfix/login_map"),
+        dest="/etc/postfix/login_map",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= login_map.changed
 
     return need_restart
 
@@ -288,6 +327,30 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
     )
     need_restart |= auth_config.changed
+    lua_push_notification_script = files.put(
+        src=importlib.resources.files(__package__).joinpath(
+            "dovecot/push_notification.lua"
+        ),
+        dest="/etc/dovecot/push_notification.lua",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= lua_push_notification_script.changed
+
+    sieve_script = files.put(
+        src=importlib.resources.files(__package__).joinpath("dovecot/default.sieve"),
+        dest="/etc/dovecot/default.sieve",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= sieve_script.changed
+    if sieve_script.changed:
+        server.shell(
+            name="compile sieve script",
+            commands=["/usr/bin/sievec /etc/dovecot/default.sieve"],
+        )
 
     files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),
@@ -368,12 +431,20 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
     return need_restart
 
 
+def _remove_rspamd() -> None:
+    """Remove rspamd"""
+    apt.packages(name="Remove rspamd", packages="rspamd", present=False)
+
+
 def check_config(config):
     mail_domain = config.mail_domain
     if mail_domain != "testrun.org" and not mail_domain.endswith(".testrun.org"):
         blocked_words = "merlinux schmieder testrun.org".split()
-        for value in config.__dict__.values():
-            if any(x in str(value) for x in blocked_words):
+        for key in config.__dict__:
+            value = config.__dict__[key]
+            if key.startswith("privacy") and any(
+                x in str(value) for x in blocked_words
+            ):
                 raise ValueError(
                     f"please set your own privacy contacts/addresses in {config._inipath}"
                 )
@@ -391,16 +462,50 @@ def deploy_chatmail(config_path: Path) -> None:
 
     from .www import build_webpages
 
-    apt.update(name="apt update", cache_time=24 * 3600)
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
-
     server.group(name="Create opendkim group", group="opendkim", system=True)
+    server.user(
+        name="Create opendkim user",
+        user="opendkim",
+        groups=["opendkim"],
+        system=True,
+    )
     server.user(
         name="Add postfix user to opendkim group for socket access",
         user="postfix",
         groups=["opendkim"],
         system=True,
+    )
+    server.user(name="Create echobot user", user="echobot", system=True)
+
+    server.shell(
+        name="Fix file owner in /home/vmail",
+        commands=["test -d /home/vmail && chown -R vmail:vmail /home/vmail"],
+    )
+
+    # Add our OBS repository for dovecot_no_delay
+    files.put(
+        name="Add Deltachat OBS GPG key to apt keyring",
+        src=importlib.resources.files(__package__).joinpath("obs-home-deltachat.gpg"),
+        dest="/etc/apt/keyrings/obs-home-deltachat.gpg",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
+    files.line(
+        name="Add DeltaChat OBS home repository to sources.list",
+        path="/etc/apt/sources.list",
+        line="deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
+        ensure_newline=True,
+    )
+
+    apt.update(name="apt update", cache_time=24 * 3600)
+
+    apt.packages(
+        name="Install rsync",
+        packages=["rsync"],
     )
 
     # Run local DNS resolver `unbound`.
@@ -412,7 +517,10 @@ def deploy_chatmail(config_path: Path) -> None:
     )
     server.shell(
         name="Generate root keys for validating DNSSEC",
-        commands=["unbound-anchor -a /var/lib/unbound/root.key || true"],
+        commands=[
+            "unbound-anchor -a /var/lib/unbound/root.key || true",
+            "systemctl reset-failed unbound.service",
+        ],
     )
     systemd.service(
         name="Start and enable unbound",
@@ -422,7 +530,9 @@ def deploy_chatmail(config_path: Path) -> None:
     )
 
     # Deploy acmetool to have TLS certificates.
-    deploy_acmetool(nginx_hook=True, domains=[mail_domain, f"mta-sts.{mail_domain}"])
+    deploy_acmetool(
+        domains=[mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"],
+    )
 
     apt.packages(
         name="Install Postfix",
@@ -431,15 +541,7 @@ def deploy_chatmail(config_path: Path) -> None:
 
     apt.packages(
         name="Install Dovecot",
-        packages=["dovecot-imapd", "dovecot-lmtpd"],
-    )
-
-    apt.packages(
-        name="Install OpenDKIM",
-        packages=[
-            "opendkim",
-            "opendkim-tools",
-        ],
+        packages=["dovecot-imapd", "dovecot-lmtpd", "dovecot-sieve"],
     )
 
     apt.packages(
@@ -463,9 +565,11 @@ def deploy_chatmail(config_path: Path) -> None:
     debug = False
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
-    opendkim_need_restart = _configure_opendkim(mail_domain)
     mta_sts_need_restart = _install_mta_sts_daemon()
     nginx_need_restart = _configure_nginx(mail_domain)
+
+    _remove_rspamd()
+    opendkim_need_restart = _configure_opendkim(mail_domain, "opendkim")
 
     systemd.service(
         name="Start and enable OpenDKIM",
@@ -484,20 +588,23 @@ def deploy_chatmail(config_path: Path) -> None:
         restarted=mta_sts_need_restart,
     )
 
-    systemd.service(
-        name="Start and enable Postfix",
-        service="postfix.service",
-        running=True,
-        enabled=True,
-        restarted=postfix_need_restart,
-    )
-
+    # Dovecot should be started before Postfix
+    # because it creates authentication socket
+    # required by Postfix.
     systemd.service(
         name="Start and enable Dovecot",
         service="dovecot.service",
         running=True,
         enabled=True,
         restarted=dovecot_need_restart,
+    )
+
+    systemd.service(
+        name="Start and enable Postfix",
+        service="postfix.service",
+        running=True,
+        enabled=True,
+        restarted=postfix_need_restart,
     )
 
     systemd.service(

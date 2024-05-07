@@ -1,6 +1,8 @@
-import os
 import importlib.resources
+import os
+
 import pyinfra
+
 from cmdeploy import deploy_chatmail
 
 

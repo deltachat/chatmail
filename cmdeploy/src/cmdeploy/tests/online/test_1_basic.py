@@ -1,4 +1,5 @@
 import smtplib
+
 import pytest
 
 
@@ -42,6 +43,28 @@ def test_reject_forged_from(cmsetup, maildata, gencreds, lp, forgeaddr):
     assert "500" in str(e.value)
 
 
+def test_authenticated_from(cmsetup, maildata):
+    """Test that envelope FROM must be the same as login."""
+    user1, user2, user3 = cmsetup.gen_users(3)
+
+    msg = maildata("encrypted.eml", from_addr=user2.addr, to_addr=user3.addr)
+    with pytest.raises(smtplib.SMTPException) as e:
+        user1.smtp.sendmail(
+            from_addr=user2.addr, to_addrs=[user3.addr], msg=msg.as_string()
+        )
+    assert e.value.recipients[user3.addr][0] == 553
+
+
+@pytest.mark.parametrize("from_addr", ["fake@example.org", "fake@testrun.org"])
+def test_reject_missing_dkim(cmsetup, maildata, from_addr):
+    """Test that emails with missing or wrong DMARC, DKIM, and SPF entries are rejected."""
+    recipient = cmsetup.gen_users(1)[0]
+    msg = maildata("plain.eml", from_addr=from_addr, to_addr=recipient.addr).as_string()
+    with smtplib.SMTP(cmsetup.maildomain, 25) as s:
+        with pytest.raises(smtplib.SMTPDataError, match="No valid DKIM signature"):
+            s.sendmail(from_addr=from_addr, to_addrs=recipient.addr, msg=msg)
+
+
 @pytest.mark.slow
 def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
     """Test that the per-account send-mail limit is exceeded."""
@@ -61,3 +84,18 @@ def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
             assert b"4.7.1: Too much mail from" in outcome[1]
             return
     pytest.fail("Rate limit was not exceeded")
+
+
+def test_expunged(remote, chatmail_config):
+    outdated_days = int(chatmail_config.delete_mails_after) + 1
+    find_cmds = [
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/cur/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/cur/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/new/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/new/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/tmp/*' -mtime +{outdated_days} -type f",
+        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/tmp/*' -mtime +{outdated_days} -type f",
+    ]
+    for cmd in find_cmds:
+        for line in remote.iter_output(cmd):
+            assert not line

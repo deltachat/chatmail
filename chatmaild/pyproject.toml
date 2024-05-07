@@ -10,6 +10,8 @@ dependencies = [
   "iniconfig",
   "deltachat-rpc-server",
   "deltachat-rpc-client",
+  "filelock",
+  "requests",
 ]
 
 [tool.setuptools]
@@ -20,6 +22,7 @@ where = ['src']
 
 [project.scripts]
 doveauth = "chatmaild.doveauth:main"
+chatmail-metadata = "chatmaild.metadata:main"
 filtermail = "chatmaild.filtermail:main"
 echobot = "chatmaild.echo:main"
 chatmail-metrics = "chatmaild.metrics:main"
@@ -33,6 +36,16 @@ log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_level = "INFO"
 
+[tool.ruff]
+lint.select = [
+  "F", # Pyflakes
+  "I", # isort
+
+  "PLC", # Pylint Convention
+  "PLE", # Pylint Error
+  "PLW", # Pylint Warning
+]
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
@@ -44,10 +57,9 @@ skipdist = True
 skip_install = True
 deps =
   ruff
-  black
 commands =
-  black --quiet --check --diff src/
-  ruff src/
+  ruff format --quiet --diff src/
+  ruff check src/
 
 [testenv]
 deps = pytest 

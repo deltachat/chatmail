@@ -1,10 +1,50 @@
-import time
-import re
+import ipaddress
 import random
+import re
+import time
 
+import imap_tools
 import pytest
 import requests
-import ipaddress
+
+
+@pytest.fixture
+def imap_mailbox(cmfactory):
+    (ac1,) = cmfactory.get_online_accounts(1)
+    user = ac1.get_config("addr")
+    password = ac1.get_config("mail_pw")
+    mailbox = imap_tools.MailBox(user.split("@")[1])
+    mailbox.login(user, password)
+    return mailbox
+
+
+class TestMetadataTokens:
+    "Tests that use Metadata extension for storing tokens"
+
+    def test_set_get_metadata(self, imap_mailbox):
+        "set and get metadata token for an account"
+        client = imap_mailbox.client
+        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "1111" )\n')
+        res = client.readline()
+        assert b"OK Setmetadata completed" in res
+
+        client.send(b"a02 GETMETADATA INBOX /private/devicetoken\n")
+        res = client.readline()
+        assert res[:1] == b"*"
+        res = client.readline().strip().rstrip(b")")
+        assert res == b"1111"
+        assert b"Getmetadata completed" in client.readline()
+
+        client.send(b'a01 SETMETADATA INBOX (/private/devicetoken "2222" )\n')
+        res = client.readline()
+        assert b"OK Setmetadata completed" in res
+
+        client.send(b"a02 GETMETADATA INBOX /private/devicetoken\n")
+        res = client.readline()
+        assert res[:1] == b"*"
+        res = client.readline().strip().rstrip(b")")
+        assert res == b"1111 2222"
+        assert b"Getmetadata completed" in client.readline()
 
 
 class TestEndToEndDeltaChat:
@@ -63,7 +103,7 @@ class TestEndToEndDeltaChat:
 
         addr = ac2.get_config("addr").lower()
         saved_ok = 0
-        for line in remote.iter_output("journalctl -f -u dovecot"):
+        for line in remote.iter_output("journalctl -n0 -f -u dovecot"):
             if addr not in line:
                 # print(line)
                 continue
@@ -75,7 +115,10 @@ class TestEndToEndDeltaChat:
                         )
                     lp.indent("good, message sending failed because quota was exceeded")
                     return
-            if "saved mail to inbox" in line:
+            if (
+                "stored mail into mailbox 'inbox'" in line
+                or "saved mail to inbox" in line
+            ):
                 saved_ok += 1
                 print(f"{saved_ok}: {line}")
                 if saved_ok >= num_to_send:
@@ -112,7 +155,7 @@ class TestEndToEndDeltaChat:
         lp.sec("ac1 sends a message and ac2 marks it as seen")
         chat = ac1.create_chat(ac2)
         msg = chat.send_text("hi")
-        m = ac2.wait_next_incoming_message()
+        m = ac2._evtracker.wait_next_incoming_message()
         m.mark_seen()
         # we can only indirectly wait for mark-seen to cause an smtp-error
         lp.sec("try to wait for markseen to complete and check error states")
@@ -132,7 +175,19 @@ def test_hide_senders_ip_address(cmfactory):
     chat = cmfactory.get_accepted_chat(user1, user2)
 
     chat.send_text("testing submission header cleanup")
-    user2.wait_next_incoming_message()
+    user2._evtracker.wait_next_incoming_message()
     user2.direct_imap.select_folder("Inbox")
     msg = user2.direct_imap.get_all_messages()[0]
     assert public_ip not in msg.obj.as_string()
+
+
+def test_echobot(cmfactory, chatmail_config, lp):
+    ac = cmfactory.get_online_accounts(1)[0]
+
+    lp.sec(f"Send message to echo@{chatmail_config.mail_domain}")
+    chat = ac.create_chat(f"echo@{chatmail_config.mail_domain}")
+    text = "hi, I hope you text me back"
+    chat.send_text(text)
+    lp.sec("Wait for reply from echobot")
+    reply = ac._evtracker.wait_next_incoming_message()
+    assert reply.text == text

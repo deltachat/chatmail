@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from pathlib import Path
-import time
 import sys
+import time
+from pathlib import Path
 
 
 def main(vmail_dir=None):

@@ -1,12 +1,13 @@
 import importlib
-import qrcode
-import os
-from PIL import ImageFont, ImageDraw, Image
 import io
+import os
+
+import qrcode
+from PIL import Image, ImageDraw, ImageFont
 
 
 def gen_qr_png_data(maildomain):
-    url = f"DCACCOUNT:https://{maildomain}/cgi-bin/newemail.py"
+    url = f"DCACCOUNT:https://{maildomain}/new"
     image = gen_qr(maildomain, url)
     temp = io.BytesIO()
     image.save(temp, format="png")

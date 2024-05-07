@@ -41,11 +41,44 @@ http {
 			try_files $uri $uri/ =404;
 		}
 
-                location /metrics {
-                        default_type text/plain;
-                }
+		location /metrics {
+			default_type text/plain;
+		}
 
-        # add cgi-bin support
-        include /usr/share/doc/fcgiwrap/examples/nginx.conf;
+		location /new {
+			if ($request_method = GET) {
+				# Redirect to Delta Chat,
+				# which will in turn do a POST request.
+				return 301 dcaccount:https://{{ config.domain_name }}/new;
+			}
+
+			fastcgi_pass unix:/run/fcgiwrap.socket;
+			include /etc/nginx/fastcgi_params;
+			fastcgi_param SCRIPT_FILENAME /usr/lib/cgi-bin/newemail.py;
+		}
+
+		# Old URL for compatibility with e.g. printed QR codes.
+		#
+		# Copy-paste instead of redirect to /new
+		# because Delta Chat core does not follow redirects.
+		#
+		# Redirects are only for browsers.
+		location /cgi-bin/newemail.py {
+			if ($request_method = GET) {
+				return 301 dcaccount:https://{{ config.domain_name }}/new;
+			}
+
+			fastcgi_pass unix:/run/fcgiwrap.socket;
+			include /etc/nginx/fastcgi_params;
+			fastcgi_param SCRIPT_FILENAME /usr/lib/cgi-bin/newemail.py;
+		}
+	}
+
+	# Redirect www. to non-www
+	server {
+		listen 443 ssl;
+		listen [::]:443 ssl;
+		server_name www.{{ config.domain_name }};
+		return 301 $scheme://{{ config.domain_name }}$request_uri;
 	}
 }

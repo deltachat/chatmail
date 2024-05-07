@@ -159,4 +159,27 @@ While this file is present, account creation will be blocked.
 Delta Chat apps will, however, discover all ports and configurations
 automatically by reading the [autoconfig XML file](https://www.ietf.org/archive/id/draft-bucksch-autoconfig-00.html) from the chatmail service.
 
+## Email authentication
 
+chatmail servers rely on [DKIM](https://www.rfc-editor.org/rfc/rfc6376)
+to authenticate incoming emails.
+Incoming emails must have a valid DKIM signature with
+Signing Domain Identifier (SDID, `d=` parameter in the DKIM-Signature header)
+equal to the `From:` header domain.
+This property is checked by OpenDKIM screen policy script
+before validating the signatures.
+This correpsonds to strict [DMARC](https://www.rfc-editor.org/rfc/rfc7489) alignment (`adkim=s`),
+but chatmail does not rely on DMARC and does not consult the sender policy published in DMARC records.
+Other legacy authentication mechanisms such as [iprev](https://www.rfc-editor.org/rfc/rfc8601#section-2.7.3)
+and [SPF](https://www.rfc-editor.org/rfc/rfc7208) are also not taken into account.
+If there is no valid DKIM signature on the incoming email,
+the sender receives a "5.7.1 No valid DKIM signature found" error.
+
+Outgoing emails must be sent over authenticated connection
+with envelope MAIL FROM (return path) corresponding to the login.
+This is ensured by Postfix which maps login username
+to MAIL FROM with
+[`smtpd_sender_login_maps`](https://www.postfix.org/postconf.5.html#smtpd_sender_login_maps)
+and rejects incorrectly authenticated emails with [`reject_sender_login_mismatch`](reject_sender_login_mismatch) policy.
+`From:` header must correspond to envelope MAIL FROM,
+this is ensured by `filtermail` proxy.

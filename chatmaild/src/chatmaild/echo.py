@@ -3,14 +3,17 @@
 
 it will echo back any message that has non-empty text and also supports the /help command.
 """
+
 import logging
 import os
+import subprocess
 import sys
+from pathlib import Path
 
 from deltachat_rpc_client import Bot, DeltaChat, EventType, Rpc, events
 
-from chatmaild.newemail import create_newemail_dict
 from chatmaild.config import read_config
+from chatmaild.newemail import create_newemail_dict
 
 hooks = events.HookCollection()
 
@@ -18,14 +21,14 @@ hooks = events.HookCollection()
 @hooks.on(events.RawEvent)
 def log_event(event):
     if event.kind == EventType.INFO:
-        logging.info(event.msg)
+        logging.info("%s", event.msg)
     elif event.kind == EventType.WARNING:
-        logging.warning(event.msg)
+        logging.warning("%s", event.msg)
 
 
 @hooks.on(events.RawEvent(EventType.ERROR))
 def log_error(event):
-    logging.error(event.msg)
+    logging.error("%s", event.msg)
 
 
 @hooks.on(events.MemberListChanged)
@@ -48,6 +51,9 @@ def on_group_name_changed(event):
 @hooks.on(events.NewMessage(func=lambda e: not e.command))
 def echo(event):
     snapshot = event.message_snapshot
+    if snapshot.is_info:
+        # Ignore info messages
+        return
     if snapshot.text or snapshot.file:
         snapshot.chat.send_message(text=snapshot.text, file=snapshot.file)
 
@@ -59,6 +65,7 @@ def help_command(event):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     path = os.environ.get("PATH")
     venv_path = sys.argv[0].strip("echobot")
     os.environ["PATH"] = path + ":" + venv_path
@@ -71,14 +78,27 @@ def main():
         account = accounts[0] if accounts else deltachat.add_account()
 
         bot = Bot(account, hooks)
+
+        config = read_config(sys.argv[1])
+
+        # Create password file
+        if bot.is_configured():
+            password = bot.account.get_config("mail_pw")
+        else:
+            password = create_newemail_dict(config)["password"]
+        Path("/run/echobot/password").write_text(password)
+
+        # Give the user which doveauth runs as access to the password file.
+        subprocess.run(
+            ["/usr/bin/setfacl", "-m", "user:vmail:r", "/run/echobot/password"],
+            check=True,
+        )
+
         if not bot.is_configured():
-            config = read_config(sys.argv[1])
-            password = create_newemail_dict(config).get("password")
             email = "echo@" + config.mail_domain
             bot.configure(email, password)
         bot.run_forever()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main()

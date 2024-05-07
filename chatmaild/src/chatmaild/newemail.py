@@ -1,13 +1,13 @@
 #!/usr/local/lib/chatmaild/venv/bin/python3
 
-""" CGI script for creating new accounts. """
+"""CGI script for creating new accounts."""
 
 import json
 import random
 import secrets
 import string
 
-from chatmaild.config import read_config, Config
+from chatmaild.config import Config, read_config
 
 CONFIG_PATH = "/usr/local/lib/chatmaild/chatmail.ini"
 ALPHANUMERIC = string.ascii_lowercase + string.digits

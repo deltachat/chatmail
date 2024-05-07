@@ -9,7 +9,7 @@ def test_gen_qr_png_data(maildomain):
 
 
 def test_fastcgi_working(maildomain, chatmail_config):
-    url = f"https://{maildomain}/cgi-bin/newemail.py"
+    url = f"https://{maildomain}/new"
     print(url)
     res = requests.post(url)
     assert maildomain in res.json().get("email")
@@ -18,7 +18,7 @@ def test_fastcgi_working(maildomain, chatmail_config):
 
 def test_newemail_configure(maildomain, rpc):
     """Test configuring accounts by scanning a QR code works."""
-    url = f"DCACCOUNT:https://{maildomain}/cgi-bin/newemail.py"
+    url = f"DCACCOUNT:https://{maildomain}/new"
     for i in range(3):
         account_id = rpc.add_account()
         rpc.set_config_from_qr(account_id, url)

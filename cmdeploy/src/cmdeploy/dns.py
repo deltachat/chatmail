@@ -1,10 +1,9 @@
+import datetime
+import importlib
+import subprocess
 import sys
 
 import requests
-import importlib
-import subprocess
-import datetime
-from ipaddress import ip_address
 
 
 class DNS:
@@ -12,6 +11,11 @@ class DNS:
         self.session = requests.Session()
         self.out = out
         self.ssh = f"ssh root@{mail_domain} -- "
+        self.out.shell_output(
+            f"{ self.ssh }'apt-get update && apt-get install -y dnsutils'",
+            timeout=60,
+            no_print=True,
+        )
         try:
             self.shell(f"unbound-control flush_zone {mail_domain}")
         except subprocess.CalledProcessError:
@@ -35,12 +39,11 @@ class DNS:
         cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
         return self.shell(cmd).strip()
 
-    def get(self, typ: str, domain: str) -> str | None:
-        """Get a DNS entry"""
+    def get(self, typ: str, domain: str) -> str:
+        """Get a DNS entry or empty string if there is none."""
         dig_result = self.shell(f"dig -r -q {domain} -t {typ} +short")
         line = dig_result.partition("\n")[0]
-        if line:
-            return line
+        return line
 
     def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""
@@ -48,28 +51,32 @@ class DNS:
         return result == f"{mail_domain}."
 
 
-def show_dns(args, out):
+def show_dns(args, out) -> int:
+    """Check existing DNS records, optionally write them to zone file, return exit code 0 or 1."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
     ssh = f"ssh root@{mail_domain}"
     dns = DNS(out, mail_domain)
-
-    def read_dkim_entries(entry):
-        lines = []
-        for line in entry.split("\n"):
-            if line.startswith(";") or not line.strip():
-                continue
-            line = line.replace("\t", " ")
-            lines.append(line)
-        return "\n".join(lines)
 
     print("Checking your DKIM keys and DNS entries...")
     try:
         acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
     except subprocess.CalledProcessError:
         print("Please run `cmdeploy run` first.")
-        return
-    dkim_entry = read_dkim_entries(out.shell_output(f"{ssh} -- opendkim-genzone -F"))
+        return 1
+
+    dkim_selector = "opendkim"
+    dkim_pubkey = out.shell_output(
+        ssh + f" -- openssl rsa -in /etc/dkimkeys/{dkim_selector}.private"
+        " -pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
+    )
+    dkim_entry_value = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
+    dkim_entry_str = ""
+    while len(dkim_entry_value) >= 255:
+        dkim_entry_str += '"' + dkim_entry_value[:255] + '" '
+        dkim_entry_value = dkim_entry_value[255:]
+    dkim_entry_str += '"' + dkim_entry_value + '"'
+    dkim_entry = f"{dkim_selector}._domainkey.{mail_domain}. TXT {dkim_entry_str}"
 
     ipv6 = dns.get_ipv6()
     reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
@@ -82,7 +89,6 @@ def show_dns(args, out):
             f.read()
             .format(
                 acme_account_url=acme_account_url,
-                email=f"root@{args.config.mail_domain}",
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,
@@ -95,14 +101,12 @@ def show_dns(args, out):
             with open(args.zonefile, "w+") as zf:
                 zf.write(zonefile)
                 print(f"DNS records successfully written to: {args.zonefile}")
-            return
+            return 0
         except TypeError:
             pass
-        started_dkim_parsing = False
-        for line in zonefile.splitlines():
-            line = line.format(
+        for raw_line in zonefile.splitlines():
+            line = raw_line.format(
                 acme_account_url=acme_account_url,
-                email=f"root@{args.config.mail_domain}",
                 sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
                 chatmail_domain=args.config.mail_domain,
                 dkim_entry=dkim_entry,
@@ -126,29 +130,25 @@ def show_dns(args, out):
                 current = dns.get("SRV", domain[:-1])
                 if current != f"{prio} {weight} {port} {value}":
                     to_print.append(line)
-            if "  TXT " in line:
+            if " TXT " in line:
                 domain, value = line.split(" TXT ")
                 current = dns.get("TXT", domain.strip()[:-1])
                 if domain.startswith("_mta-sts."):
                     if current:
                         if current.split("id=")[0] == value.split("id=")[0]:
                             continue
-                if current != value:
-                    to_print.append(line)
-            if " IN TXT ( " in line:
-                started_dkim_parsing = True
-                dkim_lines = [line]
-            if started_dkim_parsing and line.startswith('"'):
-                dkim_lines.append(" " + line)
-        domain, data = "\n".join(dkim_lines).split(" IN TXT ")
-        current = dns.get("TXT", domain.strip()[:-1])
-        if current:
-            current = "( %s )" % (current.replace('" "', '"\n "'))
-            if current.replace(";", "\\;") != data:
-                to_print.append(dkim_entry)
-        else:
-            to_print.append(dkim_entry)
 
+                # TXT records longer than 255 bytes
+                # are split into multiple <character-string>s.
+                # This typically happens with DKIM record
+                # which contains long RSA key.
+                #
+                # Removing `" "` before comparison
+                # to get back a single string.
+                if current.replace('" "', "") != value.replace('" "', ""):
+                    to_print.append(line)
+
+    exit_code = 0
     if to_print:
         to_print.insert(
             0, "You should configure the following DNS entries at your provider:\n"
@@ -157,6 +157,7 @@ def show_dns(args, out):
             "\nIf you already configured the DNS entries, wait a bit until the DNS entries propagate to the Internet."
         )
         print("\n".join(to_print))
+        exit_code = 1
     else:
         out.green("Great! All your DNS entries are correct.")
 
@@ -176,6 +177,8 @@ def show_dns(args, out):
         print(
             "You can do so at your hosting provider (maybe this isn't your DNS provider)."
         )
+        exit_code = 1
+    return exit_code
 
 
 def check_necessary_dns(out, mail_domain):
@@ -184,14 +187,14 @@ def check_necessary_dns(out, mail_domain):
     ipv4 = dns.get("A", mail_domain)
     ipv6 = dns.get("AAAA", mail_domain)
     mta_entry = dns.get("CNAME", "mta-sts." + mail_domain)
-    mta_ip = dns.get("A", mta_entry)
-    if not mta_ip:
-        mta_ip = dns.get("AAAA", mta_entry)
+    www_entry = dns.get("CNAME", "www." + mail_domain)
     to_print = []
     if not (ipv4 or ipv6):
         to_print.append(f"\t{mail_domain}.\t\t\tA<your server's IPv4 address>")
-    if not mta_ip or not (mta_ip == ipv4 or mta_ip == ipv6):
+    if mta_entry != mail_domain + ".":
         to_print.append(f"\tmta-sts.{mail_domain}.\tCNAME\t{mail_domain}.")
+    if www_entry != mail_domain + ".":
+        to_print.append(f"\twww.{mail_domain}.\tCNAME\t{mail_domain}.")
     if to_print:
         to_print.insert(
             0,

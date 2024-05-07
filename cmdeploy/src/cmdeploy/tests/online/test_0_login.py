@@ -1,8 +1,10 @@
-import pytest
-import threading
 import queue
+import socket
+import threading
 
+import pytest
 from chatmaild.config import read_config
+
 from cmdeploy.cmdeploy import main
 
 
@@ -11,6 +13,13 @@ def test_init(tmp_path, maildomain):
     main(["init", "--config", str(inipath), maildomain])
     config = read_config(inipath)
     assert config.mail_domain == maildomain
+
+
+def test_capabilities(imap):
+    imap.connect()
+    capas = imap.conn.capabilities
+    assert "XCHATMAIL" in capas
+    assert "XDELTAPUSH" in capas
 
 
 def test_login_basic_functioning(imap_or_smtp, gencreds, lp):
@@ -78,3 +87,24 @@ def test_concurrent_logins_same_account(
 
     for _ in conns:
         assert login_results.get()
+
+
+def test_no_vrfy(chatmail_config):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((chatmail_config.mail_domain, 25))
+    banner = sock.recv(1024)
+    print(banner)
+    sock.send(b"VRFY wrongaddress@%s\r\n" % (chatmail_config.mail_domain.encode(),))
+    result = sock.recv(1024)
+    print(result)
+    sock.send(b"VRFY echo@%s\r\n" % (chatmail_config.mail_domain.encode(),))
+    result2 = sock.recv(1024)
+    print(result2)
+    assert result[0:10] == result2[0:10]
+    sock.send(b"VRFY wrongaddress\r\n")
+    result = sock.recv(1024)
+    print(result)
+    sock.send(b"VRFY echo\r\n")
+    result2 = sock.recv(1024)
+    print(result2)
+    assert result[0:10] == result2[0:10] == b"252 2.0.0 "

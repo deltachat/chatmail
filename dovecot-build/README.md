@@ -42,7 +42,9 @@ and is described in the [official documentation](https://openbuildservice.org/he
 
 In scripts/dovecot/ is a shell script that prepares the required files and pushes them to build.opensuse.org.
 
-To run it you need osc, debuild and curl installed. Per default it assumes that your local obs repository is located at ~/obs/.
+Before using the script, you should have osc set up as described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig). You need to checkout our repository to ~/obs/
+
+The script assumes you are on Debian. It automatically installs any needed build dependencies.
 
 Use `source build-obs.sh` to run it.
 

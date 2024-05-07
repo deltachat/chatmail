@@ -1,6 +1,14 @@
 #!/bin/bash
 
-# this script requires wget, osc and debuild installed.
+# this script requires curl, osc and debuild installed.
+# on debian you need to run: apt install devscripts build-essential osc curl
+
+# Install dependencies
+echo "Installing dependencies for this script:"
+sudo apt install devscripts build-essential osc curl
+
+echo "Installing build dependencies"
+sudo apt install default-libmysqlclient-dev krb5-multidev libapparmor-dev libbz2-dev libcap-dev libdb-dev libexpat-dev libexttextcat-dev libicu-dev libldap2-dev liblua5.4-dev liblz4-dev liblzma-dev libpam0g-dev libpq-dev libsasl2-dev libsodium-dev libsqlite3-dev libssl-dev libstemmer-dev libsystemd-dev libunwind-dev libwrap0-dev libzstd-dev pkg-config zlib1g-dev
 
 # Define path of your local OBS repository
 OBS_PATH=~/obs/home:deltachat/dovecot/
@@ -23,9 +31,8 @@ git clone https://github.com/chatmail/dovecot.git
 echo "Building the package..."
 cd dovecot
 debuild -us -uc
-cd ..
 
-# Copy Files to Your Local OBS Repository, TODO how to do this best?
+# Copy Files to Your Local OBS Repository,
 echo "Copying files to your local OBS repository..."
 cp dovecot_2.3.21+dfsg1-3.debian.tar.xz $OBS_PATH
 cp dovecot_2.3.21+dfsg1.orig.tar.gz $OBS_PATH
@@ -33,8 +40,11 @@ cp dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz $OBS_PATH
 
 # Push Changes to OBS
 echo "Pushing changes to OBS..."
-cd /path/to/your/local/obs/repo/
+cd $OBS_PATH
+osc up
+rm *
 osc add dovecot_2.3.21+dfsg1-3.debian.tar.xz
-osc add 
-osc add
+osc add dovecot_2.3.21+dfsg1.orig.tar.gz
+osc add dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz
+
 osc commit

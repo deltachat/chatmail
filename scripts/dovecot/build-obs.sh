@@ -47,7 +47,6 @@ cp -rf dovecot_2.3.21+dfsg1-3.debian.tar.xz $REPO_PATH
 cp -rf dovecot_2.3.21+dfsg1.orig.tar.gz $REPO_PATH
 cp -rf dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz $REPO_PATH
 cp -rf dovecot_2.3.21+dfsg1-3.dsc $REPO_PATH
-cp -rf dovecot_2.3.21+dfsg1-3_amd64.changes $REPO_PATH
 
 # Push Changes to OBS
 echo "Pushing changes to OBS..."
@@ -58,6 +57,5 @@ osc add dovecot_2.3.21+dfsg1-3.debian.tar.xz
 osc add dovecot_2.3.21+dfsg1.orig.tar.gz
 osc add dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz
 osc add dovecot_2.3.21+dfsg1-3.dsc
-osc add dovecot_2.3.21+dfsg1-3_amd64.changes
 
 osc commit

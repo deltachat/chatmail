@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # this script requires curl, osc and debuild installed.
-# on debian you need to run: apt install devscripts build-essential osc curl
 
 # Install dependencies
 echo "Installing dependencies for this script:"
@@ -9,6 +8,12 @@ sudo apt install devscripts build-essential osc curl git debhelper-compat
 
 echo "Installing build dependencies"
 sudo apt install default-libmysqlclient-dev krb5-multidev libapparmor-dev libbz2-dev libcap-dev libdb-dev libexpat-dev libexttextcat-dev libicu-dev libldap2-dev liblua5.4-dev liblz4-dev liblzma-dev libpam0g-dev libpq-dev libsasl2-dev libsodium-dev libsqlite3-dev libssl-dev libstemmer-dev libsystemd-dev libunwind-dev libwrap0-dev libzstd-dev pkg-config zlib1g-dev
+
+# copying this script to a shorter file path
+# if we don't do this, some tests fail after the build
+SCRIPT_DIR=~/dovebuild
+cp build-obs.sh $SCRIPT_DIR
+cd $SCRIPT_DIR
 
 # Define path of your local OBS repository
 REPO_PATH=$OBS_PATH/home:deltachat/dovecot/
@@ -35,8 +40,8 @@ cd dovecot
 debuild -us -uc
 
 # Setting up OSC
-cd $OBS_PATH
 mkdir $OBS_PATH
+cd $OBS_PATH
 rm -rf home:deltachat/dovecot
 osc checkout home:deltachat/dovecot
 

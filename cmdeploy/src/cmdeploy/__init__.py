@@ -536,6 +536,12 @@ def deploy_chatmail(config_path: Path) -> None:
     )
 
     apt.packages(
+        # required for setfacl for echobot
+        name="Install acl",
+        packages="acl",
+    )
+
+    apt.packages(
         name="Install Postfix",
         packages="postfix",
     )

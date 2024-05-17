@@ -498,6 +498,7 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Add DeltaChat OBS home repository to sources.list",
         path="/etc/apt/sources.list",
         line="deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./",
+        escape_regex_characters=True,
         ensure_newline=True,
     )
 

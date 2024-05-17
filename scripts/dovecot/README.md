@@ -42,30 +42,11 @@ and is described in the [official documentation](https://openbuildservice.org/he
 
 In scripts/dovecot/ is a shell script that prepares the required files and pushes them to build.opensuse.org.
 
-Before using the script, you should have osc set up as described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig). You need to checkout our repository to ~/obs/
+Before using the script, you should have osc set up as described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
 
-The script assumes you are on Debian. It automatically installs any needed build dependencies.
+The script assumes you are on Debian. It automatically installs any needed dependencies and creates the source package. To upload the resulting source package to the OBS you need to enter the username and password for deltachat on build.opensuse.org in the last step of the script.
 
 Use `source build-obs.sh` to run it.
-
-### Build the debian package in the OBS manually
-
-Alternatively you can follow these steps to do it manually:
-
-On a Debian machine (for exampe [distrobox](https://distrobox.it/)),
-clone the [chatmail dovecot fork](https://github.com/chatmail/dovecot). 
-In the directory above it, put the source code tar balls from 
-[upstream debian unstable](https://packages.debian.org/unstable/dovecot-core). 
-These are the two files ending in .tar.gz. 
-
-Now run the command `debuild -us -uc` in the dovecot repo we cloned. 
-This creates the files needed for the OBS.
-
-Now copy the two .tar.gz. archives from before, 
-the tar.xz archive and the .dsc file into your local OBS repository. 
-
-With `osc add *` (don't add .osc) and `osc commit` the state is pushed to build.opensuse.org. 
-The OBS will now build the deb files for aarch64, armv7l, i586 and x86_64.
 
 ### Adding the resulting OBS repository to Debian
 
@@ -77,7 +58,7 @@ XXX (question: what is missing/why is "apt-add-repository" not possible?)
 
 To add the OBS-managed signing key to your local install: 
 
-    https://build.opensuse.org/projects/home:deltachat/signing_keys/download?kind=gpg | sudo gpg --dearmor -o /etc/apt/keyrings/obs-home-deltachat.gpg`
+    curl https://build.opensuse.org/projects/home:deltachat/signing_keys/download?kind=gpg | sudo cp scripts/dovecot/home:deltachat.gpg /etc/apt/keyrings/obs-home-deltachat.gpg`
 
 Add to /etc/apt/sources.list:
 

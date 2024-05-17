@@ -2,7 +2,7 @@
 
 # Install dependencies
 echo "Installing dependencies for this script:"
-sudo apt install devscripts build-essential osc curl git debhelper-compat
+sudo apt install -y devscripts build-essential osc curl git debhelper-compat
 
 # Define path of your local OBS repository
 OBS_PATH=$SCRIPT_DIR/obs

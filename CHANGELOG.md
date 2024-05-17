@@ -2,6 +2,9 @@
 
 ## untagged
 
+- fix writing of multiple obs repositories in `/etc/apt/sources.list`
+  ([#272](https://github.com/deltachat/chatmail/issues/272))
+
 - metadata: add support for `/shared/vendor/deltachat/irohrelay`
   ([#284](https://github.com/deltachat/chatmail/pull/284))
 

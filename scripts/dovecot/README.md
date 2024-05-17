@@ -21,7 +21,7 @@ containing the patched dovecot version.
 
 ## Building Debian packages at build.opensuse.org 
 
-Deltachat developers maintain a [shared account](https://build.opensuse.org/project/show/home:deltachat) 
+Delta Chat developers maintain an [account](https://build.opensuse.org/project/show/home:deltachat) 
 in the [Open Build Service (OBS)](https://openbuildservice.org/), 
 where the [resulting package](https://build.opensuse.org/package/show/home:deltachat/dovecot) 
 is now used in deploying chatmail servers. 

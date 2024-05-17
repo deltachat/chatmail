@@ -15,6 +15,8 @@ after which the initially specified password is required for using them.
 
 ## Deploying your own chatmail server 
 
+To deploy chatmail on your own server, you must have set-up ssh authentication and need to use an ed25519 key, due to an [upstream bug in paramiko](https://github.com/paramiko/paramiko/issues/2191).
+
 We use `chat.example.org` as the chatmail domain in the following steps. 
 Please substitute it with your own domain. 
 

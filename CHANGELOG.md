@@ -2,6 +2,9 @@
 
 ## untagged
 
+- change default for delete_mails_after from 40 to 20 days
+  ([#300]https://github.com/deltachat/chatmail/pull/300)
+
 - fix writing of multiple obs repositories in `/etc/apt/sources.list`
   ([#272](https://github.com/deltachat/chatmail/issues/272))
 

@@ -97,6 +97,20 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         },
     )
 
+    # create metrics every 5 minutes via systemd
+
+    systemd.service(
+        name=f"Setup metrics service",
+        service="metrics.service",
+        running=True,
+        enabled=True,
+        restarted=True,
+        daemon_reload=True,
+    )
+
+    # TODO Put a systemd service at the right place
+    # TODO Put a systemd timer at the right place
+
     # install systemd units
     for fn in (
         "doveauth",

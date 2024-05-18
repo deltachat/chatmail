@@ -1,0 +1,9 @@
+[Unit]
+Description=Generate metrics in /var/www/html/metrics every 5 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

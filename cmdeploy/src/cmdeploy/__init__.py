@@ -642,5 +642,6 @@ def deploy_chatmail(config_path: Path) -> None:
         service="systemd-journald.service",
         running=True,
         enabled=True,
-        restarted=journald_conf,
+        restarted=journald_conf.changed,
     )
+

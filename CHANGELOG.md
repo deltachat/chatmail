@@ -33,6 +33,9 @@
 - dovecot: enable gzip compression on disk
   ([#341](https://github.com/deltachat/chatmail/pull/341))
 
+- DKIM-sign Content-Type and oversign all signed headers
+  ([#296](https://github.com/deltachat/chatmail/pull/296))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

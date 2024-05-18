@@ -1,7 +1,8 @@
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
-error_log /var/log/nginx/error.log;
+error_log stderr;
+access_log syslog:server=unix:/dev/log combined;
 
 events {
 	worker_connections 768;

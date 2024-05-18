@@ -1,7 +1,7 @@
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
-error_log stderr;
+error_log syslog:server=unix:/dev/log,facility=local3;
 
 events {
 	worker_connections 768;
@@ -35,7 +35,7 @@ http {
 
 		server_name _;
 
-		access_log syslog:server=unix:/dev/log;
+		access_log syslog:server=unix:/dev/log,facility=local7;
 
 		location / {
 			# First attempt to serve request as file, then
@@ -82,6 +82,6 @@ http {
 		listen [::]:443 ssl;
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
-		access_log syslog:server=unix:/dev/log;
+		access_log syslog:server=unix:/dev/log,facility=local7;
 	}
 }

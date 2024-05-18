@@ -18,7 +18,7 @@ max_user_send_per_minute = 60
 max_mailbox_size = 100M
 
 # days after which mails are unconditionally deleted
-delete_mails_after = 40
+delete_mails_after = 20
 
 # minimum length a username must have
 username_min_length = 9

@@ -2,6 +2,9 @@
 
 ## untagged
 
+- run metrics generation with systemd-timer instead of cron
+  ([#304](https://github.com/deltachat/chatmail/pull/304))
+
 - change default for delete_mails_after from 40 to 20 days
   ([#300]https://github.com/deltachat/chatmail/pull/300)
 

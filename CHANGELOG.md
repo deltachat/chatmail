@@ -3,7 +3,7 @@
 ## untagged
 
 - change default for delete_mails_after from 40 to 20 days
-  ([#300]https://github.com/deltachat/chatmail/pull/300)
+  ([#300](https://github.com/deltachat/chatmail/pull/300))
 
 - save journald logs only to memory and save nginx logs to journald instead of file
   ([#299](https://github.com/deltachat/chatmail/pull/299))

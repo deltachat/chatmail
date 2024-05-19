@@ -85,9 +85,19 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         ],
     )
 
+    # create metrics every 5 minutes via systemd
+
+    files.put(
+        name="Upload metrics.timer",
+        src=importlib.resources.files(__package__).joinpath("service/metrics.timer"),
+        dest=f"/etc/systemd/system/metrics.timer",
+        **root_owned,
+    )
+
     files.template(
-        src=importlib.resources.files(__package__).joinpath("metrics.cron.j2"),
-        dest="/etc/cron.d/chatmail-metrics",
+        name="upload metrics.service"
+        src=importlib.resources.files(__package__).joinpath("service/metrics.service.j2"),
+        dest="/etc/systemd/system/metrics.service",
         user="root",
         group="root",
         mode="644",
@@ -97,19 +107,14 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         },
     )
 
-    # create metrics every 5 minutes via systemd
-
     systemd.service(
-        name=f"Setup metrics service",
-        service="metrics.service",
+        name=f"Setup metrics timer",
+        service="metrics.timer",
         running=True,
         enabled=True,
         restarted=True,
         daemon_reload=True,
     )
-
-    # TODO Put a systemd service at the right place
-    # TODO Put a systemd timer at the right place
 
     # install systemd units
     for fn in (

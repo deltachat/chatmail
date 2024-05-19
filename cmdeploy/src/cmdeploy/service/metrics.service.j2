@@ -2,5 +2,4 @@
 Description=Generate metrics in /var/www/html/metrics every 5 minutes
 
 [Service]
-WorkingDirectory=/var/www/magento-website/current
-ExecStart=/usr/bin/php bin/magento indexer:reindex
+ExecStart={{ config.execpath }} /home/vmail/mail/{{ config.mail_domain }} >/var/www/html/metrics

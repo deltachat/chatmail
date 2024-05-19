@@ -1,5 +1,5 @@
 [Unit]
-Description=Generate metrics in /var/www/html/metrics every 5 minutes
+Description=Generate metrics in /var/www/html/metrics
 
 [Service]
 ExecStart={{ config.execpath }} /home/vmail/mail/{{ config.mail_domain }} > /var/www/html/metrics

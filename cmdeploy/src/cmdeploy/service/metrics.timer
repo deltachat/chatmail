@@ -1,5 +1,5 @@
 [Unit]
-Description=Generate metrics in /var/www/html/metrics every 5 minutes
+Description=Run metrics.service every 5 minutes
 
 [Timer]
 OnBootSec=5min

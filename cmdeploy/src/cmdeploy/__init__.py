@@ -372,6 +372,23 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         )
 
     files.template(
+        src=importlib.resources.files(__package__).joinpath("service/expunge.service.j2"),
+        dest="/etc/systemd/system/expunge.service",
+        config={
+            "mail_domain": config.mail_domain,
+            "delete_mails_after": config.delete_mails_after,
+        },
+        **root_owned,
+    )
+
+    files.put(
+        name="Upload expunge.timer",
+        src=importlib.resources.files(__package__).joinpath("service/expunge.timer"),
+        dest=f"/etc/systemd/system/metrics.timer",
+        **root_owned,
+    )
+
+    files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/expunge.cron.j2"),
         dest="/etc/cron.d/expunge",
         user="root",
@@ -542,6 +559,7 @@ def deploy_chatmail(config_path: Path) -> None:
             "systemctl reset-failed unbound.service",
         ],
     )
+
     systemd.service(
         name="Start and enable unbound",
         service="unbound.service",

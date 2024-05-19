@@ -1,0 +1,9 @@
+[Unit]
+Description=Run expunge.service daily
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -95,7 +95,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
     )
 
     files.template(
-        name="upload metrics.service"
+        name="upload metrics.service",
         src=importlib.resources.files(__package__).joinpath("service/metrics.service.j2"),
         dest="/etc/systemd/system/metrics.service",
         user="root",

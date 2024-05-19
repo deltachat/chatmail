@@ -2,4 +2,4 @@
 Description=Generate metrics in /var/www/html/metrics every 5 minutes
 
 [Service]
-ExecStart={{ config.execpath }} /home/vmail/mail/{{ config.mail_domain }} >/var/www/html/metrics
+ExecStart={{ config.execpath }} /home/vmail/mail/{{ config.mail_domain }} > /var/www/html/metrics

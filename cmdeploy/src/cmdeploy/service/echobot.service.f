@@ -7,6 +7,20 @@ Environment="PATH={remote_venv_dir}:$PATH"
 Restart=always
 RestartSec=30
 
+User=echobot
+Group=echobot
+
+# Create /var/lib/echobot
+StateDirectory=echobot
+
+# Create /run/echobot
+#
+# echobot stores /run/echobot/password
+# with a password there, which doveauth then reads.
+RuntimeDirectory=echobot
+
+WorkingDirectory=/var/lib/echobot
+
 # Apply security restrictions suggested by
 #   systemd-analyze security echobot.service
 CapabilityBoundingSet=
@@ -16,7 +30,10 @@ NoNewPrivileges=true
 PrivateDevices=true
 PrivateMounts=true
 PrivateTmp=true
-PrivateUsers=true
+
+# We need to know about doveauth user to give it access to /run/echobot/password
+PrivateUsers=false
+
 ProtectClock=true
 ProtectControlGroups=true
 ProtectHostname=true

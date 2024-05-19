@@ -4,19 +4,18 @@ along with command line option and subcommand parsing.
 """
 
 import argparse
-import shutil
-import subprocess
 import importlib.resources
 import importlib.util
 import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
-
-from termcolor import colored
 from chatmaild.config import read_config, write_initial_config
-from cmdeploy.dns import show_dns, check_necessary_dns
+from termcolor import colored
 
+from cmdeploy.dns import check_necessary_dns, show_dns
 
 #
 # cmdeploy sub commands and options
@@ -157,26 +156,26 @@ def fmt_cmd_options(parser):
 
 
 def fmt_cmd(args, out):
-    """Run formattting fixes (ruff and black) on all chatmail source code."""
+    """Run formattting fixes on all chatmail source code."""
 
     sources = [str(importlib.resources.files(x)) for x in ("chatmaild", "cmdeploy")]
-    black_args = [shutil.which("black")]
-    ruff_args = [shutil.which("ruff")]
+    format_args = [shutil.which("ruff"), "format"]
+    check_args = [shutil.which("ruff"), "check"]
 
     if args.check:
-        black_args.append("--check")
+        format_args.append("--diff")
     else:
-        ruff_args.append("--fix")
+        check_args.append("--fix")
 
     if not args.verbose:
-        black_args.append("-q")
-        ruff_args.append("-q")
+        check_args.append("--quiet")
+        format_args.append("--quiet")
 
-    black_args.extend(sources)
-    ruff_args.extend(sources)
+    format_args.extend(sources)
+    check_args.extend(sources)
 
-    out.check_call(" ".join(black_args), quiet=not args.verbose)
-    out.check_call(" ".join(ruff_args), quiet=not args.verbose)
+    out.check_call(" ".join(format_args), quiet=not args.verbose)
+    out.check_call(" ".join(check_args), quiet=not args.verbose)
     return 0
 
 
@@ -232,7 +231,7 @@ class Out:
         if not quiet:
             cmdstring = " ".join(args)
             self(f"[$ {cmdstring}]", file=sys.stderr)
-        proc = subprocess.run(args, env=env)
+        proc = subprocess.run(args, env=env, check=False)
         return proc.returncode
 
 

@@ -1,8 +1,9 @@
-import os
-import logging
 import json
-import filelock
+import logging
+import os
 from contextlib import contextmanager
+
+import filelock
 
 
 class FileDict:

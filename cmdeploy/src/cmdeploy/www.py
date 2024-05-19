@@ -1,13 +1,14 @@
-import importlib.resources
-import webbrowser
 import hashlib
+import importlib.resources
 import time
 import traceback
+import webbrowser
 
 import markdown
-from jinja2 import Template
-from .genqr import gen_qr_png_data
 from chatmaild.config import read_config
+from jinja2 import Template
+
+from .genqr import gen_qr_png_data
 
 
 def snapshot_dir_stats(somedir):
@@ -120,7 +121,8 @@ def main():
     print(f"watching {src_path} directory for changes")
 
     changenum = 0
-    for count in range(0, 1000000):
+    count = 0
+    while True:
         newstats = snapshot_dir_stats(src_path)
         if newstats == stats and count % 60 != 0:
             count += 1

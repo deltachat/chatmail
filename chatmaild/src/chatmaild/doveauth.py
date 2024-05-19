@@ -1,17 +1,18 @@
+import crypt
+import json
 import logging
 import os
-import time
 import sys
-import json
-import crypt
+import time
+from pathlib import Path
 from socketserver import (
-    UnixStreamServer,
     StreamRequestHandler,
     ThreadingMixIn,
+    UnixStreamServer,
 )
 
+from .config import Config, read_config
 from .database import Database
-from .config import read_config, Config
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 
@@ -45,23 +46,32 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
         return False
     localpart, domain = parts
 
+    if localpart == "echo":
+        # echobot account should not be created in the database
+        return False
+
     if (
         len(localpart) > config.username_max_length
         or len(localpart) < config.username_min_length
     ):
-        if localpart != "echo":
-            logging.warning(
-                "localpart %s has to be between %s and %s chars long",
-                localpart,
-                config.username_min_length,
-                config.username_max_length,
-            )
-            return False
+        logging.warning(
+            "localpart %s has to be between %s and %s chars long",
+            localpart,
+            config.username_min_length,
+            config.username_max_length,
+        )
 
     return True
 
 
 def get_user_data(db, config: Config, user):
+    if user == f"echo@{config.mail_domain}":
+        return dict(
+            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            uid="vmail",
+            gid="vmail",
+        )
+
     with db.read_connection() as conn:
         result = conn.get_user(user)
     if result:
@@ -76,6 +86,21 @@ def lookup_userdb(db, config: Config, user):
 
 
 def lookup_passdb(db, config: Config, user, cleartext_password):
+    if user == f"echo@{config.mail_domain}":
+        # Echobot writes password it wants to log in with into /run/echobot/password
+        try:
+            password = Path("/run/echobot/password").read_text()
+        except Exception:
+            logging.exception("Exception when trying to read /run/echobot/password")
+            return None
+
+        return dict(
+            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            uid="vmail",
+            gid="vmail",
+            password=encrypt_password(password),
+        )
+
     with db.write_transaction() as conn:
         userdata = conn.get_user(user)
         if userdata:

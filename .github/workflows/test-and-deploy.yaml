@@ -7,6 +7,9 @@ on:
   pull_request:
     paths-ignore:
       - 'scripts/**'
+      - '**/README.md'
+      - 'CHANGELOG.md'
+      - 'LICENSE'
 
 jobs:
   deploy:
@@ -56,7 +59,7 @@ jobs:
           # restore acme & dkim state to staging.testrun.org
           rsync -avz acme-restore/acme/ root@staging.testrun.org:/var/lib/acme || true
           rsync -avz dkimkeys-restore/dkimkeys/ root@staging.testrun.org:/etc/dkimkeys || true
-          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown root:root -R /var/lib/acme
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown root:root -R /var/lib/acme || true
 
       - name: run formatting checks 
         run: cmdeploy fmt -v 

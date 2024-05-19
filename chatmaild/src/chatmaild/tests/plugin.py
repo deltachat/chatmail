@@ -1,14 +1,14 @@
-import random
-from pathlib import Path
-import os
 import importlib.resources
 import itertools
-from email.parser import BytesParser
+import os
+import random
 from email import policy
-import pytest
+from email.parser import BytesParser
+from pathlib import Path
 
-from chatmaild.database import Database
+import pytest
 from chatmaild.config import read_config, write_initial_config
+from chatmaild.database import Database
 
 
 @pytest.fixture

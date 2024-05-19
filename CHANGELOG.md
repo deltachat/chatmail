@@ -2,6 +2,27 @@
 
 ## untagged
 
+- change default for delete_mails_after from 40 to 20 days
+  ([#300]https://github.com/deltachat/chatmail/pull/300)
+
+- save journald logs only to memory and save nginx logs to journald instead of file
+  ([#299](https://github.com/deltachat/chatmail/pull/299))
+
+- fix writing of multiple obs repositories in `/etc/apt/sources.list`
+  ([#290](https://github.com/deltachat/chatmail/pull/290))
+
+- metadata: add support for `/shared/vendor/deltachat/irohrelay`
+  ([#284](https://github.com/deltachat/chatmail/pull/284))
+
+- Emit "XCHATMAIL" capability from IMAP server 
+  ([#278](https://github.com/deltachat/chatmail/pull/278))
+
+- Move echobot `into /var/lib/echobot`
+  ([#281](https://github.com/deltachat/chatmail/pull/281))
+
+- Accept Let's Encrypt's new Terms of Services
+  ([#275](https://github.com/deltachat/chatmail/pull/276))
+
 - Reload Dovecot and Postfix when TLS certificate updates
   ([#271](https://github.com/deltachat/chatmail/pull/271))
 

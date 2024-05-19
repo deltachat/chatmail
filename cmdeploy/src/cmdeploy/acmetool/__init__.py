@@ -1,8 +1,8 @@
 import importlib.resources
 
-from pyinfra.operations import apt, files, systemd, server
 from pyinfra import host
 from pyinfra.facts.systemd import SystemdStatus
+from pyinfra.operations import apt, files, server, systemd
 
 
 def deploy_acmetool(email="", domains=[]):
@@ -69,7 +69,8 @@ def deploy_acmetool(email="", domains=[]):
         restarted=service_file.changed,
     )
 
-    server.shell(
-        name=f"Request certificate for: { ', '.join(domains) }",
-        commands=[f"acmetool want { ' '.join(domains)}"],
-    )
+    if str(host) != "staging.testrun.org":
+        server.shell(
+            name=f"Request certificate for: { ', '.join(domains) }",
+            commands=[f"acmetool want --xlog.severity=debug { ' '.join(domains)}"],
+        )

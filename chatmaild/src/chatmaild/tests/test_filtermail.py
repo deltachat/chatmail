@@ -1,11 +1,10 @@
+import pytest
 from chatmaild.filtermail import (
-    check_encrypted,
     BeforeQueueHandler,
     SendRateLimiter,
+    check_encrypted,
     check_mdn,
 )
-
-import pytest
 
 
 @pytest.fixture

@@ -1,16 +1,16 @@
-from pathlib import Path
-from socketserver import (
-    UnixStreamServer,
-    StreamRequestHandler,
-    ThreadingMixIn,
-)
-import sys
 import logging
 import os
+import sys
+from pathlib import Path
+from socketserver import (
+    StreamRequestHandler,
+    ThreadingMixIn,
+    UnixStreamServer,
+)
 
+from .config import read_config
 from .filedict import FileDict
 from .notifier import Notifier
-
 
 DICTPROXY_HELLO_CHAR = "H"
 DICTPROXY_LOOKUP_CHAR = "L"
@@ -49,32 +49,40 @@ class Metadata:
         return mdict.get(self.DEVICETOKEN_KEY, [])
 
 
-def handle_dovecot_protocol(rfile, wfile, notifier, metadata):
+def handle_dovecot_protocol(rfile, wfile, notifier, metadata, iroh_relay=None):
     transactions = {}
     while True:
         msg = rfile.readline().strip().decode()
         if not msg:
             break
 
-        res = handle_dovecot_request(msg, transactions, notifier, metadata)
+        res = handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay)
         if res:
             wfile.write(res.encode("ascii"))
             wfile.flush()
 
 
-def handle_dovecot_request(msg, transactions, notifier, metadata):
+def handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay=None):
     # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
     short_command = msg[0]
     parts = msg[1:].split("\t")
     if short_command == DICTPROXY_LOOKUP_CHAR:
         # Lpriv/43f5f508a7ea0366dff30200c15250e3/devicetoken\tlkj123poi@c2.testrun.org
-        keyparts = parts[0].split("/")
+        keyparts = parts[0].split("/", 2)
         if keyparts[0] == "priv":
             keyname = keyparts[2]
             addr = parts[1]
             if keyname == metadata.DEVICETOKEN_KEY:
                 res = " ".join(metadata.get_tokens_for_addr(addr))
                 return f"O{res}\n"
+        elif keyparts[0] == "shared":
+            keyname = keyparts[2]
+            if (
+                keyname == "vendor/vendor.dovecot/pvt/server/vendor/deltachat/irohrelay"
+                and iroh_relay
+            ):
+                # Handle `GETMETADATA "" /shared/vendor/deltachat/irohrelay`
+                return f"O{iroh_relay}\n"
         logging.warning("lookup ignored: %r", msg)
         return "N\n"
     elif short_command == DICTPROXY_ITERATE_CHAR:
@@ -120,7 +128,10 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket, vmail_dir = sys.argv[1:]
+    socket, vmail_dir, config_path = sys.argv[1:]
+
+    config = read_config(config_path)
+    iroh_relay = config.iroh_relay
 
     vmail_dir = Path(vmail_dir)
     if not vmail_dir.exists():
@@ -136,7 +147,9 @@ def main():
     class Handler(StreamRequestHandler):
         def handle(self):
             try:
-                handle_dovecot_protocol(self.rfile, self.wfile, notifier, metadata)
+                handle_dovecot_protocol(
+                    self.rfile, self.wfile, notifier, metadata, iroh_relay
+                )
             except Exception:
                 logging.exception("Exception in the dovecot dictproxy handler")
                 raise

@@ -1,9 +1,10 @@
-import pytest
-import threading
 import queue
 import socket
+import threading
 
+import pytest
 from chatmaild.config import read_config
+
 from cmdeploy.cmdeploy import main
 
 
@@ -12,6 +13,13 @@ def test_init(tmp_path, maildomain):
     main(["init", "--config", str(inipath), maildomain])
     config = read_config(inipath)
     assert config.mail_domain == maildomain
+
+
+def test_capabilities(imap):
+    imap.connect()
+    capas = imap.conn.capabilities
+    assert "XCHATMAIL" in capas
+    assert "XDELTAPUSH" in capas
 
 
 def test_login_basic_functioning(imap_or_smtp, gencreds, lp):

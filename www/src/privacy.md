@@ -9,7 +9,7 @@ See [other chatmail servers](https://delta.chat/en/chatmail) for alternative ser
 {% endif %}
 
 
-## Quick Privacy Summary: No personal data collected 
+## Summary: No personal data asked or collected 
 
 This chatmail server neither asks for nor retains personal information. 
 Chatmail servers exist to reliably transmit (store and deliver) end-to-end encrypted messages

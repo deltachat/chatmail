@@ -4,6 +4,8 @@
 ## Dear [Delta Chat](https://get.delta.chat) users and newcomers ... 
 
 {% if config.mail_domain != "nine.testrun.org" %}
+Welcome to instant, interoperable and [privacy-preserving](privacy.html) messaging :) 
+{% else %}
 Welcome to the default onboarding server ({{ config.mail_domain }}) 
 for Delta Chat users.  For details how it avoids storing personal information
 please see our [privacy policy](privacy). 

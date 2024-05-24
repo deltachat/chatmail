@@ -1,7 +1,7 @@
 
 # Privacy Policy for {{ config.mail_domain }} 
 
-{% if config.mail_domain != "nine.testrun.org" %}
+{% if config.mail_domain == "nine.testrun.org" %}
 Welcome to `{{config.mail_domain}}`, the default chatmail onboarding server for Delta Chat users. 
 It is operated on the side by a small sysops team employed by [merlinux](https://merlinux.eu),
 an open-source R&D company also acting as the fiscal sponsor of Delta Chat app developments. 

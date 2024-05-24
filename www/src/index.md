@@ -1,11 +1,15 @@
 
 <img class="banner" src="collage-top.png"/>
 
-## Dear [Delta Chat](https://get.delta.chat) users and newcomers, 
+## Dear [Delta Chat](https://get.delta.chat) users and newcomers ... 
 
-Welcome to instant, interoperable and [privacy-preserving](privacy.html) messaging :) 
+{% if config.mail_domain != "nine.testrun.org" %}
+Welcome to the default onboarding server ({{ config.mail_domain }}) 
+for Delta Chat users.  For details how it avoids storing personal information
+please see our [privacy policy](privacy). 
+{% endif %}
 
-👉 **Tap** or scan this QR code to get a random `@{{config.mail_domain}}` e-mail address
+👉 **Tap** or scan this QR code to get a `@{{config.mail_domain}}` chat profile
 
 <a href="DCACCOUNT:https://{{ config.mail_domain }}/new">
     <img width=300 style="float: none;" src="qr-chatmail-invite-{{config.mail_domain}}.png" /></a>

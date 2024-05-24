@@ -9,7 +9,7 @@ for the usage in chats, especially DeltaChat.
 ### Choosing a chatmail address instead of using a random one
 
 In the Delta Chat account setup 
-you may tap `I already have a login`
+you may tap `I already have a profile`
 and fill the two fields like this: 
 
 - `Address`: invent a word with

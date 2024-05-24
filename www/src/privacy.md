@@ -13,19 +13,26 @@ See [other chatmail servers](https://delta.chat/en/chatmail) for alternative ser
 
 This chatmail server neither asks for nor retains personal information. 
 Chatmail servers exist to reliably transmit (store and deliver) end-to-end encrypted messages
-to one or more devices. 
-A Chatmail server is more similar to how the Signal messenger server relays messages
-than to classic e-mail servers who maintain permanent storage with readable personal data. 
-In particular, 
+between user's devices. 
+A Chatmail server aims to mirror how the Signal messenger server works 
+and is optimized and geared towards usage by the Delta Chat messenger app. 
+A chatmail server is very unlike classic e-mail servers 
+that maintain permanent storage with readable personal data for their users. 
 
-- this chatmail server unconditionally removes any messages after {{ config.delete_mails_after }} days. 
-- Log files are ephemeral and only analyzed for debugging purposes
+In particular, this chatmail server 
 
-Technically, you may think of Chatmail servers as a "messaging router" at Internet-scale. 
-Legally, authorities might regard this chatmail server as a "classic e-mail" server
-which collects and tracks personal data, requiring an according privacy policy. 
-We do not agree on this interpretation. Yet, we provide more legal details below
-to make life easier for data protection specialists and lawyers. 
+- unconditionally removes messages after {{ config.delete_mails_after }} days,
+
+- prohibits sending out un-encrypted messages,
+
+- only has temporary log files used solely for debugging purposes.
+
+Technically, you may think of Chatmail servers as 
+a decentralized "chat messaging router" at Internet-scale. 
+Legally, authorities might regard chatmail as a "classic e-mail" server
+which collects and retains personal data. 
+We do not agree on this interpretation. Nevertheless, we provide more legal details below
+to make lifer easier for data protection specialists and lawyers scrutinizing chatmail operations. 
 
 
 ## 1. Name and contact information 

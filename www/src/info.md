@@ -1,6 +1,4 @@
 
-<img class="banner" src="collage-info.png"/>
-
 ## More information 
 
 {{ config.mail_domain }} provides a low-maintenance, resource efficient and 
@@ -11,7 +9,7 @@ for the usage in chats, especially DeltaChat.
 ### Choosing a chatmail address instead of using a random one
 
 In the Delta Chat account setup 
-you may tap `LOG INTO YOUR E-MAIL ACCOUNT` 
+you may tap `I already have a login`
 and fill the two fields like this: 
 
 - `Address`: invent a word with

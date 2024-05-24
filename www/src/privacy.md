@@ -3,7 +3,7 @@
 
 {% if config.mail_domain != "nine.testrun.org" %}
 Welcome to `{{config.mail_domain}}`, the default chatmail onboarding server for Delta Chat users. 
-It is operated by a small sysops team employed by [merlinux](https://merlinux.eu),
+It is operated on the side by a small sysops team employed by [merlinux](https://merlinux.eu),
 an open-source R&D company also acting as the fiscal sponsor of Delta Chat app developments. 
 See [other chatmail servers](https://delta.chat/en/chatmail) for alternative server operators. 
 {% endif %}
@@ -13,11 +13,15 @@ See [other chatmail servers](https://delta.chat/en/chatmail) for alternative ser
 
 This chatmail server neither asks for nor retains personal information. 
 Chatmail servers exist to reliably transmit (store and deliver) end-to-end encrypted messages
-between user's devices. 
-A Chatmail server aims to mirror how the Signal messenger server works 
-and is optimized and geared towards usage by the Delta Chat messenger app. 
-A chatmail server is very unlike classic e-mail servers 
-that maintain permanent storage with readable personal data for their users. 
+between user's devices running the Delta Chat messenger app. 
+Technically, you may think of a Chatmail server as 
+an end-to-end encrypted "messaging router" at Internet-scale. 
+
+A chatmail server is very unlike classic e-mail servers (for example Google Mail servers)
+that ask for personal data and permanently store messages. 
+A chatmail server behaves more like the Signal messaging server 
+but does not know about phone numbers and securely and automatically interoperates 
+with other chatmail and classic e-mail servers. 
 
 In particular, this chatmail server 
 
@@ -25,14 +29,12 @@ In particular, this chatmail server
 
 - prohibits sending out un-encrypted messages,
 
-- only has temporary log files used solely for debugging purposes.
+- only has temporary log files used for debugging purposes.
 
-Technically, you may think of Chatmail servers as 
-a decentralized "chat messaging router" at Internet-scale. 
-Legally, authorities might regard chatmail as a "classic e-mail" server
+Legally, authorities might still regard chatmail as a "classic e-mail" server
 which collects and retains personal data. 
 We do not agree on this interpretation. Nevertheless, we provide more legal details below
-to make lifer easier for data protection specialists and lawyers scrutinizing chatmail operations. 
+to make life easier for data protection specialists and lawyers scrutinizing chatmail operations. 
 
 
 ## 1. Name and contact information 

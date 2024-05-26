@@ -38,17 +38,13 @@ While in theory a package can be created entirely over the web interface,
 the use of the cli-tool `osc` is more convenient
 and is described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
 
-### How to build the dovecot debian package for all platforms via our script
+### How to built the dovecot debian package for all platforms 
 
-In scripts/dovecot/ is a shell script that prepares the required files and pushes them to build.opensuse.org.
-
-To run it you need osc, debuild and curl installed. Per default it assumes that your local obs repository is located at ~/obs/.
-
-Use `source build-obs.sh` to run it.
-
-### Build the debian package in the OBS manually
-
-Alternatively you can follow these steps to do it manually:
+XXX suggested: transform this paragraph by providing a script to
+XXX - download precise files from https://packages.debian.org/unstable/dovecot-core 
+XXX - clone the chatmail/dovecot repo
+XXX - running `debuild` 
+XXX - do `osc add PRECISE_FILE_PATTERN` or so 
 
 On a Debian machine (for exampe [distrobox](https://distrobox.it/)),
 clone the [chatmail dovecot fork](https://github.com/chatmail/dovecot). 

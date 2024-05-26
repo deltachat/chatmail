@@ -36,7 +36,7 @@ that are then automatically built.
 While in theory a package can be created entirely over the web interface, 
 the use of the cli-tool `osc` is more convenient and is described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
 
-### How to build the dovecot debian package on the OBS via our script
+### How to build the dovecot debian package on the  via our script
 
 In scripts/dovecot/ is a shell script that prepares the required files and pushes them to build.opensuse.org.
 

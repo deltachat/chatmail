@@ -5,9 +5,9 @@ echo "Installing dependencies for this script:"
 sudo apt install -y devscripts build-essential osc curl git debhelper-compat
 
 # Define path of your local OBS repository
-SCRIPT_DIR=$PWD
 OBS_PATH=$SCRIPT_DIR/obs
 REPO_PATH=$OBS_PATH/home:deltachat/dovecot/
+SCRIPT_DIR=$PWD
 
 # Download Debian Source Files
 echo "Downloading precise files from Debian unstable repository..."

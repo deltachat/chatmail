@@ -38,7 +38,7 @@ While in theory a package can be created entirely over the web interface,
 the use of the cli-tool `osc` is more convenient
 and is described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
 
-### How to build the dovecot debian package on the  via our script
+### How to build the dovecot debian package for all platforms via our script
 
 In scripts/dovecot/ is a shell script that prepares the required files and pushes them to build.opensuse.org.
 
@@ -48,28 +48,26 @@ The script assumes you are on Debian. It automatically installs any needed depen
 
 Use `source build-obs.sh` to run it.
 
-### Adding the resulting OBS repository to Debian 12
+### Adding the resulting OBS repository to Debian
 
-Our dovecot fork is automatically installed as part of the chatmail deployment. You can see it in cmdeploy/src/cmdeploy/__init__.py. If you want to add our fork manually to a system, you can do the following:
+XXX suggested: 
+XXX - use the in-repo key for addition (if OBS key changes, we also need to update i in our repo anyway)
+XXX - also link to the deployment code adding the key (https://github.com/deltachat/chatmail/blob/main/cmdeploy/src/cmdeploy/__init__.py) 
 
-First add our signing key to your apt keyring:
+XXX (question: what is missing/why is "apt-add-repository" not possible?) 
 
-```
-sudo cp cmdeploy/src/cmdeploy/obs-home-deltachat.gpg /etc/apt/keyrings/obs-home-deltachat.gpg`
-```
+To add the OBS-managed signing key to your local install: 
 
-Now add our repository and key to /etc/apt/sources.list with a text editor of your choice:
+    curl https://build.opensuse.org/projects/home:deltachat/signing_keys/download?kind=gpg | sudo cp scripts/dovecot/home:deltachat.gpg /etc/apt/keyrings/obs-home-deltachat.gpg`
 
-```
-deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./
-```
+Add to /etc/apt/sources.list:
 
-You can now install dovecot like normal.
+`deb [signed-by=/etc/apt/keyrings/obs-home-deltachat.gpg] https://download.opensuse.org/repositories/home:/deltachat/Debian_12/ ./`
 
-```
-sudo apt update
-sudo apt install dovecot-core
-```
+Install dovecot 🥳
+
+`sudo apt update
+sudo apt install dovecot-core`
 
 ### Security concerns 
 

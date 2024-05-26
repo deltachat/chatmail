@@ -4,10 +4,7 @@
 echo "Downloading precise files from Debian unstable repository..."
 mkdir dovecot-build
 cd dovecot-build
-
-# taken May 2nd 2024, from https://packages.debian.org/unstable/dovecot-core 
-wget http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1-3.debian.tar.xz
-wget http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig.tar.gz
+wget https://packages.debian.org/unstable/dovecot-core # TODO: probably wrong link check this
 
 # Clone the Chatmail Dovecot Repo
 echo "Cloning the Chatmail Dovecot fork..."

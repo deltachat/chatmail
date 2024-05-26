@@ -77,4 +77,5 @@ It is probably reasonable to trust SUSE to not mess with the build
 process because it would cause serious negative reputation damage for them 
 if they tried and someone finds out. 
 
-Our dovecot fork will receive the same security backports as the dovecot package in Debian Sid.
+Any security vulnerability in dovecot needs to be tracked 
+and also mirrored in our fork. 

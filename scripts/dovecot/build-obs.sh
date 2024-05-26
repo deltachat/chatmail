@@ -11,9 +11,7 @@ echo "Installing build dependencies"
 sudo apt install default-libmysqlclient-dev krb5-multidev libapparmor-dev libbz2-dev libcap-dev libdb-dev libexpat-dev libexttextcat-dev libicu-dev libldap2-dev liblua5.4-dev liblz4-dev liblzma-dev libpam0g-dev libpq-dev libsasl2-dev libsodium-dev libsqlite3-dev libssl-dev libstemmer-dev libsystemd-dev libunwind-dev libwrap0-dev libzstd-dev pkg-config zlib1g-dev
 
 # Define path of your local OBS repository
-OBS_PATH=~/obs
-REPO_PATH=$OBS_PATH/home:deltachat/dovecot/
-SCRIPT_DIR=$PWD
+OBS_PATH=~/obs/home:deltachat/dovecot/
 
 # Download Debian Source Files
 echo "Downloading precise files from Debian unstable repository..."
@@ -36,24 +34,24 @@ debuild -us -uc
 
 # Setting up OSC
 cd $OBS_PATH
-mkdir $OBS_PATH
-rm -rf home:deltachat/dovecot
-osc checkout home:deltachat/dovecot
+osc checkout home:deltachat
+cd
 
 # Copy Files to Your Local OBS Repository,
 echo "Copying files to your local OBS repository..."
-cd $SCRIPT_DIR/dovecot-build
-cp -rf dovecot_2.3.21+dfsg1-3.debian.tar.xz $REPO_PATH
-cp -rf dovecot_2.3.21+dfsg1.orig.tar.gz $REPO_PATH
-cp -rf dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz $REPO_PATH
-cp -rf dovecot_2.3.21+dfsg1-3.dsc $REPO_PATH
-cp -rf dovecot_2.3.21+dfsg1-3_amd64.changes $REPO_PATH
+cd ..
+cp dovecot_2.3.21+dfsg1-3.debian.tar.xz $OBS_PATH/dovecot
+cp dovecot_2.3.21+dfsg1.orig.tar.gz $OBS_PATH/dovecot
+cp dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz $OBS_PATH/dovecot
+cp dovecot_2.3.21+dfsg1-3.dsc $OBS_PATH/dovecot
+cp dovecot_2.3.21+dfsg1-3_amd64.changes $OBS_PATH/dovecot
 
 # Push Changes to OBS
 echo "Pushing changes to OBS..."
-cd $REPO_PATH
+cd $OBS_PATH
 
 osc up
+rm *
 osc add dovecot_2.3.21+dfsg1-3.debian.tar.xz
 osc add dovecot_2.3.21+dfsg1.orig.tar.gz
 osc add dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz

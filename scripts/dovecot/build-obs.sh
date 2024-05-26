@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# this script requires curl, osc and debuild installed.
+
 # Install dependencies
 echo "Installing dependencies for this script:"
 sudo apt install devscripts build-essential osc curl git debhelper-compat
@@ -26,13 +28,12 @@ curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig-
 echo "Cloning the Chatmail Dovecot fork..."
 git clone https://github.com/chatmail/dovecot.git
 
-# Build the source package
-echo "Building the source package"
+# Build the Package
+echo "Building the package..."
 cd dovecot
 dpkg-source -b .
 
 # Setting up OSC
-echo "Setting up OBS home repository"
 mkdir $OBS_PATH
 cd $OBS_PATH
 rm -rf home:deltachat/dovecot
@@ -49,9 +50,11 @@ cp -rf dovecot_2.3.21+dfsg1-3.dsc $REPO_PATH
 # Push Changes to OBS
 echo "Pushing changes to OBS..."
 cd $REPO_PATH
+
 osc up
 osc add dovecot_2.3.21+dfsg1-3.debian.tar.xz
 osc add dovecot_2.3.21+dfsg1.orig.tar.gz
 osc add dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz
 osc add dovecot_2.3.21+dfsg1-3.dsc
+
 osc commit

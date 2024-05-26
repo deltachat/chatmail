@@ -15,8 +15,8 @@ SCRIPT_DIR=~/dovebuild
 cd $SCRIPT_DIR
 
 # Define path of your local OBS repository
-OBS_PATH=$SCRIPT_DIR/obs
 REPO_PATH=$OBS_PATH/home:deltachat/dovecot/
+OBS_PATH=$SCRIPT_DIR/obs
 
 # Download Debian Source Files
 echo "Downloading precise files from Debian unstable repository..."

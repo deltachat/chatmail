@@ -21,9 +21,9 @@ mkdir dovecot-build
 cd dovecot-build
 
 # taken May 6th 2024, from https://packages.debian.org/unstable/dovecot-core 
-curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1-3.debian.tar.xz -O
-curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig.tar.gz -O
-curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz -O
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1-3.debian.tar.xz --output dovecot_2.3.21+dfsg1-3.debian.tar.xz
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig.tar.gz --output dovecot_2.3.21+dfsg1.orig.tar.gz
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz --output dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz
 
 # Clone the Chatmail Dovecot Repo
 echo "Cloning the Chatmail Dovecot fork..."
@@ -32,7 +32,7 @@ git clone https://github.com/chatmail/dovecot.git
 # Build the Package
 echo "Building the package..."
 cd dovecot
-debuild -us -uc
+# debuild -us -uc
 
 # Setting up OSC
 cd $OBS_PATH

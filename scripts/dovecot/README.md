@@ -6,7 +6,8 @@ a) Dovecot developers did not yet merge a [pull request](https://github.com/dove
    which majorly speeds up message delivery by removing a hardcoded 0.5 second delay 
    on relaying incoming messages.  
 
-b) Even if merged, it would take years for it to reach Debian stable.
+b) Even if merged, it would take years for it to reach Debian stable,
+   the distribution that chatmail deployment uses. 
 
 c) The modified dovecot has been successfully used since December 2023 without issues
    and we see no noticeable downside (theoretically higher CPU usage but not measureable)
@@ -34,7 +35,8 @@ and is part of the pipeline of the creation of SUSE Linux Enterprise.
 The OBS provides a mercurial-like interface to create source repositories 
 that are then automatically built. 
 While in theory a package can be created entirely over the web interface, 
-the use of the cli-tool `osc` is more convenient and is described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
+the use of the cli-tool `osc` is more convenient
+and is described in the [official documentation](https://openbuildservice.org/help/manuals/obs-user-guide/art.obs.bg#sec.obsbg.obsconfig).
 
 ### How to build the dovecot debian package on the  via our script
 

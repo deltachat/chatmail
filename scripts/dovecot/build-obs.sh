@@ -12,10 +12,12 @@ sudo apt install default-libmysqlclient-dev krb5-multidev libapparmor-dev libbz2
 # copying this script to a shorter file path
 # if we don't do this, some tests fail after the build
 SCRIPT_DIR=~/dovebuild
+cp build-obs.sh $SCRIPT_DIR
 cd $SCRIPT_DIR
 
 # Define path of your local OBS repository
 REPO_PATH=$OBS_PATH/home:deltachat/dovecot/
+SCRIPT_DIR=$PWD
 OBS_PATH=$SCRIPT_DIR/obs
 
 # Download Debian Source Files

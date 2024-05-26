@@ -19,6 +19,11 @@ echo "Downloading precise files from Debian unstable repository..."
 mkdir dovecot-build
 cd dovecot-build
 
+# taken May 6th 2024, from https://packages.debian.org/unstable/dovecot-core 
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1-3.debian.tar.xz -O
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig.tar.gz -O
+curl http://deb.debian.org/debian/pool/main/d/dovecot/dovecot_2.3.21+dfsg1.orig-pigeonhole.tar.gz -O
+
 # Clone the Chatmail Dovecot Repo
 echo "Cloning the Chatmail Dovecot fork..."
 git clone https://github.com/chatmail/dovecot.git

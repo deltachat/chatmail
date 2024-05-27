@@ -2,6 +2,9 @@
 
 ## untagged
 
+- ensure cron is installed
+  ([#310](https://github.com/deltachat/chatmail/pull/310))
+
 - change default for delete_mails_after from 40 to 20 days
   ([#300](https://github.com/deltachat/chatmail/pull/300))
 

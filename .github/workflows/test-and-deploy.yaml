@@ -19,7 +19,7 @@ jobs:
       group: staging-deploy
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: prepare SSH
         run: |

@@ -645,3 +645,9 @@ def deploy_chatmail(config_path: Path) -> None:
         restarted=journald_conf.changed,
     )
 
+    apt.packages(
+        name="Ensure cron is installed",
+        packages=["cron"],
+    )
+
+

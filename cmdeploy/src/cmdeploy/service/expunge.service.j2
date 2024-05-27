@@ -2,8 +2,9 @@
 Description=Expunge old mails after {{ config.delete_mails_after }} days
 
 [Service]
+Type=oneshot
 # delete all mails after {{ config.delete_mails_after }} days, in the Inbox
-ExecStart={{ config.execpath }} /home/vmail/mail/{{ config.mail_domain }} > /var/www/html/metrics
+ExecStart=/home/vmail/mail/{{ config.mail_domain }} -path '*/cur/*' -mtime +{{ config.delete_mails_after }} -type f -delete
 # or in any IMAP subfolder
 ExecStart=vmail find /home/vmail/mail/{{ config.mail_domain }} -path '*/.*/cur/*' -mtime +{{ config.delete_mails_after }} -type f -delete
 # even if they are unseen

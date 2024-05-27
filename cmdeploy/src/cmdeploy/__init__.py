@@ -17,6 +17,7 @@ from pyinfra.operations import apt, files, pip, server, systemd
 
 from .acmetool import deploy_acmetool
 
+root_owned = dict(user="root", group="root", mode="644")
 
 def _build_chatmaild(dist_dir) -> None:
     dist_dir = Path(dist_dir).resolve()
@@ -50,7 +51,6 @@ def _install_remote_venv_with_chatmaild(config) -> None:
     remote_dist_file = f"{remote_base_dir}/dist/{dist_file.name}"
     remote_venv_dir = f"{remote_base_dir}/venv"
     remote_chatmail_inipath = f"{remote_base_dir}/chatmail.ini"
-    root_owned = dict(user="root", group="root", mode="644")
 
     apt.packages(
         name="apt install python3-virtualenv",
@@ -384,7 +384,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     files.put(
         name="Upload expunge.timer",
         src=importlib.resources.files(__package__).joinpath("service/expunge.timer"),
-        dest=f"/etc/systemd/system/metrics.timer",
+        dest=f"/etc/systemd/system/expunge.timer",
         **root_owned,
     )
 

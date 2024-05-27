@@ -69,8 +69,7 @@ def deploy_acmetool(email="", domains=[]):
         restarted=service_file.changed,
     )
 
-    if str(host) != "staging.testrun.org":
-        server.shell(
-            name=f"Request certificate for: { ', '.join(domains) }",
-            commands=[f"acmetool want --xlog.severity=debug { ' '.join(domains)}"],
-        )
+    server.shell(
+        name=f"Request certificate for: { ', '.join(domains) }",
+        commands=[f"acmetool want --xlog.severity=debug { ' '.join(domains)}"],
+    )

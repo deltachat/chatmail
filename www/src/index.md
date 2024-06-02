@@ -8,7 +8,7 @@ Welcome to instant, interoperable and [privacy-preserving](privacy.html) messagi
 {% else %}
 Welcome to the default onboarding server ({{ config.mail_domain }}) 
 for Delta Chat users.  For details how it avoids storing personal information
-please see our [privacy policy](privacy). 
+please see our [privacy policy](privacy.html). 
 {% endif %}
 
 👉 **Tap** or scan this QR code to get a `@{{config.mail_domain}}` chat profile

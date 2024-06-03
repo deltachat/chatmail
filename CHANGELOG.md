@@ -2,6 +2,9 @@
 
 ## untagged
 
+- don't check necessary DNS records on cmdeploy init anymore
+  ([#316](https://github.com/deltachat/chatmail/pull/316))
+
 - ensure cron is installed
   ([#310](https://github.com/deltachat/chatmail/pull/310))
 

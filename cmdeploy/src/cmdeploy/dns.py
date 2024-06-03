@@ -183,6 +183,7 @@ def show_dns(args, out) -> int:
 
 def check_necessary_dns(out, mail_domain):
     """Check whether $mail_domain and mta-sts.$mail_domain resolve."""
+    print("Checking necessary DNS records... ")
     dns = DNS(out, mail_domain)
     ipv4 = dns.get("A", mail_domain)
     ipv6 = dns.get("AAAA", mail_domain)
@@ -204,5 +205,5 @@ def check_necessary_dns(out, mail_domain):
             print(line)
         print()
     else:
-        dns.out.green("\nAll necessary DNS entries seem to be set.")
+        dns.out.green("All necessary DNS records seem to be set.")
         return True

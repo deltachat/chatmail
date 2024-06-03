@@ -38,10 +38,6 @@ def init_cmd(args, out):
     else:
         write_initial_config(args.inipath, mail_domain)
         out.green(f"created config file for {mail_domain} in {args.inipath}")
-    check_necessary_dns(
-        out,
-        mail_domain,
-    )
 
 
 def run_cmd_options(parser):

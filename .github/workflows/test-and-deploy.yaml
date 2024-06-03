@@ -33,6 +33,9 @@ jobs:
           # store previous acme & dkim state on ns.testrun.org, if it contains useful certs
           if [ -f dkimkeys/opendkim.private ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/ || true; fi
           if [ -z "$(ls -A acme/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme root@ns.testrun.org:/tmp/ || true; fi
+          # make sure CAA record isn't set
+          ssh root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging.testrun.org.zone
+          ssh root@ns.testrun.org systemctl reload nsd
 
       - name: rebuild staging.testrun.org to have a clean VPS
         run: |

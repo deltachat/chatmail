@@ -23,15 +23,11 @@ class UnknownCommand(ValueError):
 
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    salt = os.urandom(16)
-    iterations = 100000
-    hash_obj = hashlib.pbkdf2_hmac('sha512', password.encode(), salt, iterations)
-    hash_hex = hash_obj.hex()
-    salt_hex = salt.hex()
-    combined_hash = f"${iterations}${salt_hex}${hash_hex}"
+    sha512_hash = hashlib.sha512()
+    sha512_hash.update(password.encode('utf-8'))
+    hex_dig = sha512_hash.hexdigest()
     
-    return "{SHA512-CRYPT}" + combined_hash
-
+    return "{SHA512-CRYPT}$6$" + hex_dig
 
 
 def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:

@@ -23,7 +23,7 @@ class UnknownCommand(ValueError):
 
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    passhash = hashlib.sha512(password).hexdigest()
+    passhash = hashlib.sha512(password.encode('UTF-8')).hexdigest()
     return "{SHA512-CRYPT}" + passhash
 
 

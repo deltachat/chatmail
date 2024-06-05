@@ -2,6 +2,9 @@
 
 ## untagged
 
+- replace crypt with hashlib, as crypt will be deprecated in Python 3.13
+  ([#319](https://github.com/deltachat/chatmail/pull/319))
+
 - Reject DKIM signatures that do not cover the whole message body.
   ([#321](https://github.com/deltachat/chatmail/pull/321))
 

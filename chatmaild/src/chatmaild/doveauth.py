@@ -1,4 +1,4 @@
-import crypt
+import hashlib
 import json
 import logging
 import os
@@ -23,7 +23,7 @@ class UnknownCommand(ValueError):
 
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    passhash = crypt.crypt(password, crypt.METHOD_SHA512)
+    passhash = hashlib.sha512(password).hexdigest()
     return "{SHA512-CRYPT}" + passhash
 
 

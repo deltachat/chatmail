@@ -5,8 +5,9 @@
 - don't check necessary DNS records on cmdeploy init anymore
   ([#316](https://github.com/deltachat/chatmail/pull/316))
 
-- ensure cron is installed
-  ([#310](https://github.com/deltachat/chatmail/pull/310))
+- ensure cron and acl are installed
+  ([#293](https://github.com/deltachat/chatmail/pull/293),
+  [#310](https://github.com/deltachat/chatmail/pull/310))
 
 - change default for delete_mails_after from 40 to 20 days
   ([#300](https://github.com/deltachat/chatmail/pull/300))

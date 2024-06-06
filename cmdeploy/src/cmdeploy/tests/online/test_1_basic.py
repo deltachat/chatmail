@@ -86,6 +86,7 @@ def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
     pytest.fail("Rate limit was not exceeded")
 
 
+@pytest.mark.slow
 def test_expunged(remote, chatmail_config):
     outdated_days = int(chatmail_config.delete_mails_after) + 1
     find_cmds = [

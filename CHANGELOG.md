@@ -2,6 +2,8 @@
 
 ## untagged
 
+## 1.3.0 - 2024-06-06
+
 - don't check necessary DNS records on cmdeploy init anymore
   ([#316](https://github.com/deltachat/chatmail/pull/316))
 

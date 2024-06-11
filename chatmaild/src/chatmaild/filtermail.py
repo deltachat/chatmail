@@ -66,34 +66,6 @@ def check_encrypted(message):
     return True
 
 
-def check_mdn(message, envelope):
-    if len(envelope.rcpt_tos) != 1:
-        return False
-
-    for name in ["auto-submitted", "chat-version"]:
-        if not message.get(name):
-            return False
-
-    if message.get_content_type() != "multipart/report":
-        return False
-
-    body = message.get_body()
-    if body.get_content_type() != "text/plain":
-        return False
-
-    if list(body.iter_attachments()) or list(body.iter_parts()):
-        return False
-
-    # even with all mime-structural checks an attacker
-    # could try to abuse the subject or body to contain links or other
-    # annoyance -- we skip on checking subject/body for now as Delta Chat
-    # should evolve to create E2E-encrypted read receipts anyway.
-    # and then MDNs are just encrypted mail and can pass the border
-    # to other instances.
-
-    return True
-
-
 async def asyncmain_beforequeue(config):
     port = config.filtermail_smtp_port
     Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
@@ -138,9 +110,6 @@ class BeforeQueueHandler:
         logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
         if envelope.mail_from.lower() != from_addr.lower():
             return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
-
-        if not mail_encrypted and check_mdn(message, envelope):
-            return
 
         if envelope.mail_from in self.config.passthrough_senders:
             return

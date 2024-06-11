@@ -2,7 +2,7 @@
 
 ## untagged
 
-- improve filtermail checks for encrypted messages
+- improve filtermail checks for encrypted messages and drop support for unencrypted MDNs
   ([#320](https://github.com/deltachat/chatmail/pull/320))
 
 ## 1.3.0 - 2024-06-06

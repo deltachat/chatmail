@@ -19,7 +19,11 @@ for i = 1, nsigs do
 	-- Any valid signature that was not ignored like this
 	-- means the message is acceptable.
 	if sigres == 0 then
-		return nil
+		-- Do not accept the signature if it does not cover the whole body
+		-- of the message by using `l=` tag.
+		if odkim.sig_canonlength(ctx, sig) < odkim.sig_bodylength(ctx, sig) then
+			return nil
+		end
 	end	
 end
 

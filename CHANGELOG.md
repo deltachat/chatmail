@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Reject DKIM signatures that do not cover the whole message body.
+  ([#321](https://github.com/deltachat/chatmail/pull/321))
+
 - check that OpenPGP has only PKESK, SKESK and SEIPD packets
   ([#323](https://github.com/deltachat/chatmail/pull/323),
    [#324](https://github.com/deltachat/chatmail/pull/324))

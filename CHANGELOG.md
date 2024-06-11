@@ -2,6 +2,9 @@
 
 ## untagged
 
+- improve filtermail checks for encrypted messages
+  ([#320](https://github.com/deltachat/chatmail/pull/320))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

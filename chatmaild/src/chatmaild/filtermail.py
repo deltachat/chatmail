@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
+import re
 import sys
 import time
 from email import policy
@@ -12,9 +13,15 @@ from aiosmtpd.controller import Controller
 
 from .config import read_config
 
+# Regular expression that matches multi-line base64.
+BASE64_REGEX = re.compile(r"([A-Za-z0-9+/=]+\r\n)+")
+
 
 def check_encrypted(message):
-    """Check that the message is an OpenPGP-encrypted message."""
+    """Check that the message is an OpenPGP-encrypted message.
+
+    MIME structure of the message must correspond to <https://www.rfc-editor.org/rfc/rfc3156>.
+    """
     if not message.is_multipart():
         return False
     if message.get("subject") != "...":
@@ -23,11 +30,35 @@ def check_encrypted(message):
         return False
     parts_count = 0
     for part in message.iter_parts():
+        # We explicitly check Content-Type of each part later,
+        # but this is to be absolutely sure `get_payload()` returns string and not list.
+        if part.is_multipart():
+            return False
+
         if parts_count == 0:
             if part.get_content_type() != "application/pgp-encrypted":
                 return False
+
+            payload = part.get_payload()
+            if payload.strip() != "Version: 1":
+                return False
         elif parts_count == 1:
             if part.get_content_type() != "application/octet-stream":
+                return False
+
+            payload = part.get_payload()
+
+            prefix = "-----BEGIN PGP MESSAGE-----\r\n\r\n"
+            if not payload.startswith(prefix):
+                return False
+            payload = payload.removeprefix(prefix)
+
+            suffix = "-----END PGP MESSAGE-----\r\n\r\n"
+            if not payload.endswith(suffix):
+                return False
+            payload = payload.removesuffix(suffix)
+
+            if not BASE64_REGEX.fullmatch(payload):
                 return False
         else:
             return False

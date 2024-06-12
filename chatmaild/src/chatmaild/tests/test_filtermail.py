@@ -129,7 +129,7 @@ def test_passthrough_senders(gencreds, handler, maildata):
     assert not handler.check_DATA(envelope=env)
 
 
-def test_check_openpgp_payload():
+def test_check_armored_payload():
     payload = """-----BEGIN PGP MESSAGE-----\r
 \r
 wU4DSqFx0d1yqAoSAQdAYkX/ZN/Az4B0k7X47zKyWrXxlDEdS3WOy0Yf2+GJTFgg\r

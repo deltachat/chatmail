@@ -61,6 +61,12 @@ def test_filtermail_encryption_detection(maildata):
     assert not check_encrypted(msg)
 
 
+def test_filtermail_no_literal_packets(maildata):
+    """Test that literal OpenPGP packet is not considered an encrypted mail."""
+    msg = maildata("literal.eml", from_addr="1@example.org", to_addr="2@example.org")
+    assert not check_encrypted(msg)
+
+
 def test_filtermail_unencrypted_mdn(maildata, gencreds):
     """Unencrypted MDNs should not pass."""
     from_addr = gencreds()[0]

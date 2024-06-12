@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import asyncio
+import base64
+import binascii
 import logging
-import re
 import sys
 import time
 from email import policy
@@ -13,8 +14,64 @@ from aiosmtpd.controller import Controller
 
 from .config import read_config
 
-# Regular expression that matches multi-line base64.
-BASE64_REGEX = re.compile(r"([A-Za-z0-9+/=]+\r\n)+")
+
+def check_openpgp_payload(payload: bytes):
+    """Checks the OpenPGP payload.
+
+    OpenPGP payload must consist only of PKESK packets
+    terminated by a single SEIPD packet.
+
+    Returns True if OpenPGP payload is correct,
+    False otherwise.
+
+    May raise IndexError while trying to read OpenPGP packet header
+    if it is truncated.
+    """
+    i = 0
+    while i < len(payload):
+        # Only OpenPGP format is allowed.
+        if payload[i] & 0xC0 != 0xC0:
+            return False
+
+        packet_type_id = payload[i] & 0x3F
+        i += 1
+        if payload[i] < 192:
+            # One-octet length.
+            body_len = payload[i]
+            i += 1
+        elif payload[i] < 224:
+            # Two-octet length.
+            body_len = ((payload[i] - 192) << 8) + payload[i + 1] + 192
+            i += 2
+        elif payload[i] == 255:
+            # Five-octet length.
+            body_len = (
+                (payload[i + 1] << 24)
+                | (payload[i + 2] << 16)
+                | (payload[i + 3] << 8)
+                | payload[i + 4]
+            )
+            i += 5
+        else:
+            # Partial body length is not allowed.
+            return False
+
+        i += body_len
+
+        if i == len(payload):
+            if packet_type_id == 18:
+                # Last packet should be
+                # Symmetrically Encrypted and Integrity Protected Data Packet (SEIPD)
+                return True
+        elif packet_type_id != 1:
+            # All packets except the last one must be
+            # Public-Key Encrypted Session Key Packet (PKESK)
+            return False
+
+    if i > len(payload):
+        # Payload is truncated.
+        return False
+    return True
 
 
 def check_encrypted(message):
@@ -58,7 +115,18 @@ def check_encrypted(message):
                 return False
             payload = payload.removesuffix(suffix)
 
-            if not BASE64_REGEX.fullmatch(payload):
+            try:
+                payload = base64.b64decode(payload)
+            except binascii.Error:
+                return False
+
+            # Remove CRC24.
+            payload = payload[:-3]
+
+            try:
+                if not check_openpgp_payload(payload):
+                    return False
+            except IndexError:
                 return False
         else:
             return False

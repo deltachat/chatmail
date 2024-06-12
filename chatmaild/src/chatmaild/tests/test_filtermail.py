@@ -2,8 +2,8 @@ import pytest
 from chatmaild.filtermail import (
     BeforeQueueHandler,
     SendRateLimiter,
-    check_encrypted,
     check_armored_payload,
+    check_encrypted,
 )
 
 

@@ -74,6 +74,31 @@ def check_openpgp_payload(payload: bytes):
     return True
 
 
+def check_armored_payload(payload: str):
+    prefix = "-----BEGIN PGP MESSAGE-----\r\n\r\n"
+    if not payload.startswith(prefix):
+        return False
+    payload = payload.removeprefix(prefix)
+
+    suffix = "-----END PGP MESSAGE-----\r\n\r\n"
+    if not payload.endswith(suffix):
+        return False
+    payload = payload.removesuffix(suffix)
+
+    # Remove CRC24.
+    payload = payload.rpartition("=")[0]
+
+    try:
+        payload = base64.b64decode(payload)
+    except binascii.Error:
+        return False
+
+    try:
+        return check_openpgp_payload(payload)
+    except IndexError:
+        return False
+
+
 def check_encrypted(message):
     """Check that the message is an OpenPGP-encrypted message.
 
@@ -103,30 +128,7 @@ def check_encrypted(message):
             if part.get_content_type() != "application/octet-stream":
                 return False
 
-            payload = part.get_payload()
-
-            prefix = "-----BEGIN PGP MESSAGE-----\r\n\r\n"
-            if not payload.startswith(prefix):
-                return False
-            payload = payload.removeprefix(prefix)
-
-            suffix = "-----END PGP MESSAGE-----\r\n\r\n"
-            if not payload.endswith(suffix):
-                return False
-            payload = payload.removesuffix(suffix)
-
-            try:
-                payload = base64.b64decode(payload)
-            except binascii.Error:
-                return False
-
-            # Remove CRC24.
-            payload = payload[:-3]
-
-            try:
-                if not check_openpgp_payload(payload):
-                    return False
-            except IndexError:
+            if not check_armored_payload(part.get_payload()):
                 return False
         else:
             return False

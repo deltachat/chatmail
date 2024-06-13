@@ -2,8 +2,9 @@
 
 ## untagged
 
-- check that OpenPGP has only PKESK and SEIPD packets
-  ([#323](https://github.com/deltachat/chatmail/pull/323))
+- check that OpenPGP has only PKESK, SKESK and SEIPD packets
+  ([#323](https://github.com/deltachat/chatmail/pull/323),
+   [#324](https://github.com/deltachat/chatmail/pull/324))
 
 - improve filtermail checks for encrypted messages and drop support for unencrypted MDNs
   ([#320](https://github.com/deltachat/chatmail/pull/320))

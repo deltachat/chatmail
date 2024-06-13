@@ -18,7 +18,7 @@ from .config import read_config
 def check_openpgp_payload(payload: bytes):
     """Checks the OpenPGP payload.
 
-    OpenPGP payload must consist only of PKESK packets
+    OpenPGP payload must consist only of PKESK and SKESK packets
     terminated by a single SEIPD packet.
 
     Returns True if OpenPGP payload is correct,
@@ -63,9 +63,11 @@ def check_openpgp_payload(payload: bytes):
                 # Last packet should be
                 # Symmetrically Encrypted and Integrity Protected Data Packet (SEIPD)
                 return True
-        elif packet_type_id != 1:
-            # All packets except the last one must be
+        elif packet_type_id not in [1, 3]:
+            # All packets except the last one must be either
             # Public-Key Encrypted Session Key Packet (PKESK)
+            # or
+            # Symmetric-Key Encrypted Session Key Packet (SKESK)
             return False
 
     if i > len(payload):

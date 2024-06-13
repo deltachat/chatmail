@@ -1,4 +1,4 @@
-name: deploy on staging.testrun.org, and run tests
+name: deploy on staging2.testrun.org, and run tests
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   deploy:
-    name: deploy on staging.testrun.org, and run tests
+    name: deploy on staging2.testrun.org, and run tests
     runs-on: ubuntu-latest
     concurrency:
       group: staging-deploy
@@ -26,18 +26,18 @@ jobs:
           mkdir ~/.ssh
           echo "${{ secrets.STAGING_SSH_KEY }}" >> ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan staging.testrun.org > ~/.ssh/known_hosts
+          ssh-keyscan staging2.testrun.org > ~/.ssh/known_hosts
           # save previous acme & dkim state
-          rsync -avz root@staging.testrun.org:/var/lib/acme . || true
-          rsync -avz root@staging.testrun.org:/etc/dkimkeys . || true
+          rsync -avz root@staging2.testrun.org:/var/lib/acme . || true
+          rsync -avz root@staging2.testrun.org:/etc/dkimkeys . || true
           # store previous acme & dkim state on ns.testrun.org, if it contains useful certs
           if [ -f dkimkeys/opendkim.private ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/ || true; fi
           if [ -z "$(ls -A acme/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme root@ns.testrun.org:/tmp/ || true; fi
           # make sure CAA record isn't set
-          ssh root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging.testrun.org.zone
+          ssh root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging2.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 
-      - name: rebuild staging.testrun.org to have a clean VPS
+      - name: rebuild staging2.testrun.org to have a clean VPS
         run: |
             curl -X POST \
             -H "Authorization: Bearer ${{ secrets.HETZNER_API_TOKEN }}" \
@@ -52,17 +52,17 @@ jobs:
 
       - name: upload TLS cert after rebuilding
         run: |
-          echo " --- wait until staging.testrun.org VPS is rebuilt --- "
+          echo " --- wait until staging2.testrun.org VPS is rebuilt --- "
           rm ~/.ssh/known_hosts
-          while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u ; do sleep 1 ; done
-          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org id -u
+          while ! ssh -o ConnectTimeout=180 -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org id -u ; do sleep 1 ; done
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org id -u
           # download acme & dkim state from ns.testrun.org
           rsync -e "ssh -o StrictHostKeyChecking=accept-new" -avz root@ns.testrun.org:/tmp/acme acme-restore || true
           rsync -avz root@ns.testrun.org:/tmp/dkimkeys dkimkeys-restore || true
-          # restore acme & dkim state to staging.testrun.org
-          rsync -avz acme-restore/acme/ root@staging.testrun.org:/var/lib/acme || true
-          rsync -avz dkimkeys-restore/dkimkeys/ root@staging.testrun.org:/etc/dkimkeys || true
-          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown root:root -R /var/lib/acme || true
+          # restore acme & dkim state to staging2.testrun.org
+          rsync -avz acme-restore/acme/ root@staging2.testrun.org:/var/lib/acme || true
+          rsync -avz dkimkeys-restore/dkimkeys/ root@staging2.testrun.org:/etc/dkimkeys || true
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org chown root:root -R /var/lib/acme || true
 
       - name: run formatting checks 
         run: cmdeploy fmt -v 
@@ -70,18 +70,18 @@ jobs:
       - name: run deploy-chatmail offline tests 
         run: pytest --pyargs cmdeploy 
 
-      - run: cmdeploy init staging.testrun.org
+      - run: cmdeploy init staging2.testrun.org
 
       - run: cmdeploy run
 
       - name: set DNS entries
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -v root@staging.testrun.org chown opendkim:opendkim -R /etc/dkimkeys
+          ssh -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org chown opendkim:opendkim -R /etc/dkimkeys
           cmdeploy dns --zonefile staging-generated.zone
           cat staging-generated.zone >> .github/workflows/staging.testrun.org-default.zone
           cat .github/workflows/staging.testrun.org-default.zone
-          scp .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging.testrun.org.zone
-          ssh root@ns.testrun.org nsd-checkzone staging.testrun.org /etc/nsd/staging.testrun.org.zone
+          scp .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging2.testrun.org.zone
+          ssh root@ns.testrun.org nsd-checkzone staging2.testrun.org /etc/nsd/staging2.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 
       - name: cmdeploy test

@@ -1,6 +1,6 @@
-;; Zone file for staging.testrun.org
+;; Zone file for staging2.testrun.org
 
-$ORIGIN staging.testrun.org.
+$ORIGIN staging2.testrun.org.
 $TTL 300
 
 @  IN  SOA     ns.testrun.org. root.nine.testrun.org (
@@ -15,6 +15,7 @@ $TTL 300
 @  IN NS ns.testrun.org.
 
 ;; DNS records.
-@       IN      A       37.27.37.98
-mta-sts.staging.testrun.org.    CNAME   staging.testrun.org.
-www.staging.testrun.org.        CNAME   staging.testrun.org.
+@       IN      A       37.27.24.139
+mta-sts.staging2.testrun.org.    CNAME   staging2.testrun.org.
+www.staging2.testrun.org.        CNAME   staging2.testrun.org.
+

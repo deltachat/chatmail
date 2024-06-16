@@ -260,6 +260,10 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
+    if config.disable_ipv6 == "True":
+        inet_protocols = "ipv4"
+    else: inet_protocols = "all"
+
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
         dest="/etc/postfix/main.cf",
@@ -267,6 +271,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
         config=config,
+        inet_protocols=inet_protocols,
     )
     need_restart |= main_config.changed
 
@@ -309,6 +314,10 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
+    if config.disable_ipv6 == "True":
+        listen_ipv4_only = "listen = *"
+    else: listen_ipv4_only = ""
+
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
         dest="/etc/dovecot/dovecot.conf",
@@ -317,6 +326,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
         config=config,
         debug=debug,
+        listen_ipv4_only=listen_ipv4_only,
     )
     need_restart |= main_config.changed
     auth_config = files.put(
@@ -375,9 +385,16 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(domain: str, debug: bool = False) -> bool:
+def _configure_nginx(domain: str, debug: bool = False, config = Config) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
+
+    if config.disable_ipv6 == "True":
+        listen_default_server = ""
+        listen_redirect = ""
+    else:
+        listen_default_server = "listen [::]:443 ssl default_server;"
+        listen_redirect = "listen [::]:443 ssl;"   
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),
@@ -386,6 +403,8 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         group="root",
         mode="644",
         config={"domain_name": domain},
+        listen_default_server=listen_default_server,
+        listen_redirect=listen_redirect,
     )
     need_restart |= main_config.changed
 
@@ -577,41 +596,6 @@ def deploy_chatmail(config_path: Path) -> None:
 
     _remove_rspamd()
     opendkim_need_restart = _configure_opendkim(mail_domain, "opendkim")
-
-    if not config.use_ipv6:
-
-        # TODO this would be better in the nginx template,
-        # but first test if disabling nginx like that works fine
-        files.line(
-            name="Ensure `listen [::]:443 ssl;` is not in /etc/nginx/nginx.conf",
-            path="/etc/nginx/nginx.conf",
-            line="listen [::]:443 ssl;",
-            escape_regex_characters=True,
-            present=False,
-        )
-
-        files.line(
-            name="Ensure `listen [::]:443 ssl default_server;` is not in /etc/nginx/nginx.conf",
-            path="/etc/nginx/nginx.conf",
-            line="listen [::]:443 ssl default_server;",
-            escape_regex_characters=True,
-            present=False,
-        )
-
-        files.line(
-            name="Ensure `listen = *` is in /etc/dovecot/dovecot.conf",
-            path="/etc/dovecot/dovecot.conf",
-            line="listen = *",
-            escape_regex_characters=True,
-            ensure_newline=True,
-        )
-
-        files.replace(
-            name="Disable ipv6 in `/etc/postfix/main.cf`",
-            path="/etc/postfix/main.cf",
-            text="inet_protocols = all",
-            replace="inet_protocols = ipv4",
-        )
 
     systemd.service(
         name="Start and enable OpenDKIM",

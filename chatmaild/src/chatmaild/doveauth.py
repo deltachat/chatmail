@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import time
+import passlib
 from pathlib import Path
 from socketserver import (
     StreamRequestHandler,
@@ -23,11 +24,8 @@ class UnknownCommand(ValueError):
 
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    sha512_hash = hashlib.sha512()
-    sha512_hash.update(password.encode('utf-8'))
-    hex_dig = sha512_hash.hexdigest()
-    
-    return "{SHA512-CRYPT}$6$" + hex_dig
+    pw = passlib.hash.sha512_crypt.hash(password).split("$")
+    return "{SHA512-CRYPT}$" + pw[1] + "$" + pw[3] + "§" + pw[4] 
 
 
 def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:

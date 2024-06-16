@@ -19,6 +19,7 @@ dependencies = [
   "pytest",
   "pytest-xdist", 
   "imap_tools",
+  "passlib",
 ]
 
 [project.scripts]

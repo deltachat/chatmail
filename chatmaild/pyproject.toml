@@ -12,6 +12,7 @@ dependencies = [
   "deltachat-rpc-client",
   "filelock",
   "requests",
+  "passlib",
 ]
 
 [tool.setuptools]

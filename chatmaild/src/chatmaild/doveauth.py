@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 import time
-import passlib
+import passlib.hash
 from pathlib import Path
 from socketserver import (
     StreamRequestHandler,

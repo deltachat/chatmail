@@ -25,7 +25,7 @@ class UnknownCommand(ValueError):
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
     pw = passlib.hash.sha512_crypt.hash(password).split("$")
-    return "{SHA512-CRYPT}$" + pw[1] + "$" + pw[3] + "§" + pw[4]
+    return "{SHA512-CRYPT}$" + pw[1] + "$" + pw[3] + "$" + pw[4]
 
 
 def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:

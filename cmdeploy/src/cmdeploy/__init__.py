@@ -594,7 +594,7 @@ def deploy_chatmail(config_path: Path) -> None:
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
     mta_sts_need_restart = _install_mta_sts_daemon()
-    nginx_need_restart = _configure_nginx(mail_domain)
+    nginx_need_restart = _configure_nginx(config, mail_domain)
 
     _remove_rspamd()
     opendkim_need_restart = _configure_opendkim(mail_domain, "opendkim")

@@ -70,6 +70,9 @@ def check_openpgp_payload(payload: bytes):
             # Symmetric-Key Encrypted Session Key Packet (SKESK)
             return False
 
+    if i == 0:
+        return False
+
     if i > len(payload):
         # Payload is truncated.
         return False

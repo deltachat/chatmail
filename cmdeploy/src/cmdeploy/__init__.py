@@ -387,7 +387,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(config: Config, domain: str, debug: bool = False) -> bool:
+def _configure_nginx(config: Config, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
@@ -404,7 +404,7 @@ def _configure_nginx(config: Config, domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
         listen_default_server=listen_default_server,
         listen_redirect=listen_redirect,
     )
@@ -416,7 +416,7 @@ def _configure_nginx(config: Config, domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
     )
     need_restart |= autoconfig.changed
 
@@ -426,7 +426,7 @@ def _configure_nginx(config: Config, domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
     )
     need_restart |= mta_sts_config.changed
 
@@ -594,7 +594,7 @@ def deploy_chatmail(config_path: Path) -> None:
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
     mta_sts_need_restart = _install_mta_sts_daemon()
-    nginx_need_restart = _configure_nginx(config, mail_domain)
+    nginx_need_restart = _configure_nginx(config)
 
     _remove_rspamd()
     opendkim_need_restart = _configure_opendkim(mail_domain, "opendkim")

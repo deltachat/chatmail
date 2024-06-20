@@ -260,10 +260,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
-    if config.disable_ipv6 == "True":
-        inet_protocols = "ipv4"
-    else:
-        inet_protocols = "all"
+    inet_protocols = "ipv4" if config.disable_ipv6 else "all"
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
@@ -315,10 +312,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
-    if config.disable_ipv6 == "True":
-        listen_ipv4_only = "listen = *"
-    else:
-        listen_ipv4_only = ""
+    listen_ipv4_only = "listen = *" if config.disable_ipv6 else ""
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
@@ -391,12 +385,8 @@ def _configure_nginx(config: Config, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
-    if config.disable_ipv6 == "True":
-        listen_default_server = ""
-        listen_redirect = ""
-    else:
-        listen_default_server = "listen [::]:443 ssl default_server;"
-        listen_redirect = "listen [::]:443 ssl;"
+    listen_default_server= "" if config.disable_ipv6 else "listen [::]:443 ssl default_server;"
+    listen_redirect= "" if config.disable_ipv6 else "listen [::]:443 ssl;"
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),

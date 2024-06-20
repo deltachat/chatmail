@@ -13,6 +13,7 @@ class Config:
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.max_mailbox_size = params["max_mailbox_size"]
         self.delete_mails_after = params["delete_mails_after"]
+        self.delete_accounts_after = int(params["delete_accounts_after"])
         self.username_min_length = int(params["username_min_length"])
         self.username_max_length = int(params["username_max_length"])
         self.password_min_length = int(params["password_min_length"])

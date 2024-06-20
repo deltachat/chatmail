@@ -9,7 +9,7 @@ jobs:
     name: isolated chatmaild tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: run chatmaild tests 
         working-directory: chatmaild
@@ -19,7 +19,7 @@ jobs:
     name: deploy-chatmail tests 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: initenv 
         run: scripts/initenv.sh

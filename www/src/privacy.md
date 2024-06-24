@@ -77,7 +77,7 @@ we process the following data and details:
 - Users can retrieve or delete all stored messages 
   without intervention from the operators using standard IMAP client tools.
 
-### 3.1 Account setup
+### 2.1 Account setup
 
 Creating an account happens in one of two ways on our mail servers: 
 
@@ -98,7 +98,7 @@ Art. 6 (1) lit. b GDPR,
 as you have a usage contract with us
 by using our services.
 
-## 3.2 Processing of E-Mail-Messages
+### 2.2 Processing of E-Mail-Messages
 
 In addition,
 we will process data
@@ -124,7 +124,7 @@ Therefore, limits are enforced:
 
 - message size limits
 
-- any other limit neccessary for the whole server to function in a healthy way
+- any other limit necessary for the whole server to function in a healthy way
   and to prevent abuse.
 
 The processing and use of the above permissions

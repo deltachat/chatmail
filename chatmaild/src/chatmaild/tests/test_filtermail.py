@@ -167,3 +167,19 @@ UN4fiB0KR9JyG2ayUdNJVkXZSZLnHyRgiaadlpUo16LVvw==\r
 """
 
     assert check_armored_payload(payload) == True
+
+    payload = """-----BEGIN PGP MESSAGE-----\r
+\r
+HELLOWORLD
+-----END PGP MESSAGE-----\r
+\r
+"""
+    assert check_armored_payload(payload) == False
+
+    payload = """-----BEGIN PGP MESSAGE-----\r
+\r
+=njUN
+-----END PGP MESSAGE-----\r
+\r
+"""
+    assert check_armored_payload(payload) == False

@@ -47,7 +47,6 @@ apt install libpam-tmpdir
 apt install libpam-passwdqc
 apt install libpam-pwquality
 apt install cracklib-runtime
-apt install wordlist
 apt install wngerman
 
 /etc/lingin.defs

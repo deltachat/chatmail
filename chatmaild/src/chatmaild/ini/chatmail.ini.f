@@ -20,6 +20,9 @@ max_mailbox_size = 100M
 # days after which mails are unconditionally deleted
 delete_mails_after = 20
 
+# days after which accounts are deleted if there were no login
+delete_accounts_after = 30
+
 # minimum length a username must have
 username_min_length = 9
 

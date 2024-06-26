@@ -33,7 +33,7 @@ http {
 
 		index index.html index.htm;
 
-		server_name _;
+		server_name {{ config.domain_name }};
 
 		location / {
 			# First attempt to serve request as file, then
@@ -81,4 +81,5 @@ http {
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 	}
+        include /etc/nginx/sites-enabled/*;
 }

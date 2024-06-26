@@ -385,8 +385,10 @@ def _configure_nginx(config: Config, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
-    listen_default_server= "" if config.disable_ipv6 else "listen [::]:443 ssl default_server;"
-    listen_redirect= "" if config.disable_ipv6 else "listen [::]:443 ssl;"
+    listen_default_server = (
+        "" if config.disable_ipv6 else "listen [::]:443 ssl default_server;"
+    )
+    listen_redirect = "" if config.disable_ipv6 else "listen [::]:443 ssl;"
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),

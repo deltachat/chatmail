@@ -106,7 +106,8 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         if userdata:
             # Update last login time.
             conn.execute(
-                "UPDATE users SET last_login=? WHERE addr=?", (round(int(time.time()) // 86400), user)
+                "UPDATE users SET last_login=? WHERE addr=?",
+                (round(int(time.time()) // 86400), user),
             )
 
             userdata["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"

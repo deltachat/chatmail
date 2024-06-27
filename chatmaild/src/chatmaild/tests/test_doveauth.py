@@ -12,7 +12,9 @@ from chatmaild.doveauth import (
     handle_dovecot_protocol,
     handle_dovecot_request,
     lookup_passdb,
+    is_allowed_to_create,
 )
+from chatmaild.newemail import create_newemail_dict
 
 
 def test_basic(db, example_config):
@@ -23,6 +25,13 @@ def test_basic(db, example_config):
         db, example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
     )
     assert data == data2
+
+
+def test_invalid_username_length(example_config):
+    creds = create_newemail_dict(example_config)
+    assert not is_allowed_to_create(example_config, creds['email'][1:], creds['password'])
+    # for checking the max_length, we need to get it from the config
+    # assert not is_allowed_to_create(example_config, 'a' + creds['email'], creds['password'])
 
 
 def test_dont_overwrite_password_on_wrong_login(db, example_config):

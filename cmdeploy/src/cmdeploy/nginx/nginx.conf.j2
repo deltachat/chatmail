@@ -33,7 +33,7 @@ http {
 
 		index index.html index.htm;
 
-		server_name _;
+		server_name {{ config.domain_name }};
 
 		access_log syslog:server=unix:/dev/log,facility=local7;
 
@@ -84,4 +84,5 @@ http {
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 		access_log syslog:server=unix:/dev/log,facility=local7;
 	}
+        include /etc/nginx/sites-enabled/*;
 }

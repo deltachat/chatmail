@@ -260,6 +260,8 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
+    inet_protocols = "ipv4" if config.disable_ipv6 else "all"
+
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
         dest="/etc/postfix/main.cf",
@@ -267,6 +269,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
         config=config,
+        inet_protocols=inet_protocols,
     )
     need_restart |= main_config.changed
 
@@ -309,6 +312,8 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
+    listen_ipv4_only = "listen = *" if config.disable_ipv6 else ""
+
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
         dest="/etc/dovecot/dovecot.conf",
@@ -317,6 +322,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
         config=config,
         debug=debug,
+        listen_ipv4_only=listen_ipv4_only,
     )
     need_restart |= main_config.changed
     auth_config = files.put(
@@ -375,9 +381,14 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     return need_restart
 
 
-def _configure_nginx(domain: str, debug: bool = False) -> bool:
+def _configure_nginx(config: Config, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
+
+    listen_default_server = (
+        "" if config.disable_ipv6 else "listen [::]:443 ssl default_server;"
+    )
+    listen_redirect = "" if config.disable_ipv6 else "listen [::]:443 ssl;"
 
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),
@@ -385,7 +396,9 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
+        listen_default_server=listen_default_server,
+        listen_redirect=listen_redirect,
     )
     need_restart |= main_config.changed
 
@@ -395,7 +408,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
     )
     need_restart |= autoconfig.changed
 
@@ -405,7 +418,7 @@ def _configure_nginx(domain: str, debug: bool = False) -> bool:
         user="root",
         group="root",
         mode="644",
-        config={"domain_name": domain},
+        config={"domain_name": config.mail_domain},
     )
     need_restart |= mta_sts_config.changed
 
@@ -573,7 +586,7 @@ def deploy_chatmail(config_path: Path) -> None:
     dovecot_need_restart = _configure_dovecot(config, debug=debug)
     postfix_need_restart = _configure_postfix(config, debug=debug)
     mta_sts_need_restart = _install_mta_sts_daemon()
-    nginx_need_restart = _configure_nginx(mail_domain)
+    nginx_need_restart = _configure_nginx(config)
 
     _remove_rspamd()
     opendkim_need_restart = _configure_opendkim(mail_domain, "opendkim")
@@ -649,5 +662,3 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Ensure cron is installed",
         packages=["cron"],
     )
-
-

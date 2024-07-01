@@ -19,6 +19,22 @@ mail_debug = yes
 #   master: Warning: service(stats): client_limit (1000) reached, client connections are being dropped
 default_client_limit = 20000
 
+# Increase number of logged in IMAP connections.
+# Each connection is handled by a separate `imap` process.
+# `imap` process should have `client_limit=1` as described in
+# <https://doc.dovecot.org/configuration_manual/service_configuration/#service-limits>
+# so each logged in IMAP session will need its own `imap` process.
+#
+# If this limit is reached,
+# users will fail to LOGIN as `imap-login` process
+# will accept them logging in but fail to transfer logged in
+# connection to `imap` process until someone logs out and
+# the following warning will be logged:
+#   Warning: service(imap): process_limit (1024) reached, client connections are being dropped
+service imap {
+  process_limit = 50000
+}
+
 mail_server_admin = mailto:root@{{ config.mail_domain }}
 mail_server_comment = Chatmail server
 

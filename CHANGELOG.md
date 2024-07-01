@@ -18,6 +18,9 @@
 - replace `bash` with `/bin/sh`
   ([#334](https://github.com/deltachat/chatmail/pull/334))
 
+- Increase number of logged in IMAP sessions to 50000
+  ([#335](https://github.com/deltachat/chatmail/pull/335))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

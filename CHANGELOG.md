@@ -15,6 +15,9 @@
 - improve filtermail checks for encrypted messages and drop support for unencrypted MDNs
   ([#320](https://github.com/deltachat/chatmail/pull/320))
 
+- replace `bash` with `/bin/sh`
+  ([#334](https://github.com/deltachat/chatmail/pull/334))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Install dependencies
 echo "Installing dependencies for this script:"

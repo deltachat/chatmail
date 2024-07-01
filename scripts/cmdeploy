@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Wrapper for cmdelpoy to run it in activated virtualenv.
 set -e

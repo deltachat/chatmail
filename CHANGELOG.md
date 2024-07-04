@@ -24,6 +24,8 @@
 - Remove sieve to enable hardlink deduplication in LMTP
   ([#343](https://github.com/deltachat/chatmail/pull/343))
 
+- dovecot: enable gzip compression on disk
+  ([#341](https://github.com/deltachat/chatmail/pull/341))
 
 ## 1.3.0 - 2024-06-06
 

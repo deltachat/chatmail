@@ -21,6 +21,10 @@
 - filtermail: do not allow ASCII armor without actual payload
   ([#325](https://github.com/deltachat/chatmail/pull/325))
 
+- Remove sieve to enable hardlink deduplication in LMTP
+  ([#343](https://github.com/deltachat/chatmail/pull/343))
+
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

@@ -9,3 +9,4 @@
 2 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -path '*/tmp/*' -mtime +{{ config.delete_mails_after }} -type f -delete
 2 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -path '*/.*/tmp/*' -mtime +{{ config.delete_mails_after }} -type f -delete
 3 0 * * * vmail find /home/vmail/mail/{{ config.mail_domain }} -name 'maildirsize' -type f -delete
+4 0 * * * vmail /usr/local/bin/remove-seen.py /home/vmail/mail/{{ config.mail_domain }}

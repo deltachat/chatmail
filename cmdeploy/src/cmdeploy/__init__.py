@@ -361,6 +361,14 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         config=config,
     )
 
+    files.put(
+            src=importlib.resources.files(__package__).joinpath("dovecot/remove-seen.py"),
+            dest="/usr/local/bin/remove-seen.py",
+            user="root",
+            group="root",
+            mode="755"
+    )
+
     # as per https://doc.dovecot.org/configuration_manual/os/
     # it is recommended to set the following inotify limits
     for name in ("max_user_instances", "max_user_watches"):

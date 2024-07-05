@@ -12,6 +12,7 @@ from chatmaild.doveauth import (
     handle_dovecot_protocol,
     handle_dovecot_request,
     is_allowed_to_create,
+    iter_userdb,
     lookup_passdb,
 )
 from chatmaild.newemail import create_newemail_dict
@@ -25,6 +26,16 @@ def test_basic(db, example_config):
         db, example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
     )
     assert data == data2
+
+
+def test_iterate_addresses(db, example_config):
+    addresses = []
+
+    for i in range(10):
+        addresses.append(f"asdf1234{i}@chat.example.org")
+        lookup_passdb(db, example_config, addresses[-1], "q9mr3faue")
+    res = iter_userdb(db, example_config)
+    assert res == addresses
 
 
 def test_invalid_username_length(example_config):
@@ -106,6 +117,18 @@ def test_handle_dovecot_protocol(db, example_config):
     wfile = io.BytesIO()
     handle_dovecot_protocol(rfile, wfile, db, example_config)
     assert wfile.getvalue() == b"N\n"
+
+
+def test_handle_dovecot_protocol_iterate(db, gencreds, example_config):
+    lookup_passdb(db, example_config, "asdf00000@chat.example.org", "q9mr3faue")
+    lookup_passdb(db, example_config, "asdf11111@chat.example.org", "q9mr3faue")
+    rfile = io.BytesIO(b"H3\t2\t0\t\tauth\nI0\t0\tshared/userdb/")
+    wfile = io.BytesIO()
+    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    lines = wfile.getvalue().decode("ascii").split("\n")
+    assert lines[0] == "Oshared/userdb/asdf00000@chat.example.org\t"
+    assert lines[1] == "Oshared/userdb/asdf11111@chat.example.org\t"
+    assert not lines[2]
 
 
 def test_50_concurrent_lookups_different_accounts(db, gencreds, example_config):

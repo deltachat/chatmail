@@ -115,10 +115,7 @@ protocol lmtp {
   #
   # mail_lua and push_notification_lua are needed for Lua push notification handler.
   # <https://doc.dovecot.org/configuration_manual/push_notification/#configuration>
-  #
-  # Sieve to mark messages that should not be notified as \Seen
-  # <https://doc.dovecot.org/configuration_manual/sieve/configuration/>
-  mail_plugins = $mail_plugins quota mail_lua notify push_notification push_notification_lua sieve
+  mail_plugins = $mail_plugins quota mail_lua notify push_notification push_notification_lua
 }
 
 plugin {
@@ -138,10 +135,6 @@ plugin {
 plugin {
   # <https://doc.dovecot.org/configuration_manual/push_notification/#lua-lua>
   push_notification_driver = lua:file=/etc/dovecot/push_notification.lua
-}
-
-plugin {
-  sieve_default = file:/etc/dovecot/default.sieve
 }
 
 service lmtp {

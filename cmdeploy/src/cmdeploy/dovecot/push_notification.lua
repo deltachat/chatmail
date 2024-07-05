@@ -17,12 +17,8 @@ function dovecot_lua_notify_event_message_new(user, event)
 
   if user.username ~= event.from_address then
     -- Incoming message
-    if not contains(event.keywords, "$Auto") then
-      -- Not an Auto-Submitted message, notifying.
-
-      -- Notify METADATA server about new message.
-      mbox:metadata_set("/private/messagenew", "")
-    end
+    -- Notify METADATA server about new message.
+    mbox:metadata_set("/private/messagenew", "")
   end
 
   mbox:free()

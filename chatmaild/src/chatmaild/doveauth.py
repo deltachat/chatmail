@@ -129,7 +129,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         )
 
 
-def iter_userdb(db, config: Config) -> []:
+def iter_userdb(db, config: Config) -> list:
     """Get a list of all user addresses."""
     with db.read_connection() as conn:
         rows = conn.execute(

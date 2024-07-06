@@ -17,6 +17,8 @@ from termcolor import colored
 
 from cmdeploy.dns import check_necessary_dns, show_dns
 
+from .sshexec import SSHExec
+
 #
 # cmdeploy sub commands and options
 #
@@ -85,7 +87,7 @@ def dns_cmd(args, out):
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    ssh = f"ssh root@{args.config.mail_domain}"
+    ssh = SSHExec(args.config.mail_domain)
 
     out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:
@@ -94,7 +96,8 @@ def status_cmd(args, out):
         out.red("no privacy settings")
 
     s1 = "systemctl --type=service --state=running"
-    for line in out.shell_output(f"{ssh} -- {s1}").split("\n"):
+
+    for line in ssh(s1).split("\n"):
         if line.startswith("  "):
             print(line)
 
@@ -207,16 +210,6 @@ class Out:
     def __call__(self, msg, red=False, green=False, file=sys.stdout):
         color = "red" if red else ("green" if green else None)
         print(colored(msg, color), file=file)
-
-    def shell_output(self, arg, no_print=False, timeout=10):
-        if not no_print:
-            self(f"[$ {arg}]", file=sys.stderr)
-            output = subprocess.STDOUT
-        else:
-            output = subprocess.DEVNULL
-        return subprocess.check_output(
-            arg, shell=True, timeout=timeout, stderr=output
-        ).decode()
 
     def check_call(self, arg, env=None, quiet=False):
         if not quiet:

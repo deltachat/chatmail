@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Don't fix file owner ship of /home/vmail 
+  ([#345](https://github.com/deltachat/chatmail/pull/345))
+
 - Support iterating over all users with doveadm commands 
   ([#344](https://github.com/deltachat/chatmail/pull/344))
 

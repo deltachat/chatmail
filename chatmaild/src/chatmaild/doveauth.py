@@ -201,7 +201,7 @@ def handle_dovecot_request(msg, db, config: Config):
                     reply_command = "N"
         json_res = json.dumps(res) if res else ""
         return f"{reply_command}{json_res}\n"
-    elif short_command == "I":  # LOOKUP
+    elif short_command == "I":  # ITERATE
         # example: I0\t0\tshared/userdb/
         parts = msg[1:].split("\t")
         if parts[2] == "shared/userdb/":

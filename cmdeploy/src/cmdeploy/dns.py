@@ -1,23 +1,22 @@
 import datetime
 import importlib
-import subprocess
 
 import requests
 
-from .sshexec import SSHCommandExecutor
+from .sshexec import SSHExec
 
 
 class DNS:
-    def __init__(self, out, mail_domain):
+    def __init__(self, sshexec, mail_domain):
         self.session = requests.Session()
-        self.out = out
-        self.ssh = SSHCommandExecutor(mail_domain)
-
-        self.ssh.shell_output("apt-get install -y dnsutils")
-        self.ssh.shell_output(f"unbound-control flush_zone {mail_domain}")
+        self.sshexec = sshexec
+        self.sshexec(
+            "apt-get install -y dnsutils && "
+            f"unbound-control flush_zone {mail_domain}"
+        )
 
     def shell(self, cmd):
-        return self.ssh.shell_output(cmd)
+        return self.sshexec(cmd)
 
     def get_ipv4(self):
         cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
@@ -41,22 +40,24 @@ class DNS:
 
 def show_dns(args, out) -> int:
     """Check existing DNS records, optionally write them to zone file, return exit code 0 or 1."""
+    print("Checking your DKIM keys and DNS entries...")
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
-    ssh = f"ssh root@{mail_domain}"
-    dns = DNS(out, mail_domain)
 
-    print("Checking your DKIM keys and DNS entries...")
+    sshexec = SSHExec(mail_domain)
+
     try:
-        acme_account_url = out.shell_output(f"{ssh} -- acmetool account-url")
-    except subprocess.CalledProcessError:
+        acme_account_url = sshexec("acmetool account-url")
+    except sshexec.RemoteError:
         print("Please run `cmdeploy run` first.")
         return 1
 
+    dns = DNS(sshexec, mail_domain)
+
     dkim_selector = "opendkim"
-    dkim_pubkey = out.shell_output(
-        ssh + f" -- openssl rsa -in /etc/dkimkeys/{dkim_selector}.private"
-        " -pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
+    dkim_pubkey = sshexec(
+        f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private"
+        "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
     )
     dkim_entry_value = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
     dkim_entry_str = ""
@@ -172,7 +173,8 @@ def show_dns(args, out) -> int:
 def check_necessary_dns(out, mail_domain):
     """Check whether $mail_domain and mta-sts.$mail_domain resolve."""
     print("Checking necessary DNS records... ")
-    dns = DNS(out, mail_domain)
+    sshexec = SSHExec(mail_domain)
+    dns = DNS(sshexec, mail_domain)
     ipv4 = dns.get("A", mail_domain)
     ipv6 = dns.get("AAAA", mail_domain)
     mta_entry = dns.get("CNAME", "mta-sts." + mail_domain)
@@ -193,5 +195,5 @@ def check_necessary_dns(out, mail_domain):
             print(line)
         print()
     else:
-        dns.out.green("All necessary DNS records seem to be set.")
+        out.green("All necessary DNS records seem to be set.")
         return True

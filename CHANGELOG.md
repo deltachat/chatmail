@@ -2,6 +2,9 @@
 
 ## untagged
 
+- Support iterating over all users with doveadm commands 
+  ([#344](https://github.com/deltachat/chatmail/pull/344))
+
 - Test and fix for attempts to create inadmissible accounts 
   ([#333](https://github.com/deltachat/chatmail/pull/321))
 

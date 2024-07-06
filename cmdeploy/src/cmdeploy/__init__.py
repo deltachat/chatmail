@@ -465,11 +465,6 @@ def deploy_chatmail(config_path: Path) -> None:
     )
     server.user(name="Create echobot user", user="echobot", system=True)
 
-    server.shell(
-        name="Fix file owner in /home/vmail",
-        commands=["test -d /home/vmail && chown -R vmail:vmail /home/vmail"],
-    )
-
     # Add our OBS repository for dovecot_no_delay
     files.put(
         name="Add Deltachat OBS GPG key to apt keyring",

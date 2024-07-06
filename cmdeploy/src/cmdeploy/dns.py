@@ -1,35 +1,23 @@
 import datetime
 import importlib
 import subprocess
-import sys
 
 import requests
+
+from .sshexec import SSHCommandExecutor
 
 
 class DNS:
     def __init__(self, out, mail_domain):
         self.session = requests.Session()
         self.out = out
-        self.ssh = f"ssh root@{mail_domain} -- "
-        self.out.shell_output(
-            f"{ self.ssh }'apt-get update && apt-get install -y dnsutils'",
-            timeout=60,
-            no_print=True,
-        )
-        try:
-            self.shell(f"unbound-control flush_zone {mail_domain}")
-        except subprocess.CalledProcessError:
-            pass
+        self.ssh = SSHCommandExecutor(mail_domain)
+
+        self.ssh.shell_output("apt-get install -y dnsutils")
+        self.ssh.shell_output(f"unbound-control flush_zone {mail_domain}")
 
     def shell(self, cmd):
-        try:
-            return self.out.shell_output(f"{self.ssh}{cmd}", no_print=True)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            if "exit status 255" in str(e) or "timed out" in str(e):
-                self.out.red(f"Error: can't reach the server with: {self.ssh[:-4]}")
-                sys.exit(1)
-            else:
-                raise
+        return self.ssh.shell_output(cmd)
 
     def get_ipv4(self):
         cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"

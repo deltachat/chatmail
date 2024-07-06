@@ -2,6 +2,22 @@ import smtplib
 
 import pytest
 
+from cmdeploy.sshexec import SSHCommandExecutor
+
+
+class TestSSHExecutor:
+    def test_ls(self, sshdomain):
+        ssh = SSHCommandExecutor(sshdomain)
+        out = ssh.shell_output("ls")
+        out2 = ssh.shell_output("ls")
+        assert out == out2
+
+    def test_failed_command(self, sshdomain):
+        ssh = SSHCommandExecutor(sshdomain)
+        with pytest.raises(ssh.RemoteError) as s:
+            ssh.shell_output("qlwkejqlwkejqlwe")
+        assert "exit status 127" in str(s)
+
 
 def test_remote(remote, imap_or_smtp):
     lineproducer = remote.iter_output(imap_or_smtp.logcmd)

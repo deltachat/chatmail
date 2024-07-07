@@ -6,17 +6,23 @@ from cmdeploy.sshexec import SSHExec
 
 
 class TestSSHExecutor:
-    def test_ls(self, sshdomain):
-        ssh = SSHExec(sshdomain)
+    @pytest.fixture
+    def ssh(self, sshdomain):
+        return SSHExec(sshdomain)
+
+    def test_ls(self, ssh):
         out = ssh("ls")
         out2 = ssh("ls")
         assert out == out2
 
-    def test_failed_command(self, sshdomain):
-        ssh = SSHExec(sshdomain)
+    def test_failed_command(self, ssh):
         with pytest.raises(ssh.RemoteError) as s:
             ssh("qlwkejqlwkejqlwe")
         assert "exit status 127" in str(s)
+
+    def test_get_ip_addresses(self, ssh):
+        ipv4, ipv6 = ssh.get_ip_addresses()
+        assert ipv4 or ipv6
 
 
 def test_remote(remote, imap_or_smtp):

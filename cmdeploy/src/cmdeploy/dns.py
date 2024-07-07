@@ -15,14 +15,6 @@ class DNS:
             f"unbound-control flush_zone {mail_domain}"
         )
 
-    def get_ipv4(self):
-        cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
-        return self.sshexec(cmd).strip()
-
-    def get_ipv6(self):
-        cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
-        return self.sshexec(cmd).strip()
-
     def get(self, typ: str, domain: str) -> str:
         """Get a DNS entry or empty string if there is none."""
         dig_result = self.sshexec(f"dig -r -q {domain} -t {typ} +short")
@@ -64,10 +56,14 @@ def show_dns(args, out) -> int:
     dkim_entry_str += '"' + dkim_entry_value + '"'
     dkim_entry = f"{dkim_selector}._domainkey.{mail_domain}. TXT {dkim_entry_str}"
 
-    ipv6 = dns.get_ipv6()
-    reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
-    ipv4 = dns.get_ipv4()
-    reverse_ipv4 = dns.check_ptr_record(ipv4, mail_domain)
+    ipv4, ipv6 = sshexec.get_ip_addresses()
+    assert ipv4 or ipv6
+
+    if ipv4:
+        reverse_ipv4 = dns.check_ptr_record(ipv4, mail_domain)
+    if ipv6:
+        reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
+
     to_print = []
 
     with open(template, "r") as f:

@@ -8,16 +8,16 @@ from cmdeploy.sshexec import SSHExec
 
 class TestSSHExecutor:
     @pytest.fixture
-    def ssh(self, sshdomain):
-        return SSHExec(sshdomain)
+    def sshexec(self, sshdomain):
+        return SSHExec(sshdomain, remote_funcs)
 
-    def test_ls(self, ssh):
-        out = ssh(remote_funcs.shell, command="ls")
-        out2 = ssh(remote_funcs.shell, command="ls")
+    def test_ls(self, sshexec):
+        out = sshexec(remote_funcs.shell, command="ls")
+        out2 = sshexec(remote_funcs.shell, command="ls")
         assert out == out2
 
-    def test_perform_initial(self, ssh, maildomain):
-        res = ssh(remote_funcs.perform_initial_checks, mail_domain=maildomain)
+    def test_perform_initial(self, sshexec, maildomain):
+        res = sshexec(remote_funcs.perform_initial_checks, mail_domain=maildomain)
         assert res["ipv4"] or res["ipv6"]
 
 

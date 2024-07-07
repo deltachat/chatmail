@@ -11,7 +11,7 @@ def show_dns(args, out) -> int:
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
 
-    sshexec = SSHExec(mail_domain)
+    sshexec = SSHExec(mail_domain, remote_funcs)
 
     remote_data = sshexec(remote_funcs.perform_initial_checks, mail_domain=mail_domain)
 

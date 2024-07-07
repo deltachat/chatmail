@@ -15,8 +15,9 @@ from pathlib import Path
 from chatmaild.config import read_config, write_initial_config
 from termcolor import colored
 
+from . import remote_funcs
 from .dns import show_dns
-from .sshexec import SSHExec, remote_funcs
+from .sshexec import SSHExec
 
 #
 # cmdeploy sub commands and options
@@ -81,7 +82,7 @@ def dns_cmd(args, out):
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    sshexec = SSHExec(args.config.mail_domain)
+    sshexec = SSHExec(args.config.mail_domain, remote_funcs)
 
     out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:

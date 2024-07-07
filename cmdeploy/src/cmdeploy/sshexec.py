@@ -1,12 +1,10 @@
 import execnet
 
-from . import remote_funcs
-
 
 class SSHExec:
     RemoteError = execnet.RemoteError
 
-    def __init__(self, host, python="python3", timeout=60):
+    def __init__(self, host, remote_funcs, python="python3", timeout=60):
         target = host if "@" in host else f"root@{host}"
         self.gateway = execnet.makegateway(f"ssh={target}//python={python}")
         self._remote_cmdloop_channel = self.gateway.remote_exec(remote_funcs)

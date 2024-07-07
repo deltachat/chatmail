@@ -15,26 +15,23 @@ class DNS:
             f"unbound-control flush_zone {mail_domain}"
         )
 
-    def shell(self, cmd):
-        return self.sshexec(cmd)
-
     def get_ipv4(self):
         cmd = "ip a | grep 'inet ' | grep 'scope global' | grep -oE '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}' | head -1"
-        return self.shell(cmd).strip()
+        return self.sshexec(cmd).strip()
 
     def get_ipv6(self):
         cmd = "ip a | grep inet6 | grep 'scope global' | sed -e 's#/64 scope global##' | sed -e 's#inet6##'"
-        return self.shell(cmd).strip()
+        return self.sshexec(cmd).strip()
 
     def get(self, typ: str, domain: str) -> str:
         """Get a DNS entry or empty string if there is none."""
-        dig_result = self.shell(f"dig -r -q {domain} -t {typ} +short")
+        dig_result = self.sshexec(f"dig -r -q {domain} -t {typ} +short")
         line = dig_result.partition("\n")[0]
         return line
 
     def check_ptr_record(self, ip: str, mail_domain) -> bool:
         """Check the PTR record for an IPv4 or IPv6 address."""
-        result = self.shell(f"dig -r -x {ip} +short").rstrip()
+        result = self.sshexec(f"dig -r -x {ip} +short").rstrip()
         return result == f"{mail_domain}."
 
 

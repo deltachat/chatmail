@@ -95,9 +95,7 @@ def status_cmd(args, out):
     else:
         out.red("no privacy settings")
 
-    s1 = "systemctl --type=service --state=running"
-
-    for line in ssh(s1).split("\n"):
+    for line in ssh("systemctl --type=service --state=running").split("\n"):
         if line.startswith("  "):
             print(line)
 

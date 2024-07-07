@@ -40,7 +40,7 @@ def perform_initial_checks(mail_domain):
 
 def get_dkim_entry(mail_domain, dkim_selector):
     dkim_pubkey = shell(
-        f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private"
+        f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private "
         "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
     )
     dkim_entry_value = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"

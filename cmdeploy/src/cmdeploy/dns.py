@@ -59,10 +59,8 @@ def show_dns(args, out) -> int:
     ipv4, ipv6 = sshexec.get_ip_addresses()
     assert ipv4 or ipv6
 
-    if ipv4:
-        reverse_ipv4 = dns.check_ptr_record(ipv4, mail_domain)
-    if ipv6:
-        reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain)
+    reverse_ipv4 = dns.check_ptr_record(ipv4, mail_domain) if ipv4 else None
+    reverse_ipv6 = dns.check_ptr_record(ipv6, mail_domain) if ipv6 else None
 
     to_print = []
 
@@ -79,56 +77,47 @@ def show_dns(args, out) -> int:
             )
             .strip()
         )
-        try:
-            with open(args.zonefile, "w+") as zf:
-                zf.write(zonefile)
-                print(f"DNS records successfully written to: {args.zonefile}")
-            return 0
-        except TypeError:
-            pass
-        for raw_line in zonefile.splitlines():
-            line = raw_line.format(
-                acme_account_url=acme_account_url,
-                sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-                chatmail_domain=args.config.mail_domain,
-                dkim_entry=dkim_entry,
-                ipv6=ipv6,
-            ).strip()
-            for typ in ["A", "AAAA", "CNAME", "CAA"]:
-                if f" {typ} " in line:
-                    domain, value = line.split(f" {typ} ")
-                    current = dns.get(typ, domain.strip()[:-1])
-                    if current != value.strip():
-                        to_print.append(line)
-            if " MX " in line:
-                domain, typ, prio, value = line.split()
-                current = dns.get(typ, domain[:-1])
-                if not current:
-                    to_print.append(line)
-                elif current.split()[1] != value:
-                    print(line.replace(prio, str(int(current[0]) + 1)))
-            if " SRV " in line:
-                domain, typ, prio, weight, port, value = line.split()
-                current = dns.get("SRV", domain[:-1])
-                if current != f"{prio} {weight} {port} {value}":
-                    to_print.append(line)
-            if " TXT " in line:
-                domain, value = line.split(" TXT ")
-                current = dns.get("TXT", domain.strip()[:-1])
-                if domain.startswith("_mta-sts."):
-                    if current:
-                        if current.split("id=")[0] == value.split("id=")[0]:
-                            continue
+    if args.zonefile:
+        with open(args.zonefile, "w+") as zf:
+            zf.write(zonefile)
+        print(f"DNS records successfully written to: {args.zonefile}")
 
-                # TXT records longer than 255 bytes
-                # are split into multiple <character-string>s.
-                # This typically happens with DKIM record
-                # which contains long RSA key.
-                #
-                # Removing `" "` before comparison
-                # to get back a single string.
-                if current.replace('" "', "") != value.replace('" "', ""):
+    for line in zonefile.splitlines():
+        for typ in ["A", "AAAA", "CNAME", "CAA"]:
+            if f" {typ} " in line:
+                domain, value = line.split(f" {typ} ")
+                current = dns.get(typ, domain.strip()[:-1])
+                if current != value.strip():
                     to_print.append(line)
+        if " MX " in line:
+            domain, typ, prio, value = line.split()
+            current = dns.get(typ, domain[:-1])
+            if not current:
+                to_print.append(line)
+            elif current.split()[1] != value:
+                print(line.replace(prio, str(int(current[0]) + 1)))
+        if " SRV " in line:
+            domain, typ, prio, weight, port, value = line.split()
+            current = dns.get("SRV", domain[:-1])
+            if current != f"{prio} {weight} {port} {value}":
+                to_print.append(line)
+        if " TXT " in line:
+            domain, value = line.split(" TXT ")
+            current = dns.get("TXT", domain.strip()[:-1])
+            if domain.startswith("_mta-sts."):
+                if current:
+                    if current.split("id=")[0] == value.split("id=")[0]:
+                        continue
+
+            # TXT records longer than 255 bytes
+            # are split into multiple <character-string>s.
+            # This typically happens with DKIM record
+            # which contains long RSA key.
+            #
+            # Removing `" "` before comparison
+            # to get back a single string.
+            if current.replace('" "', "") != value.replace('" "', ""):
+                to_print.append(line)
 
     exit_code = 0
     if to_print:

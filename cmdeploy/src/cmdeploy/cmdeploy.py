@@ -15,9 +15,8 @@ from pathlib import Path
 from chatmaild.config import read_config, write_initial_config
 from termcolor import colored
 
-from cmdeploy.dns import check_necessary_dns, show_dns
-
-from .sshexec import SSHExec
+from .dns import show_dns
+from .sshexec import SSHExec, remote_funcs
 
 #
 # cmdeploy sub commands and options
@@ -53,12 +52,7 @@ def run_cmd_options(parser):
 
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
-    mail_domain = args.config.mail_domain
-    if not check_necessary_dns(
-        out,
-        mail_domain,
-    ):
-        sys.exit(1)
+    show_dns(args, out)
 
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
@@ -87,7 +81,7 @@ def dns_cmd(args, out):
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    ssh = SSHExec(args.config.mail_domain)
+    sshexec = SSHExec(args.config.mail_domain)
 
     out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:
@@ -95,9 +89,8 @@ def status_cmd(args, out):
     else:
         out.red("no privacy settings")
 
-    for line in ssh("systemctl --type=service --state=running").split("\n"):
-        if line.startswith("  "):
-            print(line)
+    for line in sshexec(remote_funcs.get_systemd_running):
+        print(line)
 
 
 def test_cmd_options(parser):

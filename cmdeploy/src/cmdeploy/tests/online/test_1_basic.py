@@ -2,6 +2,7 @@ import smtplib
 
 import pytest
 
+from cmdeploy import remote_funcs
 from cmdeploy.sshexec import SSHExec
 
 
@@ -11,18 +12,13 @@ class TestSSHExecutor:
         return SSHExec(sshdomain)
 
     def test_ls(self, ssh):
-        out = ssh("ls")
-        out2 = ssh("ls")
+        out = ssh(remote_funcs.shell, command="ls")
+        out2 = ssh(remote_funcs.shell, command="ls")
         assert out == out2
 
-    def test_failed_command(self, ssh):
-        with pytest.raises(ssh.RemoteError) as s:
-            ssh("qlwkejqlwkejqlwe")
-        assert "exit status 127" in str(s)
-
-    def test_get_ip_addresses(self, ssh):
-        ipv4, ipv6 = ssh.get_ip_addresses()
-        assert ipv4 or ipv6
+    def test_perform_initial(self, ssh, maildomain):
+        res = ssh(remote_funcs.perform_initial_checks, mail_domain=maildomain)
+        assert res["ipv4"] or res["ipv6"]
 
 
 def test_remote(remote, imap_or_smtp):

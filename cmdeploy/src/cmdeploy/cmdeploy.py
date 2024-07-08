@@ -53,7 +53,7 @@ def run_cmd_options(parser):
 
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
-    show_dns(args, out)
+    retcode, remote_data = show_dns(args, out)
 
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
@@ -62,7 +62,13 @@ def run_cmd(args, out):
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
 
     out.check_call(cmd, env=env)
-    print("Deploy completed, call `cmdeploy dns` next.")
+    if retcode == 0:
+        out.green("Deploy completed, call `cmdeploy test` next.")
+    elif not remote_data["acme_account_url"]:
+        out.red("Deploy completed but needs rerun (letsencrypt not configured)")
+    else:
+        out.red("Deploy failed")
+    return retcode
 
 
 def dns_cmd_options(parser):
@@ -75,7 +81,8 @@ def dns_cmd_options(parser):
 
 def dns_cmd(args, out):
     """Check DNS entries and optionally generate dns zone file."""
-    return show_dns(args, out)
+    retcode, remote_data = show_dns(args, out)
+    return retcode
 
 
 def status_cmd(args, out):

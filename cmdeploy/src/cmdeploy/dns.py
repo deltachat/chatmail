@@ -7,8 +7,8 @@ from .sshexec import SSHExec
 
 def show_dns(args, out) -> int:
     """Check existing DNS records, optionally write them to zone file
-    and return exit code 0 for success, non-zero otherwise."""
-    print("Checking your DKIM keys and DNS entries...")
+    and return (exitcode, remote_data) tuple."""
+    print("Checking DNS entries ...")
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
 
@@ -60,4 +60,4 @@ def show_dns(args, out) -> int:
             "You can do so at your hosting provider (maybe this isn't your DNS provider)."
         )
 
-    return exit_code
+    return exit_code, remote_data

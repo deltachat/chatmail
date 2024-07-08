@@ -11,16 +11,11 @@ def show_dns(args, out) -> int:
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
 
-    if not args.verbose:
+    def log_progress(data):
+        sys.stdout.write(".")
+        sys.stdout.flush()
 
-        def log(data):
-            sys.stdout.write(".")
-            sys.stdout.flush()
-
-    else:
-        log = print
-
-    sshexec = args.get_sshexec(log=log)
+    sshexec = args.get_sshexec(log=print if args.verbose else log_progress)
     print("Checking DNS entries ", end="\n" if args.verbose else "")
 
     remote_data = sshexec(remote_funcs.perform_initial_checks, mail_domain=mail_domain)
@@ -45,6 +40,7 @@ def show_dns(args, out) -> int:
         with open(args.zonefile, "w+") as zf:
             zf.write(zonefile)
         out.green(f"DNS records successfully written to: {args.zonefile}")
+        return 0, remote_data
 
     if to_print:
         to_print.insert(

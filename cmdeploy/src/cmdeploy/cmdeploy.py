@@ -65,7 +65,8 @@ def run_cmd(args, out):
     if retcode == 0:
         out.green("Deploy completed, call `cmdeploy test` next.")
     elif not remote_data["acme_account_url"]:
-        out.red("Deploy completed but needs rerun (letsencrypt not configured)")
+        out("Deploy completed but letsencrypt not configured, re-checking DNS")
+        return dns_cmd(args, out)
     else:
         out.red("Deploy failed")
     return retcode
@@ -88,7 +89,7 @@ def dns_cmd(args, out):
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    sshexec = SSHExec(args.config.mail_domain, remote_funcs)
+    sshexec = args.get_sshexec()
 
     out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:
@@ -137,14 +138,6 @@ def test_cmd(args, out):
 
 def fmt_cmd_options(parser):
     parser.add_argument(
-        "--verbose",
-        "-v",
-        dest="verbose",
-        action="store_true",
-        help="provide information on invocations",
-    )
-
-    parser.add_argument(
         "--check",
         "-c",
         action="store_true",
@@ -173,7 +166,6 @@ def fmt_cmd(args, out):
 
     out.check_call(" ".join(format_args), quiet=not args.verbose)
     out.check_call(" ".join(check_args), quiet=not args.verbose)
-    return 0
 
 
 def bench_cmd(args, out):
@@ -231,6 +223,14 @@ def add_config_option(parser):
         type=Path,
         help="path to the chatmail.ini file",
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="provide verbose logging",
+    )
 
 
 def add_subcommand(subparsers, func):
@@ -270,11 +270,18 @@ def get_parser():
 
 
 def main(args=None):
-    """Provide main entry point for 'xdcget' CLI invocation."""
+    """Provide main entry point for 'cmdeploy' CLI invocation."""
     parser = get_parser()
     args = parser.parse_args(args=args)
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
+
+    def get_sshexec(log=None):
+        print(f"[ssh] login to {args.config.mail_domain}")
+        return SSHExec(args.config.mail_domain, remote_funcs, log=log)
+
+    args.get_sshexec = get_sshexec
+
     out = Out()
     kwargs = {}
     if args.func.__name__ not in ("init_cmd", "fmt_cmd"):

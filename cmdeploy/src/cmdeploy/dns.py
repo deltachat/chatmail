@@ -1,18 +1,27 @@
 import datetime
 import importlib
+import sys
 
 from . import remote_funcs
-from .sshexec import SSHExec
 
 
 def show_dns(args, out) -> int:
     """Check existing DNS records, optionally write them to zone file
     and return (exitcode, remote_data) tuple."""
-    print("Checking DNS entries ...")
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
     mail_domain = args.config.mail_domain
 
-    sshexec = SSHExec(mail_domain, remote_funcs)
+    if not args.verbose:
+
+        def log(data):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+
+    else:
+        log = print
+
+    sshexec = args.get_sshexec(log=log)
+    print("Checking DNS entries ", end="\n" if args.verbose else "")
 
     remote_data = sshexec(remote_funcs.perform_initial_checks, mail_domain=mail_domain)
 
@@ -27,12 +36,15 @@ def show_dns(args, out) -> int:
             sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
             chatmail_domain=args.config.mail_domain,
         )
+
+    to_print = sshexec(remote_funcs.check_zonefile, zonefile=zonefile)
+    if not args.verbose:
+        print()
+
     if getattr(args, "zonefile", None):
         with open(args.zonefile, "w+") as zf:
             zf.write(zonefile)
-        print(f"DNS records successfully written to: {args.zonefile}")
-
-    to_print = sshexec(remote_funcs.check_zonefile, zonefile=zonefile)
+        out.green(f"DNS records successfully written to: {args.zonefile}")
 
     if to_print:
         to_print.insert(

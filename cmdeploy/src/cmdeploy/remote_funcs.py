@@ -15,6 +15,7 @@ from subprocess import CalledProcessError, check_output
 
 
 def shell(command, fail_ok=False):
+    log(f"$ {command}")
     try:
         return check_output(command, shell=True).decode().rstrip()
     except CalledProcessError:
@@ -97,6 +98,11 @@ def check_zonefile(zonefile):
 # and setup a simple serialized function-execution loop
 
 if __name__ == "__channelexec__":
+
+    def log(item):
+        channel.send(("log", item))  # noqa
+
     while 1:
         func_name, kwargs = channel.receive()  # noqa
-        channel.send(globals()[func_name](**kwargs))  # noqa
+        res = globals()[func_name](**kwargs)  # noqa
+        channel.send(("finish", res))  # noqa

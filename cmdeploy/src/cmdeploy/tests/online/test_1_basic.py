@@ -2,6 +2,24 @@ import smtplib
 
 import pytest
 
+from cmdeploy import remote_funcs
+from cmdeploy.sshexec import SSHExec
+
+
+class TestSSHExecutor:
+    @pytest.fixture
+    def sshexec(self, sshdomain):
+        return SSHExec(sshdomain, remote_funcs)
+
+    def test_ls(self, sshexec):
+        out = sshexec(remote_funcs.shell, command="ls")
+        out2 = sshexec(remote_funcs.shell, command="ls")
+        assert out == out2
+
+    def test_perform_initial(self, sshexec, maildomain):
+        res = sshexec(remote_funcs.perform_initial_checks, mail_domain=maildomain)
+        assert res["ipv4"] or res["ipv6"]
+
 
 def test_remote(remote, imap_or_smtp):
     lineproducer = remote.iter_output(imap_or_smtp.logcmd)

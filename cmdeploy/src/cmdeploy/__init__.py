@@ -630,5 +630,3 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Ensure cron is installed",
         packages=["cron"],
     )
-
-

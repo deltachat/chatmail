@@ -2,6 +2,10 @@
 
 ## untagged
 
+- Make DNS-checking faster and more interactive, run it fully during "cmdeploy run",
+  also introducing a generic mechanism for rapid remote ssh-based python function execution. 
+  ([#346](https://github.com/deltachat/chatmail/pull/346))
+
 - Don't fix file owner ship of /home/vmail 
   ([#345](https://github.com/deltachat/chatmail/pull/345))
 

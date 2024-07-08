@@ -38,11 +38,8 @@ def perform_initial_checks(mail_domain):
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
 
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
-
-    ipv4, reverse_ipv4 = get_ip_address_and_reverse(socket.AF_INET)
-    ipv6, reverse_ipv6 = get_ip_address_and_reverse(socket.AF_INET6)
-    res.update(dict(ipv4=ipv4, reverse_ipv4=reverse_ipv4))
-    res.update(dict(ipv6=ipv6, reverse_ipv6=reverse_ipv6))
+    res["ipv4"] = get_ip_address(socket.AF_INET)
+    res["ipv6"] = get_ip_address(socket.AF_INET6)
     return res
 
 
@@ -56,12 +53,11 @@ def get_dkim_entry(mail_domain, dkim_selector):
     return f'{dkim_selector}._domainkey.{mail_domain}. TXT "{dkim_value}"'
 
 
-def get_ip_address_and_reverse(typ):
+def get_ip_address(typ):
     sock = socket.socket(typ, socket.SOCK_DGRAM)
     sock.settimeout(0)
     sock.connect(("notifications.delta.chat", 1))
-    ip = sock.getsockname()[0]
-    return ip, shell(f"dig -r -x {ip} +short").rstrip(".")
+    return sock.getsockname()[0]
 
 
 def query_dns(typ, domain):

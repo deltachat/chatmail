@@ -47,25 +47,13 @@ def show_dns(args, out) -> int:
             0, "You should configure the following entries at your DNS provider:\n"
         )
         to_print.append(
-            "\nIf you already configured the DNS entries, wait a bit until the DNS entries propagate to the Internet."
+            "\nIf you already configured the DNS entries, "
+            "wait a bit until the DNS entries propagate to the Internet."
         )
         out.red("\n".join(to_print))
         exit_code = 1
     else:
         out.green("Great! All your DNS entries are verified and correct.")
         exit_code = 0
-
-    to_print = []
-    if not remote_data["reverse_ipv4"]:
-        to_print.append(f"\tIPv4:\t{remote_data['ipv4']}\t{args.config.mail_domain}")
-    if not remote_data["reverse_ipv6"]:
-        to_print.append(f"\tIPv6:\t{remote_data['ipv6']}\t{args.config.mail_domain}")
-    if len(to_print) > 0:
-        out.red("You need to set the following PTR/reverse DNS data:")
-        for entry in to_print:
-            print(entry)
-        out.red(
-            "You can do so at your hosting provider (maybe this isn't your DNS provider)."
-        )
 
     return exit_code, remote_data

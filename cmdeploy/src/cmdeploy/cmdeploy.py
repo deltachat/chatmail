@@ -74,9 +74,8 @@ def dns_cmd_options(parser):
 
 
 def dns_cmd(args, out):
-    """Generate dns zone file."""
-    exit_code = show_dns(args, out)
-    exit(exit_code)
+    """Check DNS entries and optionally generate dns zone file."""
+    show_dns(args, out)
 
 
 def status_cmd(args, out):

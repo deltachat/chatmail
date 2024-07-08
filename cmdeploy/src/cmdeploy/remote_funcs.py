@@ -11,11 +11,16 @@ without any installed dependencies.
 
 import re
 import socket
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 
 
-def shell(command):
-    return check_output(command, shell=True).decode().rstrip()
+def shell(command, fail_ok=False):
+    try:
+        return check_output(command, shell=True).decode().rstrip()
+    except CalledProcessError:
+        if not fail_ok:
+            raise
+        return ""
 
 
 def get_systemd_running():
@@ -26,9 +31,9 @@ def get_systemd_running():
 def perform_initial_checks(mail_domain):
     res = {}
 
-    res["acme_account_url"] = shell("acmetool account-url")
+    res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
     shell("apt-get install -y dnsutils")
-    shell("unbound-control flush_zone {mail_domain}")
+    shell("unbound-control flush_zone {mail_domain}", fail_ok=True)
 
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
 

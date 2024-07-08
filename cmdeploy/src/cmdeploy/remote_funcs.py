@@ -33,7 +33,8 @@ def perform_initial_checks(mail_domain):
     res = {}
 
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
-    shell("apt-get install -y dnsutils")
+    if not shell("dig", fail_ok=True):
+        shell("apt-get install -y dnsutils")
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
 
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")

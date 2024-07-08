@@ -5,8 +5,7 @@ class SSHExec:
     RemoteError = execnet.RemoteError
 
     def __init__(self, host, remote_funcs, log=None, python="python3", timeout=60):
-        self.ssh_target = host if "@" in host else f"root@{host}"
-        self.gateway = execnet.makegateway(f"ssh={self.ssh_target}//python={python}")
+        self.gateway = execnet.makegateway(f"ssh=root@{host}//python={python}")
         self._remote_cmdloop_channel = self.gateway.remote_exec(remote_funcs)
         self.log = log
         self.timeout = timeout

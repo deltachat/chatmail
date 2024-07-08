@@ -78,6 +78,10 @@ def check_zonefile(zonefile):
         if zf_value in query_values:
             continue
 
+        if zf_typ == "CAA" and zf_value.endswith("accounturi="):
+            # this is an initial run where acmetool did not work yet
+            continue
+
         if query_values and zf_typ == "TXT" and zf_domain.startswith("_mta-sts."):
             (query_value,) = query_values
             if query_value.split("id=")[0] == zf_value.split("id=")[0]:

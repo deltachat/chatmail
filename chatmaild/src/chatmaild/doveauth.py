@@ -121,6 +121,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         q = """INSERT INTO users (addr, password, last_login)
                VALUES (?, ?, ?)"""
         conn.execute(q, (user, encrypted_password, int(time.time())))
+        print(f"Created account {user}", file=sys.stderr)
         return dict(
             home=f"/home/vmail/mail/{config.mail_domain}/{user}",
             uid="vmail",

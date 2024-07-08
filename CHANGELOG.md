@@ -43,6 +43,9 @@
 - Add nonci_accounts metric
   ([#347](https://github.com/deltachat/chatmail/pull/347))
 
+- doveauth: log when a new account is created
+  ([#349](https://github.com/deltachat/chatmail/pull/349))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

@@ -9,6 +9,7 @@ without any installed dependencies.
 
 """
 
+import re
 import socket
 from subprocess import check_output
 
@@ -43,13 +44,9 @@ def get_dkim_entry(mail_domain, dkim_selector):
         f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private "
         "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
     )
-    dkim_entry_value = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
-    dkim_entry_str = ""
-    while len(dkim_entry_value) >= 255:
-        dkim_entry_str += '"' + dkim_entry_value[:255] + '" '
-        dkim_entry_value = dkim_entry_value[255:]
-    dkim_entry_str += '"' + dkim_entry_value + '"'
-    return f"{dkim_selector}._domainkey.{mail_domain}. TXT {dkim_entry_str}"
+    dkim_value_raw = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
+    dkim_value = '" "'.join(re.findall(".{1,255}", dkim_value_raw))
+    return f'{dkim_selector}._domainkey.{mail_domain}. TXT "{dkim_value}"'
 
 
 def get_ip_address_and_reverse(typ):
@@ -62,48 +59,27 @@ def get_ip_address_and_reverse(typ):
 
 def query_dns(typ, domain):
     res = shell(f"dig -r -q {domain} -t {typ} +short")
-    return res.partition("\n")[0]
+    return set(filter(None, res.split("\n")))
 
 
 def check_zonefile(zonefile):
     diff = []
 
-    for line in zonefile.splitlines():
-        for typ in ["A", "AAAA", "CNAME", "CAA"]:
-            if f" {typ} " in line:
-                domain, value = line.split(f" {typ} ")
-                current = query_dns(typ, domain.strip()[:-1])
-                if current != value.strip():
-                    diff.append(line)
-        if " MX " in line:
-            domain, typ, prio, value = line.split()
-            current = query_dns(typ, domain[:-1])
-            if not current:
-                diff.append(line)
-            elif current.split()[1] != value:
-                diff.append(line.replace(prio, str(int(current[0]) + 1)))
-        if " SRV " in line:
-            domain, typ, prio, weight, port, value = line.split()
-            current = query_dns("SRV", domain[:-1])
-            if current != f"{prio} {weight} {port} {value}":
-                diff.append(line)
-        if " TXT " in line:
-            domain, value = line.split(" TXT ")
-            current = query_dns("TXT", domain.strip()[:-1])
-            if domain.startswith("_mta-sts."):
-                if current:
-                    if current.split("id=")[0] == value.split("id=")[0]:
-                        continue
+    for zf_line in zonefile.splitlines():
+        zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
+        zf_domain = zf_domain.rstrip(".")
+        zf_value = zf_value.strip()
+        query_values = query_dns(zf_typ, zf_domain)
+        if zf_value in query_values:
+            continue
 
-            # TXT records longer than 255 bytes
-            # are split into multiple <character-string>s.
-            # This typically happens with DKIM record
-            # which contains long RSA key.
-            #
-            # Removing `" "` before comparison
-            # to get back a single string.
-            if current.replace('" "', "") != value.replace('" "', ""):
-                diff.append(line)
+        if query_values and zf_typ == "TXT" and zf_domain.startswith("_mta-sts."):
+            (query_value,) = query_values
+            if query_value.split("id=")[0] == zf_value.split("id=")[0]:
+                continue
+
+        assert zf_typ in ("A", "AAAA", "CNAME", "CAA", "SRV", "MX", "TXT"), zf_line
+        diff.append(zf_line)
 
     return diff
 

@@ -18,17 +18,13 @@ def show_dns(args, out) -> int:
     assert remote_data["ipv4"] or remote_data["ipv6"]
 
     with open(template, "r") as f:
-        zonefile = (
-            f.read()
-            .format(
-                acme_account_url=remote_data["acme_account_url"],
-                dkim_entry=remote_data["dkim_entry"],
-                ipv6=remote_data["ipv6"],
-                ipv4=remote_data["ipv4"],
-                sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-                chatmail_domain=args.config.mail_domain,
-            )
-            .strip()
+        zonefile = f.read().format(
+            acme_account_url=remote_data["acme_account_url"],
+            dkim_entry=remote_data["dkim_entry"],
+            ipv6=remote_data["ipv6"],
+            ipv4=remote_data["ipv4"],
+            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+            chatmail_domain=args.config.mail_domain,
         )
     if getattr(args, "zonefile", None):
         with open(args.zonefile, "w+") as zf:

@@ -22,9 +22,8 @@ def remove_users(db: Database, cutoff_date: int):
         conn.execute(delete_query, (cutoff_date))
 
 
-def remove_user_data(db: Database, cutoff_date: int, dir: Path):
+def remove_user_data(db: Database, cutoff_date: int, vmail_basedir: Path):
     """Collects all users where last_login < cutoff_date and deletes corresponding directories."""
-    db.connect()
 
     with db.write_transaction() as conn:
         select_query = "SELECT user FROM users WHERE last_login <?"
@@ -32,7 +31,7 @@ def remove_user_data(db: Database, cutoff_date: int, dir: Path):
         usernames = cursor.fetchall()
 
         for username in usernames:
-            user_dir = dir / username[0]
+            user_dir = vmail_basedir / username[0]
             if user_dir.exists() and user_dir.is_dir():
                 shutil.rmtree(user_dir)
                 print(f"Deleted directory: {user_dir}")

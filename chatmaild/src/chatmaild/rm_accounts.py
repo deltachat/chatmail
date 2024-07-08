@@ -31,7 +31,7 @@ def remove_user_data(db: Database, cutoff_date: int, vmail_basedir: Path):
 def main():
     db = Database(sys.argv[2])
     config = read_config(sys.argv[3])
-    today = round(int(time.time()) // 86400)
+    today = int(time.time() // 86400)
 
     cutoff_date = today - config.delete_accounts_after
     remove_user_data(db, cutoff_date)

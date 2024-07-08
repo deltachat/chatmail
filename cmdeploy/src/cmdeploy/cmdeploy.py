@@ -65,8 +65,9 @@ def run_cmd(args, out):
     if retcode == 0:
         out.green("Deploy completed, call `cmdeploy test` next.")
     elif not remote_data["acme_account_url"]:
-        out("Deploy completed but letsencrypt not configured, re-checking DNS")
-        return dns_cmd(args, out)
+        out.red("Deploy completed but letsencrypt not configured")
+        out.red("Run 'cmdeploy dns' or 'cmdeploy run' again")
+        retcode = 0
     else:
         out.red("Deploy failed")
     return retcode

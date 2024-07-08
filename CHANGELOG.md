@@ -2,6 +2,11 @@
 
 ## untagged
 
+- remove checking of reverse-DNS PTR records.  Chatmail-servers don't
+  depend on it and even in the wider e-mail system it's not common anymore. 
+  If it's an issue, a chatmail operator can still care to properly set reverse DNS. 
+  ([#348](https://github.com/deltachat/chatmail/pull/348))
+
 - Make DNS-checking faster and more interactive, run it fully during "cmdeploy run",
   also introducing a generic mechanism for rapid remote ssh-based python function execution. 
   ([#346](https://github.com/deltachat/chatmail/pull/346))

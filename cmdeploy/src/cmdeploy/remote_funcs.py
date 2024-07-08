@@ -79,7 +79,7 @@ def check_zonefile(zonefile):
         if zf_value in query_values:
             continue
 
-        if zf_typ == "CAA" and zf_value.endswith("accounturi="):
+        if zf_typ == "CAA" and zf_value.endswith('accounturi="'):
             # this is an initial run where acmetool did not work yet
             continue
 

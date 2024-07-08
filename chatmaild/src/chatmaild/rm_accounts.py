@@ -33,7 +33,7 @@ def remove_user_data(db: Database, cutoff_date: int, vmail_basedir: Path):
         for username in usernames:
             user_dir = vmail_basedir / username[0]
             if user_dir.exists() and user_dir.is_dir():
-                shutil.rmtree(user_dir)
+                shutil.rmtree(user_dir, ignore_errors=True)
                 print(f"Deleted directory: {user_dir}")
 
 

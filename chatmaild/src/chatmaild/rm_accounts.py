@@ -17,22 +17,18 @@ from .database import Database
 
 
 def remove_users(db: Database, cutoff_date: int):
-    db.connect()
-    try:
+    with db.write_transaction() as conn:
         delete_query = "DELETE FROM users WHERE last_login <?"
-        db.execute_query(delete_query, (cutoff_date))
-        db.commit_changes()
-    finally:
-        db.close()
+        conn.execute(delete_query, (cutoff_date))
 
 
 def remove_user_data(db: Database, cutoff_date: int, dir: Path):
     """Collects all users where last_login < cutoff_date and deletes corresponding directories."""
     db.connect()
 
-    try:
+    with db.write_transaction() as conn:
         select_query = "SELECT user FROM users WHERE last_login <?"
-        cursor = db.execute_query(select_query, (cutoff_date,))
+        cursor = conn.execute(select_query, (cutoff_date,))
         usernames = cursor.fetchall()
 
         for username in usernames:
@@ -40,9 +36,6 @@ def remove_user_data(db: Database, cutoff_date: int, dir: Path):
             if user_dir.exists() and user_dir.is_dir():
                 shutil.rmtree(user_dir)
                 print(f"Deleted directory: {user_dir}")
-
-    finally:
-        db.close()
 
 
 def main():

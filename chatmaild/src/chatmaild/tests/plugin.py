@@ -18,7 +18,8 @@ def make_config(tmp_path):
     def make_conf(mail_domain):
         basedir = tmp_path.joinpath(f"vmail/{mail_domain}")
         basedir.mkdir(parents=True, exist_ok=True)
-        overrides = dict(mailboxes_dir=str(basedir))
+        passdb = tmp_path.joinpath("vmail/passdb.sqlite")
+        overrides = dict(mailboxes_dir=str(basedir), passdb_path=str(passdb))
         write_initial_config(inipath, mail_domain=mail_domain, **overrides)
         return read_config(inipath)
 

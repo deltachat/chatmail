@@ -24,6 +24,7 @@ class Config:
         self.passthrough_senders = params["passthrough_senders"].split()
         self.passthrough_recipients = params["passthrough_recipients"].split()
         self.mailboxes_dir = params["mailboxes_dir"].strip().rstrip("/")
+        self.passdb_path = params["passdb_path"].strip().rstrip("/")
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.iroh_relay = params.get("iroh_relay")

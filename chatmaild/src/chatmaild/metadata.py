@@ -128,12 +128,12 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket, vmail_dir, config_path = sys.argv[1:]
+    socket, config_path = sys.argv[1:]
 
     config = read_config(config_path)
     iroh_relay = config.iroh_relay
 
-    vmail_dir = Path(vmail_dir)
+    vmail_dir = Path(config.mailboxes_dir)
     if not vmail_dir.exists():
         logging.error("vmail dir does not exist: %r", vmail_dir)
         return 1

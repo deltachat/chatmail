@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import sys
-import time
 from pathlib import Path
 
 from .config import Config, read_config
@@ -82,7 +81,7 @@ def lookup_userdb(db, config: Config, user):
     return get_user_data(db, config, user)
 
 
-def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None):
+def lookup_passdb(db, config: Config, user, cleartext_password):
     if user == f"echo@{config.mail_domain}":
         # Echobot writes password it wants to log in with into /run/echobot/password
         try:
@@ -98,18 +97,9 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
             password=encrypt_password(password),
         )
 
-    if last_login is None:
-        last_login = time.time()
-    last_login = int(last_login)
-
-    with db.write_transaction() as conn:
+    with db.read_connection() as conn:
         userdata = conn.get_user(user)
         if userdata:
-            # Update last login time.
-            conn.execute(
-                "UPDATE users SET last_login=? WHERE addr=?", (last_login, user)
-            )
-
             userdata["home"] = str(config.get_user_maildir(user))
             userdata["uid"] = "vmail"
             userdata["gid"] = "vmail"
@@ -117,10 +107,10 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
         if not is_allowed_to_create(config, user, cleartext_password):
             return
 
+    with db.write_transaction() as conn:
         encrypted_password = encrypt_password(cleartext_password)
-        q = """INSERT INTO users (addr, password, last_login)
-               VALUES (?, ?, ?)"""
-        conn.execute(q, (user, encrypted_password, last_login))
+        q = "INSERT INTO users (addr, password) VALUES (?, ?)"
+        conn.execute(q, (user, encrypted_password))
         print(f"Created address: {user}", file=sys.stderr)
         return dict(
             home=str(config.get_user_maildir(user)),

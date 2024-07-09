@@ -35,16 +35,9 @@ class Connection:
 
     def get_user(self, addr: str) -> {}:
         """Get a row from the users table."""
-        q = "SELECT addr, password, last_login from users WHERE addr = ?"
+        q = "SELECT addr, password from users WHERE addr = ?"
         row = self._sqlconn.execute(q, (addr,)).fetchone()
-        result = {}
-        if row:
-            result = dict(
-                user=row[0],
-                password=row[1],
-                last_login=row[2],
-            )
-        return result
+        return dict(user=row[0], password=row[1]) if row else {}
 
 
 class Database:

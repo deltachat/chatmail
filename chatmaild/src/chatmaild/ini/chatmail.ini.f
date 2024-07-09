@@ -42,6 +42,9 @@ passthrough_recipients = xstore@testrun.org groupsbot@hispanilandia.net
 # Deployment Details
 #
 
+# Directory where user mailboxes are stored
+mailboxes_dir = /home/vmail/mail/{mail_domain}
+
 # where the filtermail SMTP service listens
 filtermail_smtp_port = 10080
 
@@ -63,4 +66,3 @@ privacy_pdo =
 
 # postal address of the privacy supervisor
 privacy_supervisor =
-

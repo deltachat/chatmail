@@ -68,7 +68,7 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
 def get_user_data(db, config: Config, user):
     if user == f"echo@{config.mail_domain}":
         return dict(
-            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            home=config.get_user_maildir(user),
             uid="vmail",
             gid="vmail",
         )
@@ -76,7 +76,7 @@ def get_user_data(db, config: Config, user):
     with db.read_connection() as conn:
         result = conn.get_user(user)
     if result:
-        result["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"
+        result["home"] = config.get_user_maildir(user)
         result["uid"] = "vmail"
         result["gid"] = "vmail"
     return result
@@ -96,7 +96,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
             return None
 
         return dict(
-            home=f"/home/vmail/mail/{config.mail_domain}/echo@{config.mail_domain}",
+            home=config.get_user_maildir(user),
             uid="vmail",
             gid="vmail",
             password=encrypt_password(password),
@@ -114,7 +114,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
                 "UPDATE users SET last_login=? WHERE addr=?", (last_login, user)
             )
 
-            userdata["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"
+            userdata["home"] = config.get_user_maildir(user)
             userdata["uid"] = "vmail"
             userdata["gid"] = "vmail"
             return userdata
@@ -127,7 +127,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
         conn.execute(q, (user, encrypted_password, last_login))
         print(f"Created address: {user}", file=sys.stderr)
         return dict(
-            home=f"/home/vmail/mail/{config.mail_domain}/{user}",
+            home=config.get_user_maildir(user),
             uid="vmail",
             gid="vmail",
             password=encrypted_password,

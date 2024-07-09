@@ -124,7 +124,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
         q = """INSERT INTO users (addr, password, last_login)
                VALUES (?, ?, ?)"""
         conn.execute(q, (user, encrypted_password, last_login))
-        print(f"Created e-mail address: {user}", file=sys.stderr)
+        print(f"Created address: {user}", file=sys.stderr)
         return dict(
             home=f"/home/vmail/mail/{config.mail_domain}/{user}",
             uid="vmail",
@@ -146,7 +146,7 @@ def iter_userdb_lastlogin_before(db, cutoff_date):
     """Get a list of users where last login was before cutoff_date."""
     with db.read_connection() as conn:
         rows = conn.execute(
-            "SELECT addr FROM users WHERE last_login <?", (cutoff_date,)
+            "SELECT addr FROM users WHERE last_login < ?", (cutoff_date,)
         ).fetchall()
     return [x[0] for x in rows]
 

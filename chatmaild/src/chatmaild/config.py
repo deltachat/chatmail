@@ -3,18 +3,22 @@ from pathlib import Path
 import iniconfig
 
 
-def read_config(inipath):
+def read_config(inipath, mail_basedir=None):
     cfg = iniconfig.IniConfig(inipath)
-    return Config(inipath, params=cfg.sections["params"])
+    params = cfg.sections["params"]
+    if mail_basedir is None:
+        mail_basedir = Path(f"/home/vmail/mail/{params['mail_domain']}")
+    return Config(inipath, params=params, mail_basedir=mail_basedir)
 
 
 class Config:
-    def __init__(self, inipath, params):
+    def __init__(self, inipath, params, mail_basedir):
         self._inipath = inipath
         self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.max_mailbox_size = params["max_mailbox_size"]
         self.delete_mails_after = params["delete_mails_after"]
+        self.delete_inactive_users_after = int(params["delete_inactive_users_after"])
         self.username_min_length = int(params["username_min_length"])
         self.username_max_length = int(params["username_max_length"])
         self.password_min_length = int(params["password_min_length"])
@@ -27,7 +31,7 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
-        self.mail_basedir = Path(f"/home/vmail/mail/{self.mail_domain}")
+        self.mail_basedir = mail_basedir
 
     def _getbytefile(self):
         return open(self._inipath, "rb")

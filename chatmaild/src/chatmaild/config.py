@@ -13,7 +13,7 @@ def read_config(inipath, mail_basedir=None):
 
 
 class Config:
-    def __init__(self, inipath, params, mail_basedir):
+    def __init__(self, inipath, params, mail_basedir: Path):
         self._inipath = inipath
         self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])

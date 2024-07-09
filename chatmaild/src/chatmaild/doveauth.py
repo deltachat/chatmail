@@ -86,7 +86,7 @@ def lookup_userdb(db, config: Config, user):
     return get_user_data(db, config, user)
 
 
-def lookup_passdb(db, config: Config, user, cleartext_password):
+def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None):
     if user == f"echo@{config.mail_domain}":
         # Echobot writes password it wants to log in with into /run/echobot/password
         try:
@@ -102,12 +102,15 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
             password=encrypt_password(password),
         )
 
+    if last_login is None:
+        last_login = int(time.time())
+
     with db.write_transaction() as conn:
         userdata = conn.get_user(user)
         if userdata:
             # Update last login time.
             conn.execute(
-                "UPDATE users SET last_login=? WHERE addr=?", (int(time.time()), user)
+                "UPDATE users SET last_login=? WHERE addr=?", (last_login, user)
             )
 
             userdata["home"] = f"/home/vmail/mail/{config.mail_domain}/{user}"
@@ -120,7 +123,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         encrypted_password = encrypt_password(cleartext_password)
         q = """INSERT INTO users (addr, password, last_login)
                VALUES (?, ?, ?)"""
-        conn.execute(q, (user, encrypted_password, int(time.time())))
+        conn.execute(q, (user, encrypted_password, last_login))
         print(f"Created account {user}", file=sys.stderr)
         return dict(
             home=f"/home/vmail/mail/{config.mail_domain}/{user}",
@@ -130,11 +133,20 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         )
 
 
-def iter_userdb(db, config: Config) -> list:
+def iter_userdb(db) -> list:
     """Get a list of all user addresses."""
     with db.read_connection() as conn:
         rows = conn.execute(
             "SELECT addr from users",
+        ).fetchall()
+    return [x[0] for x in rows]
+
+
+def iter_userdb_lastlogin_before(db, cutoff_date):
+    """Get a list of users where last login was before cutoff_date."""
+    with db.read_connection() as conn:
+        rows = conn.execute(
+            "SELECT addr FROM users WHERE last_login <?", (cutoff_date,)
         ).fetchall()
     return [x[0] for x in rows]
 
@@ -206,9 +218,7 @@ def handle_dovecot_request(msg, db, config: Config):
         # example: I0\t0\tshared/userdb/
         parts = msg[1:].split("\t")
         if parts[2] == "shared/userdb/":
-            result = "".join(
-                f"Oshared/userdb/{user}\t\n" for user in iter_userdb(db, config)
-            )
+            result = "".join(f"Oshared/userdb/{user}\t\n" for user in iter_userdb(db))
             return f"{result}\n"
 
     raise UnknownCommand(msg)

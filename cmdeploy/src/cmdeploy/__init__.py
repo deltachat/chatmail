@@ -92,7 +92,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         group="root",
         mode="644",
         config={
-            "mail_domain": config.mail_domain,
+            "mailboxes_dir": config.mailboxes_dir,
             "execpath": f"{remote_venv_dir}/bin/chatmail-metrics",
         },
     )

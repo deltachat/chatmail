@@ -245,9 +245,9 @@ class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
 
 
 def main():
-    socket = sys.argv[1]
-    db = Database(sys.argv[2])
-    config = read_config(sys.argv[3])
+    socket, cfgpath = sys.argv[1:]
+    config = read_config(cfgpath)
+    db = Database(config.passdb_path)
 
     class Handler(StreamRequestHandler):
         def handle(self):

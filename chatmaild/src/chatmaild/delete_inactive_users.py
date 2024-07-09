@@ -27,6 +27,7 @@ def delete_inactive_users(db, config, CHUNK=100):
 
 
 def main():
-    db = Database(sys.argv[1])
-    config = read_config(sys.argv[2])
+    (cfgpath,) = sys.argv[1:]
+    config = read_config(cfgpath)
+    db = Database(config.passdb_path)
     delete_inactive_users(db, config)

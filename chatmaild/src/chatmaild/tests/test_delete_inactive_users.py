@@ -15,8 +15,13 @@ def test_remove_stale_users(db, example_config):
         md.joinpath("cur").mkdir()
         md.joinpath("cur", "something").mkdir()
 
+    to_remove = []
     for i in range(10):
-        create_user(f"oldold{i:03}@chat.example.org", last_login=old)
+        addr = f"oldold{i:03}@chat.example.org"
+        create_user(addr, last_login=old)
+        with db.read_connection() as conn:
+            assert conn.get_user(addr)
+        to_remove.append(addr)
 
     remain = []
     for i in range(5):
@@ -30,5 +35,11 @@ def test_remove_stale_users(db, example_config):
     for p in udir.parent.iterdir():
         assert not p.name.startswith("old")
 
+    for addr in to_remove:
+        with db.read_connection() as conn:
+            assert not conn.get_user(addr)
+
     for addr in remain:
         assert example_config.get_user_maildir(addr).exists()
+        with db.read_connection() as conn:
+            assert conn.get_user(addr)

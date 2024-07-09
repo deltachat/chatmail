@@ -1,5 +1,5 @@
 """
-Remove old user accounts
+Remove inactive users
 """
 
 import shutil

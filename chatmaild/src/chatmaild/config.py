@@ -4,6 +4,7 @@ import iniconfig
 
 
 def read_config(inipath, mail_basedir=None):
+    assert Path(inipath).exists(), inipath
     cfg = iniconfig.IniConfig(inipath)
     params = cfg.sections["params"]
     if mail_basedir is None:

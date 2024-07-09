@@ -8,7 +8,7 @@ mail_domain = {mail_domain}
 #
 
 #
-# Restrictions on user addresses 
+# Restrictions on user addresses
 #
 
 # how many mails a user can send out per minute
@@ -20,7 +20,7 @@ max_mailbox_size = 100M
 # days after which mails are unconditionally deleted
 delete_mails_after = 20
 
-# days after which users without a login are deleted (database and mails) 
+# days after which users without a login are deleted (database and mails)
 delete_inactive_users_after = 25
 
 # minimum length a username must have

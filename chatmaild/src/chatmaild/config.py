@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import iniconfig
 
 
@@ -25,9 +27,15 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+        self.mail_basedir = Path(f"/home/vmail/mail/{self.mail_domain}")
 
     def _getbytefile(self):
         return open(self._inipath, "rb")
+
+    def get_user_maildir(self, addr):
+        if not addr or "/" in addr:
+            raise ValueError(addr)
+        return self.mail_basedir.joinpath(addr)
 
 
 def write_initial_config(inipath, mail_domain):

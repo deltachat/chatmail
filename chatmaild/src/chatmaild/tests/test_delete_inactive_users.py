@@ -17,7 +17,7 @@ def test_remove_stale_users(db, example_config):
 
     # create some stale and some new accounts
     to_remove = []
-    for i in range(10):
+    for i in range(150):
         addr = f"oldold{i:03}@chat.example.org"
         create_user(addr, last_login=old)
         with db.read_connection() as conn:

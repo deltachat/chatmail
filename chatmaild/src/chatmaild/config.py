@@ -38,9 +38,11 @@ class Config:
         return open(self._inipath, "rb")
 
     def get_user_maildir(self, addr):
-        if not addr or "/" in addr:
-            raise ValueError(addr)
-        return self.mail_basedir.joinpath(addr)
+        if addr and addr != "." and "/" not in addr:
+            res = self.mail_basedir.joinpath(addr).resolve()
+            if res.is_relative_to(self.mail_basedir):
+                return res
+        raise ValueError(f"invalid address {addr!r}")
 
 
 def write_initial_config(inipath, mail_domain):

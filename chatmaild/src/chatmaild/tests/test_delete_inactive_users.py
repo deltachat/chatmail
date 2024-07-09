@@ -15,6 +15,7 @@ def test_remove_stale_users(db, example_config):
         md.joinpath("cur").mkdir()
         md.joinpath("cur", "something").mkdir()
 
+    # create some stale and some new accounts
     to_remove = []
     for i in range(10):
         addr = f"oldold{i:03}@chat.example.org"
@@ -25,19 +26,24 @@ def test_remove_stale_users(db, example_config):
 
     remain = []
     for i in range(5):
-        create_user(f"newnew{i:03}@chat.example.org", last_login=new)
+        addr = f"newnew{i:03}@chat.example.org"
+        create_user(addr, last_login=new)
+        remain.append(addr)
 
-    udir = example_config.get_user_maildir("oldold001@chat.example.org")
-    assert udir.exists()
+    # check pre and post-conditions for delete_inactive_users()
+
+    for addr in to_remove:
+        assert example_config.get_user_maildir(addr).exists()
 
     delete_inactive_users(db, example_config)
 
-    for p in udir.parent.iterdir():
+    for p in example_config.mail_basedir.iterdir():
         assert not p.name.startswith("old")
 
     for addr in to_remove:
         with db.read_connection() as conn:
             assert not conn.get_user(addr)
+            assert not example_config.get_user_maildir(addr).exists()
 
     for addr in remain:
         assert example_config.get_user_maildir(addr).exists()

@@ -1,12 +1,12 @@
-from time import time as now
+import time
 
 from chatmaild.delete_inactive_users import delete_inactive_users
 from chatmaild.doveauth import lookup_passdb
 
 
 def test_remove_stale_users(db, example_config):
-    old = now() - (example_config.delete_inactive_users_after * 86400) - 1000
-    new = old + 1001
+    new = time.time()
+    old = new - (example_config.delete_inactive_users_after * 86400) - 1
 
     def create_user(addr, last_login):
         lookup_passdb(db, example_config, addr, "q9mr3faue", last_login=last_login)

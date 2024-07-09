@@ -12,7 +12,6 @@ from chatmaild.doveauth import (
     get_user_data,
     is_allowed_to_create,
     iter_userdb,
-    iter_userdb_lastlogin_before,
     lookup_passdb,
 )
 from chatmaild.newemail import create_newemail_dict
@@ -36,25 +35,6 @@ def test_iterate_addresses(db, example_config):
         lookup_passdb(db, example_config, addresses[-1], "q9mr3faue")
     res = iter_userdb(db)
     assert res == addresses
-
-
-def test_iterate_addresses_lastlogin_before(db, example_config):
-    addresses = []
-
-    cutoff_date = 1000
-    for i in range(10):
-        addr = f"oldold{i:03}@chat.example.org"
-        lookup_passdb(
-            db, example_config, addr, "q9mr3faue", last_login=cutoff_date - 10
-        )
-        addresses.append(addr)
-
-    for i in range(5):
-        addr = f"newnew{i:03}@chat.example.org"
-        lookup_passdb(db, example_config, addr, "q9mr3faue", last_login=cutoff_date + i)
-
-    res = iter_userdb_lastlogin_before(db, cutoff_date)
-    assert sorted(res) == sorted(addresses)
 
 
 def test_invalid_username_length(example_config):

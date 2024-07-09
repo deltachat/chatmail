@@ -43,7 +43,15 @@ def test_get_user_maildir(make_config):
 
     with pytest.raises(ValueError):
         config.get_user_maildir("")
+
     with pytest.raises(ValueError):
         config.get_user_maildir(None)
+
     with pytest.raises(ValueError):
         config.get_user_maildir("../some@something.testrun.org")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir("..")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir(".")

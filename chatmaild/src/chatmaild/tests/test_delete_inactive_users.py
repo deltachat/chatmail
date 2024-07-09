@@ -1,7 +1,7 @@
 from time import time as now
 
-from chatmaild.doveauth import lookup_passdb
 from chatmaild.delete_inactive_users import delete_inactive_users
+from chatmaild.doveauth import lookup_passdb
 
 
 def test_remove_stale_users(db, example_config):

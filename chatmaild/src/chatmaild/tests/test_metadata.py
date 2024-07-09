@@ -92,8 +92,26 @@ def test_notifier_remove_without_set(metadata, testaddr):
     assert not metadata.get_tokens_for_addr(testaddr)
 
 
+<<<<<<< HEAD
 def test_handle_dovecot_request_lookup_fails(dictproxy, testaddr):
     res = dictproxy.handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}")
+=======
+def test_metadata_login_timestamp(metadata, testaddr):
+    timestamp = metadata.vmail_dir.joinpath(testaddr).mkdir()
+    metadata.write_login_timestamp(testaddr, timestamp=100000)
+    timestamp = metadata.vmail_dir.joinpath(testaddr, "last-login").read_text()
+    assert int(timestamp) == 86400
+
+    metadata.write_login_timestamp(testaddr, timestamp=200000)
+    timestamp = metadata.vmail_dir.joinpath(testaddr, "last-login").read_text()
+    assert int(timestamp) == 86400 * 2
+
+
+def test_handle_dovecot_request_lookup_fails(notifier, metadata, testaddr):
+    res = handle_dovecot_request(
+        f"Lpriv/123/chatmail\t{testaddr}", {}, notifier, metadata
+    )
+>>>>>>> 317d30f (write last login differently)
     assert res == "N\n"
 
 
@@ -133,7 +151,37 @@ def test_handle_dovecot_request_happy_path(dictproxy, testaddr, token):
     assert queue_item.path.exists()
 
 
+<<<<<<< HEAD
 def test_handle_dovecot_protocol_set_devicetoken(dictproxy):
+=======
+def test_handle_dovecot_request_last_login(notifier, metadata, testaddr, token):
+    transactions = {}
+
+    userdir = metadata.vmail_dir.joinpath(testaddr)
+
+    # set last-login info for user
+    tx = "1111"
+    msg = f"B{tx}\t{testaddr}"
+    res = handle_dovecot_request(msg, transactions, notifier, metadata)
+    assert not res
+    assert transactions == {tx: dict(addr=testaddr, res="O\n")}
+
+    timestamp = int(time.time())
+    msg = f"S{tx}\tshared/last-login/{testaddr}\t{timestamp}"
+    res = handle_dovecot_request(msg, transactions, notifier, metadata)
+    assert not res
+    assert len(transactions) == 1
+    read_timestamp = int(userdir.joinpath("last-login").read_text())
+    assert read_timestamp == timestamp // 86400 * 86400
+
+    msg = f"C{tx}"
+    res = handle_dovecot_request(msg, transactions, notifier, metadata)
+    assert res == "O\n"
+    assert len(transactions) == 0
+
+
+def test_handle_dovecot_protocol_set_devicetoken(metadata, notifier):
+>>>>>>> 317d30f (write last login differently)
     rfile = io.BytesIO(
         b"\n".join(
             [

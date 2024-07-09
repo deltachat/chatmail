@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from chatmaild.config import read_config
 
@@ -35,11 +37,12 @@ def test_read_config_testrun(make_config):
 
 def test_get_user_maildir(make_config):
     config = make_config("something.testrun.org")
-    assert config.mail_basedir.name == "something.testrun.org"
+    mailboxes_dir = Path(config.mailboxes_dir)
+    assert mailboxes_dir.name == "something.testrun.org"
     assert config.mail_domain == "something.testrun.org"
-    path = config.get_user_maildir("user1@something.testrun.org")
+    path = Path(config.get_user_maildir("user1@something.testrun.org"))
     assert not path.exists()
-    assert path == config.mail_basedir.joinpath("user1@something.testrun.org")
+    assert path == mailboxes_dir.joinpath("user1@something.testrun.org")
 
     with pytest.raises(ValueError):
         config.get_user_maildir("")

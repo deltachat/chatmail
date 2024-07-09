@@ -103,7 +103,8 @@ def lookup_passdb(db, config: Config, user, cleartext_password, last_login=None)
         )
 
     if last_login is None:
-        last_login = int(time.time())
+        last_login = time.time()
+    last_login = int(last_login)
 
     with db.write_transaction() as conn:
         userdata = conn.get_user(user)

@@ -17,7 +17,9 @@ def make_config(tmp_path):
 
     def make_conf(mail_domain):
         write_initial_config(inipath, mail_domain=mail_domain)
-        return read_config(inipath)
+        basedir = tmp_path.joinpath(f"vmail/{mail_domain}")
+        basedir.mkdir(parents=True, exist_ok=True)
+        return read_config(inipath, mail_basedir=basedir)
 
     return make_conf
 

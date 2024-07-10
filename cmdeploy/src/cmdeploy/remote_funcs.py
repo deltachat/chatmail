@@ -15,7 +15,7 @@ from subprocess import CalledProcessError, check_output
 
 
 def shell(command, fail_ok=False):
-    log(f"$ {command}")
+    print(f"$ {command}")
     try:
         return check_output(command, shell=True).decode().rstrip()
     except CalledProcessError:
@@ -56,7 +56,14 @@ def get_dkim_entry(mail_domain, dkim_selector):
 def get_ip_address(typ):
     sock = socket.socket(typ, socket.SOCK_DGRAM)
     sock.settimeout(0)
-    sock.connect(("notifications.delta.chat", 1))
+    host_port = "notifications.delta.chat", 443
+    try:
+        sock.connect(host_port)
+    except OSError:
+        print(f"failed to connect to: {host_port}")
+        return None
+    else:
+        print(f"successfully connected to: {host_port}")
     return sock.getsockname()[0]
 
 
@@ -96,7 +103,7 @@ def check_zonefile(zonefile):
 
 if __name__ == "__channelexec__":
 
-    def log(item):
+    def print(item):
         channel.send(("log", item))  # noqa
 
     while 1:

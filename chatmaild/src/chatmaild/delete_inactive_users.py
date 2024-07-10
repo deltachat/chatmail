@@ -14,28 +14,34 @@ from .database import Database
 LAST_LOGIN = "last-login"
 
 
+def get_daytimestamp(timestamp) -> int:
+    return int(timestamp) // 86400 * 86400
+
+
 def write_last_login_to_userdir(userdir, timestamp):
     target = userdir.joinpath(LAST_LOGIN)
-    timestamp = int(timestamp // 86400 * 86400)
+    timestamp = get_daytimestamp(timestamp)
     try:
         st = target.stat()
     except FileNotFoundError:
         # only happens on initial login
         userdir.mkdir(exist_ok=True)
-        target.write_text("")
+        target.touch()
         os.utime(target, (timestamp, timestamp))
     else:
         if st.st_mtime < timestamp:
             os.utime(target, (timestamp, timestamp))
 
 
-def get_last_login_from_userdir(userdir):
+def get_last_login_from_userdir(userdir) -> int:
     target = userdir.joinpath(LAST_LOGIN)
     try:
         return int(target.stat().st_mtime)
     except FileNotFoundError:
-        target.write_text("")
-        timestamp = int(time.time() // 86400 * 86400)
+        # during migration many directories will not have last-login file
+        # so we write it here to the current time
+        target.touch()
+        timestamp = get_daytimestamp(time.time())
         os.utime(target, (timestamp, timestamp))
         return timestamp
 

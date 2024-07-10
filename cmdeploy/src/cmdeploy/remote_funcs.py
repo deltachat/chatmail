@@ -36,16 +36,30 @@ def perform_initial_checks(mail_domain):
         shell("apt-get install -y dnsutils")
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
+
     res["ipv4"] = query_dns("A", mail_domain)
     res["ipv6"] = query_dns("AAAA", mail_domain)
+
+    # parse out sts-id if exists
+    val = query_dns("TXT", f"_mta-sts.{mail_domain}")
+    if val:
+        # "v=STSv1; id={{ sts_id }}"
+        parts = val.split("id=")
+        if len(parts) == 2:
+            val = parts[1].rstrip('"')
+    res["sts_id"] = val
+
     return res
 
 
 def get_dkim_entry(mail_domain, dkim_selector):
-    dkim_pubkey = shell(
-        f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private "
-        "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
-    )
+    try:
+        dkim_pubkey = shell(
+            f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private "
+            "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
+        )
+    except CalledProcessError:
+        return
     dkim_value_raw = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
     dkim_value = '" "'.join(re.findall(".{1,255}", dkim_value_raw))
     return f'{dkim_selector}._domainkey.{mail_domain}. TXT "{dkim_value}"'
@@ -54,10 +68,11 @@ def get_dkim_entry(mail_domain, dkim_selector):
 def query_dns(typ, domain):
     res = shell(f"dig -r -q {domain} -t {typ} +short")
     print(res)
-    return set(filter(None, res.split("\n")))
+    if res:
+        return res.split("\n")[0]
 
 
-def check_zonefile(zonefile, fullcheck):
+def check_zonefile(zonefile):
     diff = []
 
     for zf_line in zonefile.splitlines():
@@ -66,21 +81,10 @@ def check_zonefile(zonefile, fullcheck):
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
         zf_domain = zf_domain.rstrip(".")
         zf_value = zf_value.strip()
-        query_values = query_dns(zf_typ, zf_domain)
-        if zf_value in query_values:
-            continue
-
-        if zf_typ == "CAA" and zf_value.endswith('accounturi="'):
-            # this is an initial run where acmetool did not work yet
-            continue
-
-        if query_values and zf_typ == "TXT" and zf_domain.startswith("_mta-sts."):
-            (query_value,) = query_values
-            if query_value.split("id=")[0] == zf_value.split("id=")[0]:
-                continue
-
-        assert zf_typ in ("A", "AAAA", "CNAME", "CAA", "SRV", "MX", "TXT"), zf_line
-        diff.append(zf_line)
+        query_value = query_dns(zf_typ, zf_domain)
+        if zf_value != query_value:
+            assert zf_typ in ("A", "AAAA", "CNAME", "CAA", "SRV", "MX", "TXT"), zf_line
+            diff.append(zf_line)
 
     return diff
 

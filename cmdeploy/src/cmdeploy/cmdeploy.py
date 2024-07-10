@@ -16,7 +16,7 @@ from chatmaild.config import read_config, write_initial_config
 from termcolor import colored
 
 from . import remote_funcs
-from .dns import show_dns
+from .dns import NoIPRecords, show_dns
 from .sshexec import SSHExec
 
 #
@@ -67,7 +67,7 @@ def run_cmd(args, out):
         out.green("Deploy completed, call `cmdeploy test` next.")
     elif not remote_data["acme_account_url"]:
         out.red("Deploy completed but letsencrypt not configured")
-        out.red("Run 'cmdeploy dns' or 'cmdeploy run' again")
+        out.red("Run 'cmdeploy run' again")
         retcode = 0
     else:
         out.red("Deploy failed")
@@ -85,6 +85,10 @@ def dns_cmd_options(parser):
 def dns_cmd(args, out):
     """Check DNS entries and optionally generate dns zone file."""
     retcode, remote_data = show_dns(args, out)
+    for name in ["acme_account_url", "dkim_entry"]:
+        if not remote_data[name]:
+            # dns run insists on all records present
+            return 1
     return retcode
 
 
@@ -305,6 +309,9 @@ def main(args=None):
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)
+    except NoIPRecords as e:
+        out.red(str(e))
+        sys.exit(1)
 
 
 if __name__ == "__main__":

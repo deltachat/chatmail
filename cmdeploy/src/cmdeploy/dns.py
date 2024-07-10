@@ -7,7 +7,11 @@ from jinja2 import Template
 from . import remote_funcs
 
 
-def show_dns(args, out, fullcheck=True) -> int:
+class NoIPRecords(Exception):
+    """Indicates that no DNS A or AAAA record is present."""
+
+
+def show_dns(args, out) -> int:
     """Check existing DNS records, optionally write them to zone file
     and return (exitcode, remote_data) tuple."""
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.j2")
@@ -23,9 +27,11 @@ def show_dns(args, out, fullcheck=True) -> int:
     remote_data = sshexec(remote_funcs.perform_initial_checks, mail_domain=mail_domain)
 
     if not remote_data["ipv4"] and not remote_data["ipv6"]:
-        print()
-        print(f"no A and also no AAAA record set for domain: {mail_domain}")
-        raise SystemExit(1)
+        raise NoIPRecords(f"No A or AAAA DNS records set for {mail_domain}!")
+
+    sts_id = remote_data.get("sts_id")
+    if not sts_id:
+        sts_id = datetime.datetime.now().strftime("%Y%m%d%H%M")
 
     content = template.read_text()
     zonefile = Template(content).render(
@@ -33,14 +39,12 @@ def show_dns(args, out, fullcheck=True) -> int:
         dkim_entry=remote_data.get("dkim_entry"),
         ipv4=remote_data["ipv4"],
         ipv6=remote_data["ipv6"],
-        sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        sts_id=sts_id,
         chatmail_domain=args.config.mail_domain,
     )
     zonefile = "\n".join([x.strip() for x in zonefile.split("\n") if x.strip()])
 
-    to_print = sshexec(
-        remote_funcs.check_zonefile, zonefile=zonefile, fullcheck=fullcheck
-    )
+    to_print = sshexec(remote_funcs.check_zonefile, zonefile=zonefile)
     if not args.verbose:
         print()
 

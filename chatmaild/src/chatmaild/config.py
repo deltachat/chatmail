@@ -44,7 +44,7 @@ class Config:
         raise ValueError(f"invalid address {addr!r}")
 
 
-def write_initial_config(inipath, mail_domain, **overrides):
+def write_initial_config(inipath, mail_domain, overrides):
     """Write out default config file, using the specified config value overrides."""
     from importlib.resources import files
 

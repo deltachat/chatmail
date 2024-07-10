@@ -40,7 +40,7 @@ class Config:
         if addr and addr != "." and "/" not in addr:
             res = self.mailboxes_dir.joinpath(addr).resolve()
             if res.is_relative_to(self.mailboxes_dir):
-                return str(res)
+                return res
         raise ValueError(f"invalid address {addr!r}")
 
 

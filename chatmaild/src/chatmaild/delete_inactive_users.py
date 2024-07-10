@@ -2,28 +2,65 @@
 Remove inactive users
 """
 
+import os
 import shutil
 import sys
 import time
+from pathlib import Path
 
 from .config import read_config
 from .database import Database
-from .doveauth import iter_userdb_lastlogin_before
+
+LAST_LOGIN = "last-login"
 
 
-def delete_inactive_users(db, config, CHUNK=100):
+def write_last_login_to_userdir(userdir, timestamp):
+    target = userdir.joinpath(LAST_LOGIN)
+    timestamp = int(timestamp // 86400 * 86400)
+    try:
+        st = target.stat()
+    except FileNotFoundError:
+        # only happens on initial login
+        userdir.mkdir(exist_ok=True)
+        target.write_text("")
+        os.utime(target, (timestamp, timestamp))
+    else:
+        if st.st_mtime < timestamp:
+            os.utime(target, (timestamp, timestamp))
+
+
+def get_last_login_from_userdir(userdir):
+    target = userdir.joinpath(LAST_LOGIN)
+    try:
+        return int(target.stat().st_mtime)
+    except FileNotFoundError:
+        target.write_text("")
+        timestamp = int(time.time() // 86400 * 86400)
+        os.utime(target, (timestamp, timestamp))
+        return timestamp
+
+
+def delete_inactive_users(db, config, chunksize=100):
     cutoff_date = time.time() - config.delete_inactive_users_after * 86400
+    pending = []
 
-    old_users = iter_userdb_lastlogin_before(db, cutoff_date)
-    chunks = (old_users[i : i + CHUNK] for i in range(0, len(old_users), CHUNK))
-    for sublist in chunks:
-        for user in sublist:
-            user_mail_dir = config.get_user_maildir(user)
-            shutil.rmtree(user_mail_dir, ignore_errors=True)
+    def remove(userdir):
+        shutil.rmtree(userdir, ignore_errors=True)
+        pending.append(userdir.name)
+        if len(pending) > chunksize:
+            clear_pending()
 
+    def clear_pending():
         with db.write_transaction() as conn:
-            for user in sublist:
+            for user in pending:
                 conn.execute("DELETE FROM users WHERE addr = ?", (user,))
+        pending[:] = []
+
+    for userdir in Path(config.mailboxes_dir).iterdir():
+        if get_last_login_from_userdir(userdir) < cutoff_date:
+            remove(userdir)
+
+    clear_pending()
 
 
 def main():

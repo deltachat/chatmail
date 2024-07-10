@@ -1,12 +1,13 @@
 """
-Functions to be executed on an ssh-connected host.
+Pure python functions which execute remotely in a system Python interpreter.
 
-All functions of this module need to work with Python builtin types
-and standard library dependencies only.
+All functions of this module
 
-When a remote function executes remotely, it runs in a system python interpreter
-without any installed dependencies.
+- need to get and and return Python builtin data types only,
 
+- can only use standard library dependencies,
+
+- can freely call each other.
 """
 
 import re
@@ -29,7 +30,14 @@ def get_systemd_running():
 
 
 def perform_initial_checks(mail_domain):
-    res = {}
+    """Collecting initial DNS zone content."""
+    A = query_dns("A", mail_domain)
+    AAAA = query_dns("AAAA", mail_domain)
+    MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
+
+    res = dict(A=A, AAAA=AAAA, MTA_STS=MTA_STS)
+    if not MTA_STS or (not A and not AAAA):
+        return res
 
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
     if not shell("dig", fail_ok=True):
@@ -37,18 +45,9 @@ def perform_initial_checks(mail_domain):
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
 
-    res["ipv4"] = query_dns("A", mail_domain)
-    res["ipv6"] = query_dns("AAAA", mail_domain)
-
-    # parse out sts-id if exists
-    val = query_dns("TXT", f"_mta-sts.{mail_domain}")
-    if val:
-        # "v=STSv1; id={{ sts_id }}"
-        parts = val.split("id=")
-        if len(parts) == 2:
-            val = parts[1].rstrip('"')
-    res["sts_id"] = val
-
+    # parse out sts-id if exists, example: "v=STSv1; id=2090123"
+    parts = query_dns("TXT", f"_mta-sts.{mail_domain}").split("id=")
+    res["sts_id"] = parts[1].rstrip('"') if len(parts) == 2 else ""
     return res
 
 
@@ -73,6 +72,7 @@ def query_dns(typ, domain):
 
 
 def check_zonefile(zonefile):
+    """Check all expected zone file entries."""
     diff = []
 
     for zf_line in zonefile.splitlines():
@@ -99,5 +99,6 @@ if __name__ == "__channelexec__":
 
     while 1:
         func_name, kwargs = channel.receive()  # noqa
+        kwargs = kwargs if kwargs else {}
         res = globals()[func_name](**kwargs)  # noqa
         channel.send(("finish", res))  # noqa

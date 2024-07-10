@@ -23,7 +23,7 @@ class Config:
         self.password_min_length = int(params["password_min_length"])
         self.passthrough_senders = params["passthrough_senders"].split()
         self.passthrough_recipients = params["passthrough_recipients"].split()
-        self.mailboxes_dir = params["mailboxes_dir"].strip().rstrip("/")
+        self.mailboxes_dir = Path(params["mailboxes_dir"].strip())
         self.passdb_path = params["passdb_path"].strip().rstrip("/")
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
@@ -38,7 +38,7 @@ class Config:
 
     def get_user_maildir(self, addr):
         if addr and addr != "." and "/" not in addr:
-            res = Path(self.mailboxes_dir).joinpath(addr).resolve()
+            res = self.mailboxes_dir.joinpath(addr).resolve()
             if res.is_relative_to(self.mailboxes_dir):
                 return str(res)
         raise ValueError(f"invalid address {addr!r}")

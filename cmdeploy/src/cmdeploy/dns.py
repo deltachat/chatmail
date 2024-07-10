@@ -2,13 +2,15 @@ import datetime
 import importlib
 import sys
 
+from jinja2 import Template
+
 from . import remote_funcs
 
 
-def show_dns(args, out) -> int:
+def show_dns(args, out, fullcheck=True) -> int:
     """Check existing DNS records, optionally write them to zone file
     and return (exitcode, remote_data) tuple."""
-    template = importlib.resources.files(__package__).joinpath("chatmail.zone.f")
+    template = importlib.resources.files(__package__).joinpath("chatmail.zone.j2")
     mail_domain = args.config.mail_domain
 
     def log_progress(data):
@@ -20,19 +22,25 @@ def show_dns(args, out) -> int:
 
     remote_data = sshexec(remote_funcs.perform_initial_checks, mail_domain=mail_domain)
 
-    assert remote_data["ipv4"] or remote_data["ipv6"]
+    if not remote_data["ipv4"] and not remote_data["ipv6"]:
+        print()
+        print(f"no A and also no AAAA record set for domain: {mail_domain}")
+        raise SystemExit(1)
 
-    with open(template, "r") as f:
-        zonefile = f.read().format(
-            acme_account_url=remote_data["acme_account_url"],
-            dkim_entry=remote_data["dkim_entry"],
-            ipv6=remote_data["ipv6"],
-            ipv4=remote_data["ipv4"],
-            sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
-            chatmail_domain=args.config.mail_domain,
-        )
+    content = template.read_text()
+    zonefile = Template(content).render(
+        acme_account_url=remote_data.get("acme_account_url"),
+        dkim_entry=remote_data.get("dkim_entry"),
+        ipv4=remote_data["ipv4"],
+        ipv6=remote_data["ipv6"],
+        sts_id=datetime.datetime.now().strftime("%Y%m%d%H%M"),
+        chatmail_domain=args.config.mail_domain,
+    )
+    zonefile = "\n".join([x.strip() for x in zonefile.split("\n") if x.strip()])
 
-    to_print = sshexec(remote_funcs.check_zonefile, zonefile=zonefile)
+    to_print = sshexec(
+        remote_funcs.check_zonefile, zonefile=zonefile, fullcheck=fullcheck
+    )
     if not args.verbose:
         print()
 

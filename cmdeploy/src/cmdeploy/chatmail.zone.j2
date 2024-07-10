@@ -1,8 +1,8 @@
 {% if ipv4 %}
-{{ chatmail_domain }}.                   A     {{ ' '.join(ipv4) }}
+{{ chatmail_domain }}.                   A     {{ ipv4 }}
 {% endif %}
 {% if ipv6 %}
-{{ chatmail_domain }}.                   AAAA  {{ ' '.join(ipv6) }}
+{{ chatmail_domain }}.                   AAAA  {{ ipv6 }}
 {% endif %}
 {{ chatmail_domain }}.                   MX 10 {{ chatmail_domain }}.
 _submission._tcp.{{ chatmail_domain }}.  SRV 0 1 587 {{ chatmail_domain }}.

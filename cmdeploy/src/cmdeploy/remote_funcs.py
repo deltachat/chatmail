@@ -10,7 +10,6 @@ without any installed dependencies.
 """
 
 import re
-import socket
 from subprocess import CalledProcessError, check_output
 
 
@@ -36,10 +35,9 @@ def perform_initial_checks(mail_domain):
     if not shell("dig", fail_ok=True):
         shell("apt-get install -y dnsutils")
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
-
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
-    res["ipv4"] = get_ip_address(socket.AF_INET)
-    res["ipv6"] = get_ip_address(socket.AF_INET6)
+    res["ipv4"] = query_dns("A", mail_domain)
+    res["ipv6"] = query_dns("AAAA", mail_domain)
     return res
 
 
@@ -53,29 +51,18 @@ def get_dkim_entry(mail_domain, dkim_selector):
     return f'{dkim_selector}._domainkey.{mail_domain}. TXT "{dkim_value}"'
 
 
-def get_ip_address(typ):
-    sock = socket.socket(typ, socket.SOCK_DGRAM)
-    sock.settimeout(0)
-    host_port = "notifications.delta.chat", 443
-    try:
-        sock.connect(host_port)
-    except OSError:
-        print(f"failed to connect to: {host_port}")
-        return None
-    else:
-        print(f"successfully connected to: {host_port}")
-    return sock.getsockname()[0]
-
-
 def query_dns(typ, domain):
     res = shell(f"dig -r -q {domain} -t {typ} +short")
+    print(res)
     return set(filter(None, res.split("\n")))
 
 
-def check_zonefile(zonefile):
+def check_zonefile(zonefile, fullcheck):
     diff = []
 
     for zf_line in zonefile.splitlines():
+        print("")
+        print(f"dns-checking {zf_line!r}")
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
         zf_domain = zf_domain.rstrip(".")
         zf_value = zf_value.strip()

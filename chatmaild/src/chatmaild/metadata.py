@@ -18,16 +18,6 @@ class Metadata:
     def get_metadata_dict(self, addr):
         return FileDict(self.vmail_dir / addr / "metadata.json")
 
-    def write_login_timestamp(self, addr, timestamp):
-        # day resolution is enough for timestamp
-        timestamp = int(timestamp) // 86400 * 86400
-        target_file = self.vmail_dir.joinpath(addr, "last-login")
-        try:
-            target_file.write_text(str(timestamp))
-        except FileNotFoundError:
-            target_file.parent.mkdir()
-            target_file.write_text(str(timestamp))
-
     def add_token_to_addr(self, addr, token):
         with self.get_metadata_dict(addr).modify() as data:
             tokens = data.setdefault(self.DEVICETOKEN_KEY, [])

@@ -35,7 +35,7 @@ def pytest_runtest_setup(item):
             pytest.skip("skipping slow test, use --slow to run")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def chatmail_config(pytestconfig):
     current = basedir = Path().resolve()
     while 1:
@@ -49,12 +49,12 @@ def chatmail_config(pytestconfig):
     pytest.skip(f"no chatmail.ini file found in {basedir} or parent dirs")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def maildomain(chatmail_config):
     return chatmail_config.mail_domain
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sshdomain(maildomain):
     return os.environ.get("CHATMAIL_SSH", maildomain)
 

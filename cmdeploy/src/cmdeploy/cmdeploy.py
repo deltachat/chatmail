@@ -15,8 +15,7 @@ from pathlib import Path
 from chatmaild.config import read_config, write_initial_config
 from termcolor import colored
 
-from . import remote_funcs
-from .dns import NoIPRecords, show_dns
+from . import dns, remote_funcs
 from .sshexec import SSHExec
 
 #
@@ -54,7 +53,10 @@ def run_cmd_options(parser):
 
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
-    retcode, remote_data = show_dns(args, out)
+
+    remote_data = dns.get_initial_remote_data(args, out)
+    if not remote_data:
+        return 1
 
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
@@ -62,9 +64,9 @@ def run_cmd(args, out):
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
 
-    out.check_call(cmd, env=env)
+    retcode = out.check_call(cmd, env=env)
     if retcode == 0:
-        out.green("Deploy completed, call `cmdeploy test` next.")
+        out.green("Deploy completed, call `cmdeploy dns` next.")
     elif not remote_data["acme_account_url"]:
         out.red("Deploy completed but letsencrypt not configured")
         out.red("Run 'cmdeploy run' again")
@@ -84,11 +86,10 @@ def dns_cmd_options(parser):
 
 def dns_cmd(args, out):
     """Check DNS entries and optionally generate dns zone file."""
-    retcode, remote_data = show_dns(args, out)
-    for name in ["acme_account_url", "dkim_entry"]:
-        if not remote_data[name]:
-            # dns run insists on all records present
-            return 1
+    remote_data = dns.get_initial_remote_data(args, out)
+    if not remote_data:
+        return 1
+    retcode = dns.show_dns(args, out, remote_data)
     return retcode
 
 
@@ -282,9 +283,16 @@ def main(args=None):
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
 
-    def get_sshexec(log=None):
-        print(f"[ssh] login to {args.config.mail_domain}")
-        return SSHExec(args.config.mail_domain, remote_funcs, log=log)
+    ssh_exec_cache = []
+
+    def get_sshexec():
+        if not ssh_exec_cache:
+            print(f"[ssh] login to {args.config.mail_domain}")
+            ssh_exec = SSHExec(
+                args.config.mail_domain, remote_funcs, verbose=args.verbose
+            )
+            ssh_exec_cache.append(ssh_exec)
+        return ssh_exec_cache[0]
 
     args.get_sshexec = get_sshexec
 
@@ -309,9 +317,6 @@ def main(args=None):
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)
-    except NoIPRecords as e:
-        out.red(str(e))
-        sys.exit(1)
 
 
 if __name__ == "__main__":

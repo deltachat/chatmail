@@ -128,7 +128,7 @@ def test_cmd(args, out):
         "-n4",
         "-rs",
         "-x",
-        "-vrx",
+        "-v",
         "--durations=5",
     ]
     if args.slow:

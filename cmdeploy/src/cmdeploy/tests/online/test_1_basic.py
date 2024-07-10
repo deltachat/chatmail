@@ -7,18 +7,38 @@ from cmdeploy.sshexec import SSHExec
 
 
 class TestSSHExecutor:
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def sshexec(self, sshdomain):
         return SSHExec(sshdomain, remote_funcs)
 
     def test_ls(self, sshexec):
-        out = sshexec(remote_funcs.shell, command="ls")
-        out2 = sshexec(remote_funcs.shell, command="ls")
+        out = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
+        out2 = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
         assert out == out2
 
     def test_perform_initial(self, sshexec, maildomain):
-        res = sshexec(remote_funcs.perform_initial_checks, mail_domain=maildomain)
-        assert res["ipv4"] or res["ipv6"]
+        res = sshexec(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        assert res["A"] or res["AAAA"]
+
+    def test_logged(self, sshexec, maildomain, capsys):
+        sshexec.logged(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        out, err = capsys.readouterr()
+        assert out.startswith("Collecting")
+        assert out.endswith("....\n")
+        assert out.count("\n") == 1
+
+        sshexec.verbose = True
+        sshexec.logged(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        out, err = capsys.readouterr()
+        lines = out.split("\n")
+        assert len(lines) > 4
+        assert remote_funcs.perform_initial_checks.__doc__ in lines[0]
 
 
 def test_remote(remote, imap_or_smtp):

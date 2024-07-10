@@ -53,16 +53,16 @@ def write_initial_config(inipath, mail_domain, overrides):
     content = source_inipath.read_text().format(mail_domain=mail_domain)
 
     # apply config overrides
-    newlines = []
+    new_lines = []
     for line in content.split("\n"):
-        newline = line.strip()
-        if newline and newline[0] not in "#[":
-            name, value = newline.split(" =", maxsplit=1)
-            value = overrides.get(name.strip(), value.strip())
-            newline = f"{name.strip()} = {value.strip()}"
-        newlines.append(newline)
+        new_line = line.strip()
+        if new_line and new_line[0] not in "#[":
+            name, value = map(str.strip, new_line.split("=", maxsplit=1))
+            value = overrides.get(name, value)
+            new_line = f"{name} = {value}"
+        new_lines.append(new_line)
 
-    content = "\n".join(newlines)
+    content = "\n".join(new_lines)
 
     # apply testrun privacy overrides
 

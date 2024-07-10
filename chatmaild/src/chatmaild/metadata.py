@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from pathlib import Path
 from socketserver import (
     StreamRequestHandler,
     ThreadingMixIn,
@@ -133,7 +132,7 @@ def main():
     config = read_config(config_path)
     iroh_relay = config.iroh_relay
 
-    vmail_dir = Path(config.mailboxes_dir)
+    vmail_dir = config.mailboxes_dir
     if not vmail_dir.exists():
         logging.error("vmail dir does not exist: %r", vmail_dir)
         return 1

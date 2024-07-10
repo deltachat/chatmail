@@ -41,7 +41,7 @@ def test_remove_stale_users(db, example_config):
 
     delete_inactive_users(db, example_config)
 
-    for p in Path(example_config.mailboxes_dir).iterdir():
+    for p in example_config.mailboxes_dir.iterdir():
         assert not p.name.startswith("old")
 
     for addr in to_remove:

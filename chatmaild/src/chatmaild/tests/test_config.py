@@ -37,7 +37,7 @@ def test_read_config_testrun(make_config):
 
 def test_config_userstate_paths(make_config, tmp_path):
     config = make_config("something.testrun.org")
-    mailboxes_dir = Path(config.mailboxes_dir)
+    mailboxes_dir = config.mailboxes_dir
     passdb_path = Path(config.passdb_path)
     assert mailboxes_dir.name == "something.testrun.org"
     assert passdb_path.name == "passdb.sqlite"

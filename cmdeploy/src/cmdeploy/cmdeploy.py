@@ -55,7 +55,7 @@ def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
     remote_data = dns.get_initial_remote_data(args, out)
-    if not remote_data:
+    if not dns.check_initial_remote_data(remote_data, print=out.red):
         return 1
 
     env = os.environ.copy()
@@ -283,16 +283,14 @@ def main(args=None):
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
 
-    ssh_exec_cache = []
+    ssh_cache = []
 
     def get_sshexec():
-        if not ssh_exec_cache:
+        if not ssh_cache:
             print(f"[ssh] login to {args.config.mail_domain}")
-            ssh_exec = SSHExec(
-                args.config.mail_domain, remote_funcs, verbose=args.verbose
-            )
-            ssh_exec_cache.append(ssh_exec)
-        return ssh_exec_cache[0]
+            ssh = SSHExec(args.config.mail_domain, remote_funcs, verbose=args.verbose)
+            ssh_cache.append(ssh)
+        return ssh_cache[0]
 
     args.get_sshexec = get_sshexec
 
@@ -313,7 +311,6 @@ def main(args=None):
         if res is None:
             res = 0
         return res
-
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)

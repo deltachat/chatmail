@@ -37,6 +37,7 @@ def init_cmd(args, out):
     mail_domain = args.chatmail_domain
     if args.inipath.exists():
         print(f"Path exists, not modifying: {args.inipath}")
+        return 1
     else:
         write_initial_config(args.inipath, mail_domain, overrides={})
         out.green(f"created config file for {mail_domain} in {args.inipath}")

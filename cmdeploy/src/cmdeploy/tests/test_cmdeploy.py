@@ -21,8 +21,9 @@ class TestCmdline:
         run = parser.parse_args(["run"])
         assert init and run
 
-    @pytest.mark.xfail(reason="init doesn't exit anymore, check for CLI output instead")
-    def test_init_not_overwrite(self):
-        main(["init", "chat.example.org"])
-        with pytest.raises(SystemExit):
-            main(["init", "chat.example.org"])
+    def test_init_not_overwrite(self, capsys):
+        assert main(["init", "chat.example.org"]) == 0
+        capsys.readouterr()
+        assert main(["init", "chat.example.org"]) == 1
+        out, err = capsys.readouterr()
+        assert "path exists" in out.lower()

@@ -1,3 +1,5 @@
+load_module modules/ngx_stream_module.so;
+
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
@@ -6,6 +8,21 @@ error_log syslog:server=unix:/dev/log,facility=local3;
 events {
 	worker_connections 768;
 	# multi_accept on;
+}
+
+stream {
+        map $ssl_preread_alpn_protocols $proxy {
+            default 127.0.0.1:8443;
+            ~\bsmtp\b 127.0.0.1:submissions;
+            ~\bimap\b 127.0.0.1:imaps;
+        }
+
+        server {
+                listen 443;
+                listen [::]:443;
+                proxy_pass $proxy;
+                ssl_preread on;
+        }
 }
 
 http {
@@ -26,8 +43,8 @@ http {
 	gzip on;
 
 	server {
-		listen 443 ssl default_server;
-		listen [::]:443 ssl default_server;
+		listen 8443 ssl default_server;
+		listen [::]:8443 ssl default_server;
 
 		root /var/www/html;
 
@@ -78,8 +95,8 @@ http {
 
 	# Redirect www. to non-www
 	server {
-		listen 443 ssl;
-		listen [::]:443 ssl;
+		listen 8443 ssl;
+		listen [::]:8443 ssl;
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 		access_log syslog:server=unix:/dev/log,facility=local7;

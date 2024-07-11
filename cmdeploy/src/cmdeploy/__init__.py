@@ -534,7 +534,7 @@ def deploy_chatmail(config_path: Path) -> None:
 
     apt.packages(
         name="Install nginx",
-        packages=["nginx"],
+        packages=["nginx", "libnginx-mod-stream"],
     )
 
     apt.packages(

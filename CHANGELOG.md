@@ -63,6 +63,9 @@
 - doveauth: log when a new account is created
   ([#349](https://github.com/deltachat/chatmail/pull/349))
 
+- Multiplex HTTPS, IMAP and SMTP on port 443
+  ([#357](https://github.com/deltachat/chatmail/pull/357))
+
 ## 1.3.0 - 2024-06-06
 
 - don't check necessary DNS records on cmdeploy init anymore

@@ -155,7 +155,8 @@ While this file is present, account creation will be blocked.
 
 [Postfix](http://www.postfix.org/) listens on ports 25 (smtp) and 587 (submission) and 465 (submissions).
 [Dovecot](https://www.dovecot.org/) listens on ports 143 (imap) and 993 (imaps).
-[nginx](https://www.nginx.com/) listens on port 443 (https).
+[nginx](https://www.nginx.com/) listens on port 8443 (https-alt) and 443 (https).
+Port 443 multiplexes HTTPS, IMAP and SMTP using ALPN to redirect connections to ports 8443, 465 or 993.
 [acmetool](https://hlandau.github.io/acmetool/) listens on port 80 (http).
 
 Delta Chat apps will, however, discover all ports and configurations

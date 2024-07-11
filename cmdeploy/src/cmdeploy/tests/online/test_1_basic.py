@@ -40,6 +40,18 @@ class TestSSHExecutor:
         assert len(lines) > 4
         assert remote_funcs.perform_initial_checks.__doc__ in lines[0]
 
+    def test_exception(self, sshexec, capsys):
+        try:
+            sshexec.logged(
+                remote_funcs.perform_initial_checks,
+                kwargs=dict(mail_domain=None),
+            )
+        except sshexec.FuncError as e:
+            assert "remote_funcs.py" in str(e)
+            assert "AssertionError" in str(e)
+        else:
+            pytest.fail("didn't raise exception")
+
 
 def test_remote(remote, imap_or_smtp):
     lineproducer = remote.iter_output(imap_or_smtp.logcmd)

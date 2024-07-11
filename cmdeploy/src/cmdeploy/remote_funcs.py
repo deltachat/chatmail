@@ -11,6 +11,7 @@ All functions of this module
 """
 
 import re
+import traceback
 from subprocess import CalledProcessError, check_output
 
 
@@ -31,11 +32,12 @@ def get_systemd_running():
 
 def perform_initial_checks(mail_domain):
     """Collecting initial DNS zone content."""
+    assert mail_domain
     A = query_dns("A", mail_domain)
     AAAA = query_dns("AAAA", mail_domain)
     MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
 
-    res = dict(A=A, AAAA=AAAA, MTA_STS=MTA_STS)
+    res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS)
     if not MTA_STS or (not A and not AAAA):
         return res
 
@@ -69,14 +71,14 @@ def query_dns(typ, domain):
     print(res)
     if res:
         return res.split("\n")[0]
+    return ""
 
 
 def check_zonefile(zonefile):
-    """Check all expected zone file entries."""
+    """Check expected zone file entries."""
     diff = []
 
     for zf_line in zonefile.splitlines():
-        print("")
         print(f"dns-checking {zf_line!r}")
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
         zf_domain = zf_domain.rstrip(".")
@@ -89,16 +91,35 @@ def check_zonefile(zonefile):
     return diff
 
 
+## Function Execution server
+
+
+def _run_loop(cmd_channel):
+    while 1:
+        cmd = cmd_channel.receive()
+        if cmd is None:
+            break
+
+        cmd_channel.send(_handle_one_request(cmd))
+
+
+def _handle_one_request(cmd):
+    func_name, kwargs = cmd
+    try:
+        res = globals()[func_name](**kwargs)
+        return ("finish", res)
+    except:
+        data = traceback.format_exc()
+        return ("error", data)
+
+
 # check if this module is executed remotely
 # and setup a simple serialized function-execution loop
 
 if __name__ == "__channelexec__":
+    channel = channel  # noqa (channel object gets injected)
 
-    def print(item):
-        channel.send(("log", item))  # noqa
+    # enable simple "print" debugging for anyone changing this module
+    globals()["print"] = lambda x="": channel.send(("log", x))
 
-    while 1:
-        func_name, kwargs = channel.receive()  # noqa
-        kwargs = kwargs if kwargs else {}
-        res = globals()[func_name](**kwargs)  # noqa
-        channel.send(("finish", res))  # noqa
+    _run_loop(channel)

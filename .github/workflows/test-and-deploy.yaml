@@ -15,11 +15,14 @@ jobs:
   deploy:
     name: deploy on staging2.testrun.org, and run tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     concurrency:
       group: ${ GITHUB_HEAD_REF }
       cancel-in-progress: true
     steps:
+      - uses: jsok/serialize-workflow-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
 
       - name: prepare SSH

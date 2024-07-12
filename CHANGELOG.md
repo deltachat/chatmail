@@ -14,6 +14,9 @@
   which removes users from database and mails after 100 days without any login. 
   ([#350](https://github.com/deltachat/chatmail/pull/350))
 
+- reload nginx in the acmetool cronjob
+  ([#360](https://github.com/deltachat/chatmail/pull/360))
+
 - remove checking of reverse-DNS PTR records.  Chatmail-servers don't
   depend on it and even in the wider e-mail system it's not common anymore. 
   If it's an issue, a chatmail operator can still care to properly set reverse DNS. 

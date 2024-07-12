@@ -1,7 +1,7 @@
 
 <img width="800px" src="www/src/collage-top.png"/>
 
-# Chatmail services optimized for Delta Chat apps 
+# Chatmail Services Optimized for Delta Chat Apps 
 
 This repository helps to setup a ready-to-use chatmail server
 comprised of a minimal setup of the battle-tested 

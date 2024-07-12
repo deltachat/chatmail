@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ci-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ !contains(github.ref, ${{ github.ref }}) }}
     steps:
       - uses: jsok/serialize-workflow-action@v1

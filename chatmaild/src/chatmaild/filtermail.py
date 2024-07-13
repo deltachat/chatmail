@@ -152,7 +152,7 @@ class BeforeQueueHandler:
         self.send_rate_limiter = SendRateLimiter()
 
     async def handle_MAIL(self, server, session, envelope, address, mail_options):
-        logging.info(f"handle_MAIL from {address}")
+        logging.info("handle_MAIL from %s", address)
         envelope.mail_from = address
         max_sent = self.config.max_user_send_per_minute
         if not self.send_rate_limiter.is_sending_allowed(address, max_sent):
@@ -176,13 +176,13 @@ class BeforeQueueHandler:
 
     def check_DATA(self, envelope):
         """the central filtering function for e-mails."""
-        logging.info(f"Processing DATA message from {envelope.mail_from}")
+        logging.info("Processing DATA message from %s", envelope.mail_from)
 
         message = BytesParser(policy=policy.default).parsebytes(envelope.content)
         mail_encrypted = check_encrypted(message)
 
         _, from_addr = parseaddr(message.get("from").strip())
-        logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
+        logging.info("mime-from: %s envelope-from: %r", from_addr, envelope.mail_from)
         if envelope.mail_from.lower() != from_addr.lower():
             return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
 

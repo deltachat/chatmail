@@ -143,12 +143,18 @@ def check_encrypted(message):
 
 async def asyncmain_beforequeue(config):
     port = config.filtermail_smtp_port
-    Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
+    smtp_client = SMTPClient("localhost", config.postfix_reinject_port)
+    Controller(
+        BeforeQueueHandler(config, smtp_client=smtp_client),
+        hostname="127.0.0.1",
+        port=port,
+    ).start()
 
 
 class BeforeQueueHandler:
-    def __init__(self, config):
+    def __init__(self, config, smtp_client):
         self.config = config
+        self.smtp_client = smtp_client
         self.send_rate_limiter = SendRateLimiter()
 
     async def handle_MAIL(self, server, session, envelope, address, mail_options):
@@ -170,8 +176,9 @@ class BeforeQueueHandler:
         if error:
             return error
         logging.info("re-injecting the mail that passed checks")
-        client = SMTPClient("localhost", self.config.postfix_reinject_port)
-        client.sendmail(envelope.mail_from, envelope.rcpt_tos, envelope.content)
+        self.smtp_client.sendmail(
+            envelope.mail_from, envelope.rcpt_tos, envelope.content
+        )
         return "250 OK"
 
     def check_DATA(self, envelope):

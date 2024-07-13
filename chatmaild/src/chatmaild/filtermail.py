@@ -111,7 +111,7 @@ def check_encrypted(message):
     """
     if not message.is_multipart():
         return False
-    if message.get("subject") != "...":
+    if message.get("subject") not in {"...", "[...]"}:
         return False
     if message.get_content_type() != "multipart/encrypted":
         return False

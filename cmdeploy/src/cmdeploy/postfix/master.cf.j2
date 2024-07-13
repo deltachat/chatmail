@@ -32,6 +32,8 @@ submission inet n       -       y       -       -       smtpd
   -o smtpd_client_connection_count_limit=1000
   -o smtpd_proxy_filter=127.0.0.1:{{ config.filtermail_smtp_port }}
   -o cleanup_service_name=authclean
+# Do not reduce timeout to 10s on overload.
+  -o smtpd_timeout=300s
 smtps     inet  n       -       y       -       -       smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes
@@ -49,6 +51,8 @@ smtps     inet  n       -       y       -       -       smtpd
   -o milter_macro_daemon_name=ORIGINATING
   -o smtpd_proxy_filter=127.0.0.1:{{ config.filtermail_smtp_port }}
   -o cleanup_service_name=authclean
+# Do not reduce timeout to 10s on overload.
+  -o smtpd_timeout=300s
 #628       inet  n       -       y       -       -       qmqpd
 pickup    unix  n       -       y       60      1       pickup
 cleanup   unix  n       -       y       -       0       cleanup

@@ -4,6 +4,7 @@ from chatmaild.filtermail import (
     SendRateLimiter,
     check_armored_payload,
     check_encrypted,
+    common_encrypted_subjects,
 )
 
 
@@ -54,7 +55,7 @@ def test_filtermail_no_encryption_detection(maildata):
 
 
 def test_filtermail_encryption_detection(maildata):
-    for subject in ("...", "[...]"):
+    for subject in common_encrypted_subjects:
         msg = maildata(
             "encrypted.eml",
             from_addr="1@example.org",

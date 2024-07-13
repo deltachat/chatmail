@@ -59,7 +59,7 @@ def test_filtermail_encryption_detection(maildata):
             "encrypted.eml",
             from_addr="1@example.org",
             to_addr="2@example.org",
-            replaced_subject=subject,
+            subject=subject,
         )
         assert check_encrypted(msg)
 

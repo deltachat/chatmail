@@ -80,6 +80,17 @@ def pytest_report_header():
 
 
 @pytest.fixture
+def data(request):
+    datadir = request.fspath.dirpath("data")
+
+    class Data:
+        def get(self, name):
+            return datadir.join(name).read()
+
+    return Data()
+
+
+@pytest.fixture
 def benchmark(request):
     def bench(func, num, name=None, reportfunc=None):
         if name is None:

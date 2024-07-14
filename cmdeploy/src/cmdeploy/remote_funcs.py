@@ -76,9 +76,16 @@ def query_dns(typ, domain):
 
 def check_zonefile(zonefile):
     """Check expected zone file entries."""
-    diff = []
+    required = True
+    required_diff = []
+    recommended_diff = []
 
     for zf_line in zonefile.splitlines():
+        if "# Recommended" in zf_line:
+            required = False
+            continue
+        if not zf_line.strip() or zf_line.startswith("#"):
+            continue
         print(f"dns-checking {zf_line!r}")
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
         zf_domain = zf_domain.rstrip(".")
@@ -86,9 +93,12 @@ def check_zonefile(zonefile):
         query_value = query_dns(zf_typ, zf_domain)
         if zf_value != query_value:
             assert zf_typ in ("A", "AAAA", "CNAME", "CAA", "SRV", "MX", "TXT"), zf_line
-            diff.append(zf_line)
+            if required:
+                required_diff.append(zf_line)
+            else:
+                recommended_diff.append(zf_line)
 
-    return diff
+    return required_diff, recommended_diff
 
 
 ## Function Execution server
@@ -119,7 +129,7 @@ def _handle_one_request(cmd):
 if __name__ == "__channelexec__":
     channel = channel  # noqa (channel object gets injected)
 
-    # enable simple "print" debugging for anyone changing this module
+    # enable simple "print" logging for anyone changing this module
     globals()["print"] = lambda x="": channel.send(("log", x))
 
     _run_loop(channel)

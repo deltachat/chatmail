@@ -1,7 +1,7 @@
 import pytest
 
 from cmdeploy import remote_funcs
-from cmdeploy.dns import check_initial_remote_data
+from cmdeploy.dns import check_full_zone, check_initial_remote_data
 
 
 @pytest.fixture
@@ -59,9 +59,13 @@ class TestPerformInitialChecks:
         assert len(l) == 2
 
 
-def parse_zonefile_into_dict(zonefile, mockdns_base):
+def parse_zonefile_into_dict(zonefile, mockdns_base, only_required=False):
     for zf_line in zonefile.split("\n"):
-        if not zf_line.strip() or zf_line.startswith("#"):
+        if zf_line.startswith("#"):
+            if "Recommended" in zf_line and only_required:
+                return
+            continue
+        if not zf_line.strip():
             continue
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)
         zf_domain = zf_domain.rstrip(".")
@@ -69,18 +73,45 @@ def parse_zonefile_into_dict(zonefile, mockdns_base):
         mockdns_base.setdefault(zf_typ, {})[zf_domain] = zf_value
 
 
-def test_check_zonefile_all_ok(data, mockdns_base):
-    zonefile = data.get("zftest.zone")
-    parse_zonefile_into_dict(zonefile, mockdns_base)
-    required_diff, recommended_diff = remote_funcs.check_zonefile(zonefile)
-    assert not required_diff and not recommended_diff
+class MockSSHExec:
+    def logged(self, func, kwargs):
+        return func(**kwargs)
+
+    def call(self, func, kwargs):
+        return func(**kwargs)
 
 
-def test_check_zonefile_recommended_not_set(data, mockdns_base):
-    zonefile = data.get("zftest.zone")
+class TestZonefileChecks:
+    def test_check_zonefile_all_ok(self, cm_data, mockdns_base):
+        zonefile = cm_data.get("zftest.zone")
+        parse_zonefile_into_dict(zonefile, mockdns_base)
+        required_diff, recommended_diff = remote_funcs.check_zonefile(zonefile)
+        assert not required_diff and not recommended_diff
 
-    zonefile_mocked = zonefile.split("# Recommended")[0]
-    parse_zonefile_into_dict(zonefile_mocked, mockdns_base)
-    required_diff, recommended_diff = remote_funcs.check_zonefile(zonefile)
-    assert not required_diff
-    assert len(recommended_diff) == 8
+    def test_check_zonefile_recommended_not_set(self, cm_data, mockdns_base):
+        zonefile = cm_data.get("zftest.zone")
+        zonefile_mocked = zonefile.split("# Recommended")[0]
+        parse_zonefile_into_dict(zonefile_mocked, mockdns_base)
+        required_diff, recommended_diff = remote_funcs.check_zonefile(zonefile)
+        assert not required_diff
+        assert len(recommended_diff) == 8
+
+    def test_check_zonefile_output_required_fine(self, cm_data, mockdns_base, mockout):
+        zonefile = cm_data.get("zftest.zone")
+        zonefile_mocked = zonefile.split("# Recommended")[0]
+        parse_zonefile_into_dict(zonefile_mocked, mockdns_base, only_required=True)
+        mssh = MockSSHExec()
+        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
+        assert res == 0
+        assert "WARNING" in mockout.captured_plain[0]
+        assert len(mockout.captured_plain) == 9
+
+    def test_check_zonefile_output_full(self, cm_data, mockdns_base, mockout):
+        zonefile = cm_data.get("zftest.zone")
+        parse_zonefile_into_dict(zonefile, mockdns_base)
+        mssh = MockSSHExec()
+        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
+        assert res == 0
+        assert not mockout.captured_red
+        assert "correct" in mockout.captured_green[0]
+        assert not mockout.captured_red

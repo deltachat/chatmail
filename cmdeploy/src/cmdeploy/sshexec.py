@@ -7,6 +7,10 @@ class FuncError(Exception):
     pass
 
 
+def print_stderr(item="", end="\n"):
+    print(item, file=sys.stderr, end=end)
+
+
 class SSHExec:
     RemoteError = execnet.RemoteError
     FuncError = FuncError
@@ -32,17 +36,17 @@ class SSHExec:
 
     def logged(self, call, kwargs):
         def log_progress(data):
-            sys.stdout.write(".")
-            sys.stdout.flush()
+            sys.stderr.write(".")
+            sys.stderr.flush()
 
         title = call.__doc__
         if not title:
             title = call.__name__
         if self.verbose:
-            print("[ssh] " + title)
-            return self(call, kwargs, log_callback=print)
+            print_stderr("[ssh] " + title)
+            return self(call, kwargs, log_callback=print_stderr)
         else:
-            print(title, end="")
+            print_stderr(title, end="")
             res = self(call, kwargs, log_callback=log_progress)
-            print()
+            print_stderr()
             return res

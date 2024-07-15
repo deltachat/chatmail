@@ -80,14 +80,14 @@ def pytest_report_header():
 
 
 @pytest.fixture
-def data(request):
+def cm_data(request):
     datadir = request.fspath.dirpath("data")
 
-    class Data:
+    class CMData:
         def get(self, name):
             return datadir.join(name).read()
 
-    return Data()
+    return CMData()
 
 
 @pytest.fixture

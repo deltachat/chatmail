@@ -31,7 +31,7 @@ def get_systemd_running():
 
 
 def perform_initial_checks(mail_domain):
-    """Collecting initial DNS zone content."""
+    """Collecting initial DNS settings."""
     assert mail_domain
     A = query_dns("A", mail_domain)
     AAAA = query_dns("AAAA", mail_domain)

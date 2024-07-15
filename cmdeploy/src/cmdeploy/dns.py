@@ -30,14 +30,7 @@ def get_filled_zone_file(remote_data):
 
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.j2")
     content = template.read_text()
-    zonefile = Template(content).render(
-        acme_account_url=remote_data["acme_account_url"],
-        dkim_entry=remote_data["dkim_entry"],
-        A=remote_data["A"],
-        AAAA=remote_data["AAAA"],
-        sts_id=sts_id,
-        chatmail_domain=remote_data["mail_domain"],
-    )
+    zonefile = Template(content).render(**remote_data)
     lines = [x.strip() for x in zonefile.split("\n") if x.strip()]
     lines.append("")
     zonefile = "\n".join(lines)

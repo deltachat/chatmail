@@ -2,29 +2,29 @@
 ; Required DNS entries for chatmail servers 
 ;
 {% if A %}
-{{ chatmail_domain }}.                   A     {{ A }}
+{{ mail_domain }}.                   A     {{ A }}
 {% endif %}
 {% if AAAA %}
-{{ chatmail_domain }}.                   AAAA  {{ AAAA }}
+{{ mail_domain }}.                   AAAA  {{ AAAA }}
 {% endif %}
-{{ chatmail_domain }}.                   MX 10 {{ chatmail_domain }}.
-_mta-sts.{{ chatmail_domain }}.          TXT "v=STSv1; id={{ sts_id }}"
-mta-sts.{{ chatmail_domain }}.           CNAME {{ chatmail_domain }}.
-www.{{ chatmail_domain }}.               CNAME {{ chatmail_domain }}.
+{{ mail_domain }}.                   MX 10 {{ mail_domain }}.
+_mta-sts.{{ mail_domain }}.          TXT "v=STSv1; id={{ sts_id }}"
+mta-sts.{{ mail_domain }}.           CNAME {{ mail_domain }}.
+www.{{ mail_domain }}.               CNAME {{ mail_domain }}.
 {{ dkim_entry }}
 
 ;
 ; Recommended DNS entries for interoperability and security-hardening
 ;
-{{ chatmail_domain }}.                   TXT "v=spf1 a:{{ chatmail_domain }} ~all"
-_dmarc.{{ chatmail_domain }}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
+{{ mail_domain }}.                   TXT "v=spf1 a:{{ mail_domain }} ~all"
+_dmarc.{{ mail_domain }}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 
 {% if acme_account_url %}
-{{ chatmail_domain }}.                   CAA 128 issue "letsencrypt.org;accounturi={{ acme_account_url }}"
+{{ mail_domain }}.                   CAA 128 issue "letsencrypt.org;accounturi={{ acme_account_url }}"
 {% endif %}
-_adsp._domainkey.{{ chatmail_domain }}.  TXT "dkim=discardable"
+_adsp._domainkey.{{ mail_domain }}.  TXT "dkim=discardable"
 
-_submission._tcp.{{ chatmail_domain }}.  SRV 0 1 587 {{ chatmail_domain }}.
-_submissions._tcp.{{ chatmail_domain }}. SRV 0 1 465 {{ chatmail_domain }}.
-_imap._tcp.{{ chatmail_domain }}.        SRV 0 1 143 {{ chatmail_domain }}.
-_imaps._tcp.{{ chatmail_domain }}.       SRV 0 1 993 {{ chatmail_domain }}.
+_submission._tcp.{{ mail_domain }}.  SRV 0 1 587 {{ mail_domain }}.
+_submissions._tcp.{{ mail_domain }}. SRV 0 1 465 {{ mail_domain }}.
+_imap._tcp.{{ mail_domain }}.        SRV 0 1 143 {{ mail_domain }}.
+_imaps._tcp.{{ mail_domain }}.       SRV 0 1 993 {{ mail_domain }}.

@@ -82,7 +82,7 @@ def handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay=Non
             ):
                 # Handle `GETMETADATA "" /shared/vendor/deltachat/irohrelay`
                 return f"O{iroh_relay}\n"
-        logging.warning("lookup ignored: %r", msg)
+        logging.warning(f"lookup ignored: {msg!r}")
         return "N\n"
     elif short_command == DICTPROXY_ITERATE_CHAR:
         # Empty line means ITER_FINISHED.
@@ -92,7 +92,7 @@ def handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay=Non
         return  # no version checking
 
     if short_command not in (DICTPROXY_TRANSACTION_CHARS):
-        logging.warning("unknown dictproxy request: %r", msg)
+        logging.warning(f"unknown dictproxy request: {msg!r}")
         return
 
     transaction_id = parts[0]

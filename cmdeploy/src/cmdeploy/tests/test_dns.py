@@ -90,7 +90,7 @@ class TestZonefileChecks:
 
     def test_check_zonefile_recommended_not_set(self, cm_data, mockdns_base):
         zonefile = cm_data.get("zftest.zone")
-        zonefile_mocked = zonefile.split("# Recommended")[0]
+        zonefile_mocked = zonefile.split("; Recommended")[0]
         parse_zonefile_into_dict(zonefile_mocked, mockdns_base)
         required_diff, recommended_diff = remote_funcs.check_zonefile(zonefile)
         assert not required_diff
@@ -98,7 +98,7 @@ class TestZonefileChecks:
 
     def test_check_zonefile_output_required_fine(self, cm_data, mockdns_base, mockout):
         zonefile = cm_data.get("zftest.zone")
-        zonefile_mocked = zonefile.split("# Recommended")[0]
+        zonefile_mocked = zonefile.split("; Recommended")[0]
         parse_zonefile_into_dict(zonefile_mocked, mockdns_base, only_required=True)
         mssh = MockSSHExec()
         res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)

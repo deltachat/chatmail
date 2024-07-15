@@ -1,6 +1,6 @@
-#
-# Required DNS entries for chatmail servers 
-#
+;
+; Required DNS entries for chatmail servers 
+;
 {% if A %}
 {{ chatmail_domain }}.                   A     {{ A }}
 {% endif %}
@@ -13,9 +13,9 @@ mta-sts.{{ chatmail_domain }}.           CNAME {{ chatmail_domain }}.
 www.{{ chatmail_domain }}.               CNAME {{ chatmail_domain }}.
 {{ dkim_entry }}
 
-#
-# Recommended DNS entries for interoperability and security-hardening
-#
+;
+; Recommended DNS entries for interoperability and security-hardening
+;
 {{ chatmail_domain }}.                   TXT "v=spf1 a:{{ chatmail_domain }} ~all"
 _dmarc.{{ chatmail_domain }}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 

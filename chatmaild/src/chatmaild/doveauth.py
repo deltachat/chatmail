@@ -233,7 +233,7 @@ def handle_dovecot_protocol(rfile, wfile, db: Database, config: Config):
         try:
             res = handle_dovecot_request(msg, db, config)
         except UnknownCommand:
-            logging.warning("unknown command: %r", msg)
+            logging.warning(f"unknown command: {msg!r}")
         else:
             if res:
                 wfile.write(res.encode("ascii"))

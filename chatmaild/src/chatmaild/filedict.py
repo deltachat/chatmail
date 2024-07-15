@@ -32,5 +32,5 @@ class FileDict:
         except FileNotFoundError:
             return {}
         except Exception:
-            logging.warning("corrupt serialization state at: %r", self.path)
+            logging.warning(f"corrupt serialization state at: {self.path!r}")
             return {}

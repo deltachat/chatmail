@@ -7,6 +7,7 @@ import argparse
 import importlib.resources
 import importlib.util
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -54,7 +55,8 @@ def run_cmd_options(parser):
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
 
-    remote_data = dns.get_initial_remote_data(args)
+    sshexec = args.get_sshexec()
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
     if not dns.check_initial_remote_data(remote_data, print=out.red):
         return 1
 
@@ -80,16 +82,37 @@ def dns_cmd_options(parser):
     parser.add_argument(
         "--zonefile",
         dest="zonefile",
-        help="print the whole zonefile for deploying directly",
+        type=pathlib.Path,
+        default=None,
+        help="write out a zonefile",
     )
 
 
 def dns_cmd(args, out):
     """Check DNS entries and optionally generate dns zone file."""
-    remote_data = dns.get_initial_remote_data(args)
+    sshexec = args.get_sshexec()
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
     if not remote_data:
         return 1
-    retcode = dns.show_dns(args, out, remote_data)
+
+    if not remote_data["acme_account_url"]:
+        out.red("could not get letsencrypt account url, please run 'cmdeploy run'")
+        return 1
+
+    if not remote_data["dkim_entry"]:
+        out.red("could not determine dkim_entry, please run 'cmdeploy run'")
+        return 1
+
+    zonefile = dns.get_filled_zone_file(remote_data)
+
+    if args.zonefile:
+        args.zonefile.write_text(zonefile)
+        out.green(f"DNS records successfully written to: {args.zonefile}")
+        return 0
+
+    retcode = dns.check_full_zone(
+        sshexec, remote_data=remote_data, zonefile=zonefile, out=out
+    )
     return retcode
 
 
@@ -283,14 +306,9 @@ def main(args=None):
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
 
-    ssh_cache = []
-
     def get_sshexec():
-        if not ssh_cache:
-            print(f"[ssh] login to {args.config.mail_domain}")
-            ssh = SSHExec(args.config.mail_domain, remote_funcs, verbose=args.verbose)
-            ssh_cache.append(ssh)
-        return ssh_cache[0]
+        print(f"[ssh] login to {args.config.mail_domain}")
+        return SSHExec(args.config.mail_domain, remote_funcs, verbose=args.verbose)
 
     args.get_sshexec = get_sshexec
 

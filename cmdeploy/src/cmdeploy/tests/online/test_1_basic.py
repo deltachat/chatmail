@@ -27,16 +27,16 @@ class TestSSHExecutor:
             remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
-        assert out.startswith("Collecting")
-        assert out.endswith("....\n")
-        assert out.count("\n") == 1
+        assert err.startswith("Collecting")
+        assert err.endswith("....\n")
+        assert err.count("\n") == 1
 
         sshexec.verbose = True
         sshexec.logged(
             remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
-        lines = out.split("\n")
+        lines = err.split("\n")
         assert len(lines) > 4
         assert remote_funcs.perform_initial_checks.__doc__ in lines[0]
 

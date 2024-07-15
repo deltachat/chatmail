@@ -79,3 +79,22 @@ def maildata(request):
         return BytesParser(policy=policy.default).parsebytes(text.encode())
 
     return maildata
+
+
+@pytest.fixture
+def mockout():
+    class MockOut:
+        captured_red = []
+        captured_green = []
+        captured_plain = []
+
+        def red(self, msg):
+            self.captured_red.append(msg)
+
+        def green(self, msg):
+            self.captured_green.append(msg)
+
+        def __call__(self, msg):
+            self.captured_plain.append(msg)
+
+    return MockOut()

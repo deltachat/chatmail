@@ -14,6 +14,9 @@
   which removes users from database and mails after 100 days without any login. 
   ([#350](https://github.com/deltachat/chatmail/pull/350))
 
+- Refine DNS checking to distinguish between "required" and "recommended" settings 
+  ([#372](https://github.com/deltachat/chatmail/pull/372))
+
 - reload nginx in the acmetool cronjob
   ([#360](https://github.com/deltachat/chatmail/pull/360))
 

@@ -81,10 +81,10 @@ def check_zonefile(zonefile):
     recommended_diff = []
 
     for zf_line in zonefile.splitlines():
-        if "# Recommended" in zf_line:
+        if "; Recommended" in zf_line:
             required = False
             continue
-        if not zf_line.strip() or zf_line.startswith("#"):
+        if not zf_line.strip() or zf_line.startswith(";"):
             continue
         print(f"dns-checking {zf_line!r}")
         zf_domain, zf_typ, zf_value = zf_line.split(maxsplit=2)

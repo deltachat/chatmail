@@ -13,8 +13,8 @@ events {
 stream {
         map $ssl_preread_alpn_protocols $proxy {
             default 127.0.0.1:8443;
-            ~\bsmtp\b 127.0.0.1:submissions;
-            ~\bimap\b 127.0.0.1:imaps;
+            ~\bsmtp\b 127.0.0.1:465;
+            ~\bimap\b 127.0.0.1:993;
         }
 
         server {

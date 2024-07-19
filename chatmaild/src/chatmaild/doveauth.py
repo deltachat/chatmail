@@ -62,11 +62,7 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
 
 def get_user_data(db, config: Config, user, conn=None):
     if user == f"echo@{config.mail_domain}":
-        return dict(
-            home=str(config.get_user_maildir(user)),
-            uid="vmail",
-            gid="vmail",
-        )
+        return config.get_user_dict(user)
 
     if conn is None:
         with db.read_connection() as conn:
@@ -75,9 +71,7 @@ def get_user_data(db, config: Config, user, conn=None):
         result = conn.get_user(user)
 
     if result:
-        result["home"] = str(config.get_user_maildir(user))
-        result["uid"] = "vmail"
-        result["gid"] = "vmail"
+        result.update(config.get_user_dict(user))
     return result
 
 
@@ -94,12 +88,7 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
             logging.exception("Exception when trying to read /run/echobot/password")
             return None
 
-        return dict(
-            home=str(config.get_user_maildir(user)),
-            uid="vmail",
-            gid="vmail",
-            password=encrypt_password(password),
-        )
+        return config.get_user_dict(user, enc_password=encrypt_password(password))
 
     userdata = get_user_data(db, config, user)
     if userdata:
@@ -114,16 +103,11 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
         if userdata:
             return userdata
 
-        encrypted_password = encrypt_password(cleartext_password)
+        enc_password = encrypt_password(cleartext_password)
         q = "INSERT INTO users (addr, password) VALUES (?, ?)"
-        conn.execute(q, (user, encrypted_password))
+        conn.execute(q, (user, enc_password))
         print(f"Created address: {user}", file=sys.stderr)
-        return dict(
-            home=str(config.get_user_maildir(user)),
-            uid="vmail",
-            gid="vmail",
-            password=encrypted_password,
-        )
+        return config.get_user_dict(user, enc_password=enc_password)
 
 
 def iter_userdb(db) -> list:

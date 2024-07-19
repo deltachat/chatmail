@@ -43,6 +43,13 @@ class Config:
                 return res
         raise ValueError(f"invalid address {addr!r}")
 
+    def get_user_dict(self, addr, enc_password=None):
+        home = self.get_user_maildir(addr)
+        res = dict(home=str(home), uid="vmail", gid="vmail")
+        if enc_password is not None:
+            res["password"] = enc_password
+        return res
+
 
 def write_initial_config(inipath, mail_domain, overrides):
     """Write out default config file, using the specified config value overrides."""

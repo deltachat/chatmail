@@ -60,7 +60,7 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
     return True
 
 
-def get_user_data(db, config: Config, user):
+def get_user_data(db, config: Config, user, conn=None):
     if user == f"echo@{config.mail_domain}":
         return dict(
             home=str(config.get_user_maildir(user)),
@@ -68,8 +68,12 @@ def get_user_data(db, config: Config, user):
             gid="vmail",
         )
 
-    with db.read_connection() as conn:
+    if conn is None:
+        with db.read_connection() as conn:
+            result = conn.get_user(user)
+    else:
         result = conn.get_user(user)
+
     if result:
         result["home"] = str(config.get_user_maildir(user))
         result["uid"] = "vmail"
@@ -97,17 +101,19 @@ def lookup_passdb(db, config: Config, user, cleartext_password):
             password=encrypt_password(password),
         )
 
-    with db.read_connection() as conn:
-        userdata = conn.get_user(user)
-        if userdata:
-            userdata["home"] = str(config.get_user_maildir(user))
-            userdata["uid"] = "vmail"
-            userdata["gid"] = "vmail"
-            return userdata
-        if not is_allowed_to_create(config, user, cleartext_password):
-            return
+    userdata = get_user_data(db, config, user)
+    if userdata:
+        return userdata
+    if not is_allowed_to_create(config, user, cleartext_password):
+        return
 
+    # reading and writing user data needs to be atomic
+    # to allow concurrent logins to succeed.
     with db.write_transaction() as conn:
+        userdata = get_user_data(db, config, user, conn=conn)
+        if userdata:
+            return userdata
+
         encrypted_password = encrypt_password(cleartext_password)
         q = "INSERT INTO users (addr, password) VALUES (?, ?)"
         conn.execute(q, (user, encrypted_password))

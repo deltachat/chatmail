@@ -60,7 +60,7 @@ def delete_inactive_users(db, config, chunksize=100):
         with db.write_transaction() as conn:
             for user in pending:
                 conn.execute("DELETE FROM users WHERE addr = ?", (user,))
-        pending[:] = []
+        pending.clear()
 
     for userdir in Path(config.mailboxes_dir).iterdir():
         if get_last_login_from_userdir(userdir) < cutoff_date:

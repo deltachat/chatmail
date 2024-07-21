@@ -23,7 +23,7 @@ class DictProxy:
                 wfile.flush()
 
     def handle_dovecot_request(self, msg):
-        # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
+        # see https://doc.dovecot.org/developer_manual/design/dict_protocol/#dovecot-dict-protocol
         short_command = msg[0]
         parts = msg[1:].split("\t")
 
@@ -67,10 +67,7 @@ class DictProxy:
         self.transactions[transaction_id]["res"] = "F\n"
 
     def handle_commit_transaction(self, transaction_id, parts):
-        # each set devicetoken operation persists directly
-        # and does not wait until a "commit" comes
-        # because our dovecot config does not involve
-        # multiple set-operations in a single commit
+        # return whatever "set" command(s) set as result.
         return self.transactions.pop(transaction_id)["res"]
 
     def serve_forever_from_socket(self, socket):

@@ -1,11 +1,5 @@
 import logging
-import os
 import sys
-from socketserver import (
-    StreamRequestHandler,
-    ThreadingMixIn,
-    UnixStreamServer,
-)
 
 from .config import read_config
 from .dictproxy import DictProxy
@@ -83,10 +77,6 @@ class MetadataDictProxy(DictProxy):
             self.transactions[transaction_id]["res"] = "F\n"
 
 
-class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
-    request_queue_size = 100
-
-
 def main():
     socket, config_path = sys.argv[1:]
 
@@ -108,21 +98,4 @@ def main():
         notifier=notifier, metadata=metadata, iroh_relay=iroh_relay
     )
 
-    class Handler(StreamRequestHandler):
-        def handle(self):
-            try:
-                dictproxy.loop_forever(self.rfile, self.wfile)
-            except Exception:
-                logging.exception("Exception in the dovecot dictproxy handler")
-                raise
-
-    try:
-        os.unlink(socket)
-    except FileNotFoundError:
-        pass
-
-    with ThreadedUnixStreamServer(socket, Handler) as server:
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            pass
+    dictproxy.serve_forever_from_socket(socket)

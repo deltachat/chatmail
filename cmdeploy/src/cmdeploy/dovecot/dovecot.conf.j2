@@ -111,7 +111,7 @@ protocol imap {
 }
 
 plugin {
-  last_login_dict = proxy:/run/chatmail-metadata/metadata.socket:metadata
+  last_login_dict = proxy:/run/chatmail-lastlogin/lastlogin.socket:lastlogin
   #last_login_key = last-login/%u # default
   last_login_precision = s
 }

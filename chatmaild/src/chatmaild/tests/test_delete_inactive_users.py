@@ -1,11 +1,8 @@
 import time
 
-from chatmaild.delete_inactive_users import (
-    delete_inactive_users,
-    get_last_login_from_userdir,
-    write_last_login_to_userdir,
-)
+from chatmaild.delete_inactive_users import delete_inactive_users
 from chatmaild.doveauth import lookup_passdb
+from chatmaild.lastlogin import get_last_login_from_userdir, write_last_login_to_userdir
 
 
 def test_login_timestamps(tmp_path):

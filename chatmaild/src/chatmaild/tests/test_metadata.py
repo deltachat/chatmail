@@ -3,7 +3,6 @@ import time
 
 import pytest
 import requests
-from chatmaild.delete_inactive_users import get_last_login_from_userdir
 from chatmaild.metadata import (
     Metadata,
     MetadataDictProxy,
@@ -97,16 +96,6 @@ def test_handle_dovecot_request_lookup_fails(dictproxy, testaddr):
     res = dictproxy.handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}")
     assert res == "N\n"
 
-def test_metadata_login_timestamp(metadata, testaddr):
-    timestamp = metadata.vmail_dir.joinpath(testaddr).mkdir()
-    metadata.write_login_timestamp(testaddr, timestamp=100000)
-    timestamp = metadata.vmail_dir.joinpath(testaddr, "last-login").read_text()
-    assert int(timestamp) == 86400
-
-    metadata.write_login_timestamp(testaddr, timestamp=200000)
-    timestamp = metadata.vmail_dir.joinpath(testaddr, "last-login").read_text()
-    assert int(timestamp) == 86400 * 2
-
 
 def test_handle_dovecot_request_happy_path(dictproxy, testaddr, token):
     metadata = dictproxy.metadata
@@ -142,32 +131,6 @@ def test_handle_dovecot_request_happy_path(dictproxy, testaddr, token):
     assert dictproxy.handle_dovecot_request(f"C{tx2}") == "O\n"
     assert not transactions
     assert queue_item.path.exists()
-
-
-def test_handle_dovecot_request_last_login(notifier, metadata, testaddr, token):
-    dictproxy = MetadataDictProxy(notifier=notifier, metadata=metadata)
-
-    userdir = metadata.vmail_dir.joinpath(testaddr)
-
-    # set last-login info for user
-    tx = "1111"
-    msg = f"B{tx}\t{testaddr}"
-    res = dictproxy.handle_dovecot_request(msg)
-    assert not res
-    assert dictproxy.transactions == {tx: dict(addr=testaddr, res="O\n")}
-
-    timestamp = int(time.time())
-    msg = f"S{tx}\tshared/last-login/{testaddr}\t{timestamp}"
-    res = dictproxy.handle_dovecot_request(msg)
-    assert not res
-    assert len(dictproxy.transactions) == 1
-    read_timestamp = get_last_login_from_userdir(userdir)
-    assert read_timestamp == timestamp // 86400 * 86400
-
-    msg = f"C{tx}"
-    res = dictproxy.handle_dovecot_request(msg)
-    assert res == "O\n"
-    assert len(dictproxy.transactions) == 0
 
 
 def test_handle_dovecot_protocol_set_devicetoken(dictproxy):

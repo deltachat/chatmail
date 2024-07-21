@@ -14,6 +14,10 @@
   which removes users from database and mails after 100 days without any login. 
   ([#350](https://github.com/deltachat/chatmail/pull/350))
 
+- Fix and refine "last-login" tracking which now happens via a dedicated
+  dovecot dictproxy with state kept in "$USERDIR/last-login" files. 
+  ([#354](https://github.com/deltachat/chatmail/pull/354))
+
 - Refine DNS checking to distinguish between "required" and "recommended" settings 
   ([#372](https://github.com/deltachat/chatmail/pull/372))
 

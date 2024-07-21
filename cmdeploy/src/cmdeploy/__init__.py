@@ -103,6 +103,7 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         "filtermail",
         "echobot",
         "chatmail-metadata",
+        "lastlogin",
     ):
         params = dict(
             execpath=f"{remote_venv_dir}/bin/{fn}",

@@ -4,8 +4,8 @@ import time
 import pytest
 import requests
 from chatmaild.metadata import (
-    DovecotDictProxy,
     Metadata,
+    MetadataDictProxy,
 )
 from chatmaild.notifier import (
     Notifier,
@@ -29,8 +29,8 @@ def metadata(tmp_path):
 
 
 @pytest.fixture
-def dict_proxy(notifier, metadata):
-    return DovecotDictProxy(notifier=notifier, metadata=metadata)
+def dictproxy(notifier, metadata):
+    return MetadataDictProxy(notifier=notifier, metadata=metadata)
 
 
 @pytest.fixture
@@ -92,48 +92,48 @@ def test_notifier_remove_without_set(metadata, testaddr):
     assert not metadata.get_tokens_for_addr(testaddr)
 
 
-def test_handle_dovecot_request_lookup_fails(dict_proxy, testaddr):
-    res = dict_proxy.handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}")
+def test_handle_dovecot_request_lookup_fails(dictproxy, testaddr):
+    res = dictproxy.handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}")
     assert res == "N\n"
 
 
-def test_handle_dovecot_request_happy_path(dict_proxy, testaddr, token):
-    metadata = dict_proxy.metadata
-    transactions = dict_proxy.transactions
-    notifier = dict_proxy.notifier
+def test_handle_dovecot_request_happy_path(dictproxy, testaddr, token):
+    metadata = dictproxy.metadata
+    transactions = dictproxy.transactions
+    notifier = dictproxy.notifier
 
     # set device token in a transaction
     tx = "1111"
     msg = f"B{tx}\t{testaddr}"
-    res = dict_proxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg)
     assert not res and not metadata.get_tokens_for_addr(testaddr)
     assert transactions == {tx: dict(addr=testaddr, res="O\n")}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t{token}"
-    res = dict_proxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg)
     assert not res
     assert len(transactions) == 1
     assert metadata.get_tokens_for_addr(testaddr) == [token]
 
     msg = f"C{tx}"
-    res = dict_proxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg)
     assert res == "O\n"
     assert len(transactions) == 0
     assert metadata.get_tokens_for_addr(testaddr) == [token]
 
     # trigger notification for incoming message
     tx2 = "2222"
-    assert dict_proxy.handle_dovecot_request(f"B{tx2}\t{testaddr}") is None
+    assert dictproxy.handle_dovecot_request(f"B{tx2}\t{testaddr}") is None
     msg = f"S{tx2}\tpriv/guid00/messagenew"
-    assert dict_proxy.handle_dovecot_request(msg) is None
+    assert dictproxy.handle_dovecot_request(msg) is None
     queue_item = notifier.retry_queues[0].get()[1]
     assert queue_item.token == token
-    assert dict_proxy.handle_dovecot_request(f"C{tx2}") == "O\n"
+    assert dictproxy.handle_dovecot_request(f"C{tx2}") == "O\n"
     assert not transactions
     assert queue_item.path.exists()
 
 
-def test_handle_dovecot_protocol_set_devicetoken(dict_proxy):
+def test_handle_dovecot_protocol_set_devicetoken(dictproxy):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -145,12 +145,12 @@ def test_handle_dovecot_protocol_set_devicetoken(dict_proxy):
         )
     )
     wfile = io.BytesIO()
-    dict_proxy.loop_forever(rfile, wfile)
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b"O\n"
-    assert dict_proxy.metadata.get_tokens_for_addr("user@example.org") == ["01234"]
+    assert dictproxy.metadata.get_tokens_for_addr("user@example.org") == ["01234"]
 
 
-def test_handle_dovecot_protocol_set_get_devicetoken(dict_proxy):
+def test_handle_dovecot_protocol_set_get_devicetoken(dictproxy):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -162,19 +162,19 @@ def test_handle_dovecot_protocol_set_get_devicetoken(dict_proxy):
         )
     )
     wfile = io.BytesIO()
-    dict_proxy.loop_forever(rfile, wfile)
-    assert dict_proxy.metadata.get_tokens_for_addr("user@example.org") == ["01234"]
+    dictproxy.loop_forever(rfile, wfile)
+    assert dictproxy.metadata.get_tokens_for_addr("user@example.org") == ["01234"]
     assert wfile.getvalue() == b"O\n"
 
     rfile = io.BytesIO(
         b"\n".join([b"HELLO", b"Lpriv/0123/devicetoken\tuser@example.org"])
     )
     wfile = io.BytesIO()
-    dict_proxy.loop_forever(rfile, wfile)
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b"O01234\n"
 
 
-def test_handle_dovecot_protocol_iterate(dict_proxy):
+def test_handle_dovecot_protocol_iterate(dictproxy):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -184,7 +184,7 @@ def test_handle_dovecot_protocol_iterate(dict_proxy):
         )
     )
     wfile = io.BytesIO()
-    dict_proxy.loop_forever(rfile, wfile)
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b"\n"
 
 
@@ -299,7 +299,7 @@ def test_persistent_queue_items(tmp_path, testaddr, token):
     assert not queue_item < item2 and not item2 < queue_item
 
 
-def test_iroh_relay(dict_proxy):
+def test_iroh_relay(dictproxy):
     rfile = io.BytesIO(
         b"\n".join(
             [
@@ -309,6 +309,6 @@ def test_iroh_relay(dict_proxy):
         )
     )
     wfile = io.BytesIO()
-    dict_proxy.iroh_relay = "https://example.org/"
-    dict_proxy.loop_forever(rfile, wfile)
+    dictproxy.iroh_relay = "https://example.org/"
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b"Ohttps://example.org/\n"

@@ -8,16 +8,9 @@ from socketserver import (
 )
 
 from .config import read_config
+from .dictproxy import DictProxy
 from .filedict import FileDict
 from .notifier import Notifier
-
-DICTPROXY_HELLO_CHAR = "H"
-DICTPROXY_LOOKUP_CHAR = "L"
-DICTPROXY_ITERATE_CHAR = "I"
-DICTPROXY_BEGIN_TRANSACTION_CHAR = "B"
-DICTPROXY_SET_CHAR = "S"
-DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
-DICTPROXY_TRANSACTION_CHARS = "BSC"
 
 
 class Metadata:
@@ -48,48 +41,12 @@ class Metadata:
         return mdict.get(self.DEVICETOKEN_KEY, [])
 
 
-class DovecotDictProxy:
+class MetadataDictProxy(DictProxy):
     def __init__(self, notifier, metadata, iroh_relay=None):
+        super().__init__()
         self.notifier = notifier
         self.metadata = metadata
         self.iroh_relay = iroh_relay
-        self.transactions = {}
-
-    def loop_forever(self, rfile, wfile):
-        while True:
-            msg = rfile.readline().strip().decode()
-            if not msg:
-                break
-
-            res = self.handle_dovecot_request(msg)
-            if res:
-                wfile.write(res.encode("ascii"))
-                wfile.flush()
-
-    def handle_dovecot_request(self, msg):
-        # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
-        short_command = msg[0]
-        parts = msg[1:].split("\t")
-
-        if short_command == DICTPROXY_LOOKUP_CHAR:
-            return self.handle_lookup(parts)
-        elif short_command == DICTPROXY_ITERATE_CHAR:
-            return self.handle_iterate(parts)
-        elif short_command == DICTPROXY_HELLO_CHAR:
-            return  # no version checking
-
-        if short_command not in (DICTPROXY_TRANSACTION_CHARS):
-            logging.warning(f"unknown dictproxy request: {msg!r}")
-            return
-
-        transaction_id = parts[0]
-
-        if short_command == DICTPROXY_BEGIN_TRANSACTION_CHAR:
-            return self.handle_begin_transaction(transaction_id, parts)
-        elif short_command == DICTPROXY_COMMIT_TRANSACTION_CHAR:
-            return self.handle_commit_transaction(transaction_id, parts)
-        elif short_command == DICTPROXY_SET_CHAR:
-            return self.handle_set(transaction_id, parts)
 
     def handle_lookup(self, parts):
         # Lpriv/43f5f508a7ea0366dff30200c15250e3/devicetoken\tlkj123poi@c2.testrun.org
@@ -111,19 +68,9 @@ class DovecotDictProxy:
         logging.warning(f"lookup ignored: {parts!r}")
         return "N\n"
 
-    def handle_iterate(self, parts):
-        # Empty line means ITER_FINISHED.
-        # If we don't return empty line Dovecot will timeout.
-        return "\n"
-
-    def handle_begin_transaction(self, transaction_id, parts):
-        addr = parts[1]
-        self.transactions[transaction_id] = dict(addr=addr, res="O\n")
-
     def handle_set(self, transaction_id, parts):
         # For documentation on key structure see
         # https://github.com/dovecot/core/blob/main/src/lib-storage/mailbox-attribute.h
-
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
         addr = self.transactions[transaction_id]["addr"]
@@ -134,13 +81,6 @@ class DovecotDictProxy:
         else:
             # Transaction failed.
             self.transactions[transaction_id]["res"] = "F\n"
-
-    def handle_commit_transaction(self, transaction_id, parts):
-        # each set devicetoken operation persists directly
-        # and does not wait until a "commit" comes
-        # because our dovecot config does not involve
-        # multiple set-operations in a single commit
-        return self.transactions.pop(transaction_id)["res"]
 
 
 class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
@@ -164,14 +104,14 @@ def main():
     notifier = Notifier(queue_dir)
     notifier.start_notification_threads(metadata.remove_token_from_addr)
 
-    dict_proxy = DovecotDictProxy(
+    dictproxy = MetadataDictProxy(
         notifier=notifier, metadata=metadata, iroh_relay=iroh_relay
     )
 
     class Handler(StreamRequestHandler):
         def handle(self):
             try:
-                dict_proxy.loop_forever(self.rfile, self.wfile)
+                dictproxy.loop_forever(self.rfile, self.wfile)
             except Exception:
                 logging.exception("Exception in the dovecot dictproxy handler")
                 raise

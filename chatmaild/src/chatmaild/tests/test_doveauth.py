@@ -8,9 +8,8 @@ import chatmaild.doveauth
 import pytest
 from chatmaild.database import DBError
 from chatmaild.doveauth import (
+    AuthDictProxy,
     get_user_data,
-    handle_dovecot_protocol,
-    handle_dovecot_request,
     is_allowed_to_create,
     iter_userdb,
     iter_userdb_lastlogin_before,
@@ -105,12 +104,14 @@ def test_too_high_db_version(db):
 
 
 def test_handle_dovecot_request(db, example_config):
+    dictproxy = AuthDictProxy(db=db, config=example_config)
+
     # Test that password can contain ", ', \ and /
     msg = (
         'Lshared/passdb/laksjdlaksjdlak\\\\sjdlk\\"12j\\\'3l1/k2j3123"'
         "some42123@chat.example.org\tsome42123@chat.example.org"
     )
-    res = handle_dovecot_request(msg, db, example_config)
+    res = dictproxy.handle_dovecot_request(msg)
     assert res
     assert res[0] == "O" and res.endswith("\n")
     userdata = json.loads(res[1:].strip())
@@ -120,28 +121,31 @@ def test_handle_dovecot_request(db, example_config):
 
 
 def test_handle_dovecot_protocol_hello_is_skipped(db, example_config, caplog):
+    dictproxy = AuthDictProxy(db=db, config=example_config)
     rfile = io.BytesIO(b"H3\t2\t0\t\tauth\n")
     wfile = io.BytesIO()
-    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b""
     assert not caplog.messages
 
 
 def test_handle_dovecot_protocol(db, example_config):
+    dictproxy = AuthDictProxy(db=db, config=example_config)
     rfile = io.BytesIO(
         b"H3\t2\t0\t\tauth\nLshared/userdb/foobar@chat.example.org\tfoobar@chat.example.org\n"
     )
     wfile = io.BytesIO()
-    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    dictproxy.loop_forever(rfile, wfile)
     assert wfile.getvalue() == b"N\n"
 
 
 def test_handle_dovecot_protocol_iterate(db, gencreds, example_config):
+    dictproxy = AuthDictProxy(db=db, config=example_config)
     lookup_passdb(db, example_config, "asdf00000@chat.example.org", "q9mr3faue")
     lookup_passdb(db, example_config, "asdf11111@chat.example.org", "q9mr3faue")
     rfile = io.BytesIO(b"H3\t2\t0\t\tauth\nI0\t0\tshared/userdb/")
     wfile = io.BytesIO()
-    handle_dovecot_protocol(rfile, wfile, db, example_config)
+    dictproxy.loop_forever(rfile, wfile)
     lines = wfile.getvalue().decode("ascii").split("\n")
     assert lines[0] == "Oshared/userdb/asdf00000@chat.example.org\t"
     assert lines[1] == "Oshared/userdb/asdf11111@chat.example.org\t"

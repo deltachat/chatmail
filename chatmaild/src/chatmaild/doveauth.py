@@ -5,14 +5,10 @@ import os
 import sys
 import time
 from pathlib import Path
-from socketserver import (
-    StreamRequestHandler,
-    ThreadingMixIn,
-    UnixStreamServer,
-)
 
 from .config import Config, read_config
 from .database import Database
+from .dictproxy import DictProxy
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 
@@ -178,15 +174,13 @@ def split_and_unescape(s):
     yield out
 
 
-def handle_dovecot_request(msg, db, config: Config):
-    # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
-    short_command = msg[0]
-    if short_command == "H":  # HELLO
-        # we don't do any checking on versions and just return
-        return
-    elif short_command == "L":  # LOOKUP
-        parts = msg[1:].split("\t")
+class AuthDictProxy(DictProxy):
+    def __init__(self, db, config):
+        super().__init__()
+        self.db = db
+        self.config = config
 
+    def handle_lookup(self, parts):
         # Dovecot <2.3.17 has only one part,
         # do not attempt to read any other parts for compatibility.
         keyname = parts[0]
@@ -194,6 +188,8 @@ def handle_dovecot_request(msg, db, config: Config):
         namespace, type, args = keyname.split("/", 2)
         args = list(split_and_unescape(args))
 
+        config = self.config
+        db = self.db
         reply_command = "F"
         res = ""
         if namespace == "shared":
@@ -215,33 +211,13 @@ def handle_dovecot_request(msg, db, config: Config):
                     reply_command = "N"
         json_res = json.dumps(res) if res else ""
         return f"{reply_command}{json_res}\n"
-    elif short_command == "I":  # ITERATE
+
+    def handle_iterate(self, parts):
         # example: I0\t0\tshared/userdb/
-        parts = msg[1:].split("\t")
         if parts[2] == "shared/userdb/":
+            db = self.db
             result = "".join(f"Oshared/userdb/{user}\t\n" for user in iter_userdb(db))
             return f"{result}\n"
-
-    raise UnknownCommand(msg)
-
-
-def handle_dovecot_protocol(rfile, wfile, db: Database, config: Config):
-    while True:
-        msg = rfile.readline().strip().decode()
-        if not msg:
-            break
-        try:
-            res = handle_dovecot_request(msg, db, config)
-        except UnknownCommand:
-            logging.warning(f"unknown command: {msg!r}")
-        else:
-            if res:
-                wfile.write(res.encode("ascii"))
-                wfile.flush()
-
-
-class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
-    request_queue_size = 100
 
 
 def main():
@@ -249,21 +225,6 @@ def main():
     config = read_config(cfgpath)
     db = Database(config.passdb_path)
 
-    class Handler(StreamRequestHandler):
-        def handle(self):
-            try:
-                handle_dovecot_protocol(self.rfile, self.wfile, db, config)
-            except Exception:
-                logging.exception("Exception in the handler")
-                raise
+    dictproxy = AuthDictProxy(db=db, config=config)
 
-    try:
-        os.unlink(socket)
-    except FileNotFoundError:
-        pass
-
-    with ThreadedUnixStreamServer(socket, Handler) as server:
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            pass
+    dictproxy.serve_forever_from_socket(socket)

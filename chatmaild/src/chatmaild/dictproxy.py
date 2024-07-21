@@ -1,4 +1,10 @@
 import logging
+import os
+from socketserver import (
+    StreamRequestHandler,
+    ThreadingMixIn,
+    UnixStreamServer,
+)
 
 
 class DictProxy:
@@ -66,3 +72,29 @@ class DictProxy:
         # because our dovecot config does not involve
         # multiple set-operations in a single commit
         return self.transactions.pop(transaction_id)["res"]
+
+    def serve_forever_from_socket(self, socket):
+        dictproxy = self
+
+        class Handler(StreamRequestHandler):
+            def handle(self):
+                try:
+                    dictproxy.loop_forever(self.rfile, self.wfile)
+                except Exception:
+                    logging.exception("Exception in the handler")
+                    raise
+
+        try:
+            os.unlink(socket)
+        except FileNotFoundError:
+            pass
+
+        with ThreadedUnixStreamServer(socket, Handler) as server:
+            try:
+                server.serve_forever()
+            except KeyboardInterrupt:
+                pass
+
+
+class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
+    request_queue_size = 100

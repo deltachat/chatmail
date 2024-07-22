@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 from chatmaild.config import read_config, write_initial_config
-from chatmaild.database import Database
 
 
 @pytest.fixture
@@ -52,13 +51,6 @@ def gencreds(maildomain):
             yield f"{user}@{domain}", f"{password}"
 
     return lambda domain=None: next(gen(domain))
-
-
-@pytest.fixture()
-def db(tmpdir):
-    db_path = tmpdir / "passdb.sqlite"
-    print("database path:", db_path)
-    return Database(db_path)
 
 
 @pytest.fixture

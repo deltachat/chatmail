@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 
 import iniconfig
@@ -49,6 +51,21 @@ class Config:
         if enc_password is not None:
             res["password"] = enc_password
         return res
+
+    def set_user_password(self, addr, enc_password):
+        # reading and writing user data needs to be atomic
+        # to allow concurrent logins to succeed.
+        userdir = self.get_user_maildir(addr)
+        try:
+            userdir.mkdir()
+        except FileExistsError:
+            pass
+        password_path = userdir.joinpath("password")
+        password_path_tmp = userdir.joinpath("password.tmp")
+        password_path_tmp.write_text(enc_password)
+        os.rename(password_path_tmp, password_path)
+        print(f"Created address: {addr}", file=sys.stderr)
+        return self.get_user_dict(addr=addr, enc_password=enc_password)
 
 
 def write_initial_config(inipath, mail_domain, overrides):

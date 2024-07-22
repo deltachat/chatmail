@@ -29,6 +29,8 @@ def write_last_login_to_userdir(userdir, timestamp):
 
 
 def get_last_login_from_userdir(userdir) -> int:
+    if "@" not in userdir.name:
+        return get_daytimestamp(time.time())
     target = userdir.joinpath(LAST_LOGIN)
     try:
         return int(target.stat().st_mtime)

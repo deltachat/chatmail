@@ -25,14 +25,13 @@ def test_delete_skips_non_email_dir(db, example_config):
     assert not list(userdir.iterdir())
 
 
-def test_delete_inactive_users(db, example_config):
+def test_delete_inactive_users(example_config):
     new = time.time()
     old = new - (example_config.delete_inactive_users_after * 86400) - 1
 
     def create_user(addr, last_login):
-        lookup_passdb(db, example_config, addr, "q9mr3faue")
+        lookup_passdb(example_config, addr, "q9mr3faue")
         md = example_config.get_user_maildir(addr)
-        md.mkdir(parents=True)
         md.joinpath("cur").mkdir()
         md.joinpath("cur", "something").mkdir()
         write_last_login_to_userdir(md, timestamp=last_login)
@@ -42,8 +41,6 @@ def test_delete_inactive_users(db, example_config):
     for i in range(150):
         addr = f"oldold{i:03}@chat.example.org"
         create_user(addr, last_login=old)
-        with db.read_connection() as conn:
-            assert conn.get_user(addr)
         to_remove.append(addr)
 
     remain = []
@@ -57,17 +54,15 @@ def test_delete_inactive_users(db, example_config):
     for addr in to_remove:
         assert example_config.get_user_maildir(addr).exists()
 
-    delete_inactive_users(db, example_config)
+    delete_inactive_users(example_config)
 
     for p in example_config.mailboxes_dir.iterdir():
         assert not p.name.startswith("old")
 
     for addr in to_remove:
         assert not example_config.get_user_maildir(addr).exists()
-        with db.read_connection() as conn:
-            assert not conn.get_user(addr)
 
     for addr in remain:
-        assert example_config.get_user_maildir(addr).exists()
-        with db.read_connection() as conn:
-            assert conn.get_user(addr)
+        userdir = example_config.get_user_maildir(addr)
+        assert userdir.exists()
+        assert userdir.joinpath("password").read_text()

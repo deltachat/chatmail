@@ -1,10 +1,6 @@
 import logging
 import os
-from socketserver import (
-    StreamRequestHandler,
-    ThreadingMixIn,
-    UnixStreamServer,
-)
+from socketserver import StreamRequestHandler, ThreadingUnixStreamServer
 
 
 class DictProxy:
@@ -86,12 +82,8 @@ class DictProxy:
         except FileNotFoundError:
             pass
 
-        with ThreadedUnixStreamServer(socket, Handler) as server:
+        with ThreadingUnixStreamServer(socket, Handler) as server:
             try:
                 server.serve_forever()
             except KeyboardInterrupt:
                 pass
-
-
-class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
-    request_queue_size = 100

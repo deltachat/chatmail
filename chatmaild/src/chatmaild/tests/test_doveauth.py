@@ -129,7 +129,7 @@ def test_handle_dovecot_protocol_hello_is_skipped(db, example_config, caplog):
     assert not caplog.messages
 
 
-def test_handle_dovecot_protocol(db, example_config):
+def test_handle_dovecot_protocol_user_not_exists(db, example_config):
     dictproxy = AuthDictProxy(db=db, config=example_config)
     rfile = io.BytesIO(
         b"H3\t2\t0\t\tauth\nLshared/userdb/foobar@chat.example.org\tfoobar@chat.example.org\n"

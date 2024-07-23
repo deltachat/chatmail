@@ -78,7 +78,7 @@ http {
 
 	# Redirect www. to non-www
 	server {
-		listen 443 ssl;
+		listen 8443 ssl;
 		{{ listen_redirect }}
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;

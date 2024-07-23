@@ -1,6 +1,5 @@
 import sqlite3
 
-from chatmaild.lastlogin import get_last_login_from_userdir
 from chatmaild.migrate_db import migrate_from_db_to_maildir
 
 
@@ -59,9 +58,10 @@ def test_migration(tmp_path, example_config, caplog):
         if "@" not in path.name:
             continue
         password, last_login = all.pop(path.name)
+        user = example_config.get_user(path.name)
         if last_login:
-            assert get_last_login_from_userdir(path) == last_login
-        assert password == path.joinpath("password").read_text()
+            assert user.get_last_login_timestamp() == last_login
+        assert password == user.get_userdb_dict()["password"]
 
     assert not all
     assert not example_config.passdb_path.exists()

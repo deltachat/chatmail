@@ -2,6 +2,11 @@
 
 ## untagged
 
+- Migrate and remove sqlite database in favor of password/lastlogin tracking 
+  in a user's maildir.  This removes the need for "passdb" setting in ini file
+  which was introduced through #351 below. 
+  ([#379](https://github.com/deltachat/chatmail/pull/379))
+
 - BREAKING: new required chatmail.ini values:
 
   mailboxes_dir = /home/vmail/mail/{mail_domain}
@@ -13,10 +18,6 @@
 - BREAKING: new required chatmail.ini value 'delete_inactive_users_after = 100'
   which removes users from database and mails after 100 days without any login. 
   ([#350](https://github.com/deltachat/chatmail/pull/350))
-
-- Fix and refine "last-login" tracking which now happens via a dedicated
-  dovecot dictproxy with state kept in "$USERDIR/last-login" files. 
-  ([#354](https://github.com/deltachat/chatmail/pull/354))
 
 - Refine DNS checking to distinguish between "required" and "recommended" settings 
   ([#372](https://github.com/deltachat/chatmail/pull/372))

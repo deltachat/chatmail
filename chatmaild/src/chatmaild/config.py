@@ -4,6 +4,8 @@ from pathlib import Path
 
 import iniconfig
 
+echobot_password_path = Path("/run/echobot/password")
+
 
 def read_config(inipath):
     assert Path(inipath).exists(), inipath
@@ -45,21 +47,18 @@ class Config:
                 return res
         raise ValueError(f"invalid address {addr!r}")
 
-    def get_user_dict(self, addr, enc_password=None):
+    def get_user_dict(self, addr, enc_password):
         home = self.get_user_maildir(addr)
-        res = dict(home=str(home), uid="vmail", gid="vmail")
-        if enc_password is not None:
-            res["password"] = enc_password
-        return res
+        return dict(
+            addr=addr, home=str(home), uid="vmail", gid="vmail", password=enc_password
+        )
 
     def set_user_password(self, addr, enc_password):
         # reading and writing user data needs to be atomic
         # to allow concurrent logins to succeed.
+        assert not addr.startswith("echo@"), addr
         userdir = self.get_user_maildir(addr)
-        try:
-            userdir.mkdir()
-        except FileExistsError:
-            pass
+        userdir.mkdir(exist_ok=True)
         password_path = userdir.joinpath("password")
         password_path_tmp = userdir.joinpath("password.tmp")
         password_path_tmp.write_text(enc_password)

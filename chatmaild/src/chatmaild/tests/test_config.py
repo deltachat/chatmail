@@ -63,12 +63,6 @@ def test_config_userstate_paths(make_config, tmp_path):
 
 def test_config_get_user_dict(make_config, tmp_path):
     config = make_config("something.testrun.org")
-    data = config.get_user_dict("user1@something.org")
-    assert data["home"]
-    assert data["uid"] == "vmail"
-    assert data["gid"] == "vmail"
-    assert "password" not in data
-
     addr = "user1@something.org"
     enc_password = "l1k2j31lk2j3l1k23j123"
     data = config.get_user_dict(addr, enc_password=enc_password)

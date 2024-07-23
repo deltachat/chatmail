@@ -6,7 +6,7 @@ from .config import read_config
 from .dictproxy import DictProxy
 
 # this file's mtime reflects the last login-time for a user
-LAST_LOGIN = "last-login"
+LAST_LOGIN = "password"
 
 
 def get_daytimestamp(timestamp) -> int:
@@ -16,31 +16,16 @@ def get_daytimestamp(timestamp) -> int:
 def write_last_login_to_userdir(userdir, timestamp):
     target = userdir.joinpath(LAST_LOGIN)
     timestamp = get_daytimestamp(timestamp)
-    try:
-        st = target.stat()
-    except FileNotFoundError:
-        # only happens on initial login
-        userdir.mkdir(exist_ok=True)
-        target.touch()
+    st = target.stat()
+    if int(st.st_mtime) != timestamp:
         os.utime(target, (timestamp, timestamp))
-    else:
-        if st.st_mtime < timestamp:
-            os.utime(target, (timestamp, timestamp))
 
 
 def get_last_login_from_userdir(userdir) -> int:
     if "@" not in userdir.name:
         return get_daytimestamp(time.time())
     target = userdir.joinpath(LAST_LOGIN)
-    try:
-        return int(target.stat().st_mtime)
-    except FileNotFoundError:
-        # during migration many directories will not have last-login file
-        # so we write it here to the current time
-        target.touch()
-        timestamp = get_daytimestamp(time.time())
-        os.utime(target, (timestamp, timestamp))
-        return timestamp
+    return int(target.stat().st_mtime)
 
 
 class LastLoginDictProxy(DictProxy):

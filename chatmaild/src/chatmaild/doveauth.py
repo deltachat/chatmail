@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-from .config import Config, read_config
+from .config import Config, echobot_password_path, read_config
 from .dictproxy import DictProxy
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
@@ -131,12 +131,17 @@ class AuthDictProxy(DictProxy):
 
     def lookup_userdb(self, user):
         userdir = self.config.get_user_maildir(user)
-        password_path = userdir.joinpath("password")
-        result = {}
-        if password_path.exists():
-            result = dict(addr=user, password=password_path.read_text())
-            result.update(self.config.get_user_dict(user))
-        return result
+        if user.startswith("echo@"):
+            password_path = echobot_password_path
+        else:
+            password_path = userdir.joinpath("password")
+
+        try:
+            enc_password = password_path.read_text()
+        except FileNotFoundError:
+            return {}
+        else:
+            return self.config.get_user_dict(user, enc_password=enc_password)
 
     def lookup_passdb(self, user, cleartext_password):
         userdata = self.lookup_userdb(user)

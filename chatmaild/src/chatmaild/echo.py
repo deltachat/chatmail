@@ -6,11 +6,13 @@ it will echo back any message that has non-empty text and also supports the /hel
 
 import logging
 import os
+import subprocess
 import sys
 
 from deltachat_rpc_client import Bot, DeltaChat, EventType, Rpc, events
 
-from chatmaild.config import read_config
+from chatmaild.config import echobot_password_path, read_config
+from chatmaild.doveauth import encrypt_password
 from chatmaild.newemail import create_newemail_dict
 
 hooks = events.HookCollection()
@@ -85,10 +87,16 @@ def main():
             password = bot.account.get_config("mail_pw")
         else:
             password = create_newemail_dict(config)["password"]
-        config.set_user_password(addr, password)
+
+        echobot_password_path.write_text(encrypt_password(password))
+        # Give the user which doveauth runs as access to the password file.
+        subprocess.check_call(
+            ["/usr/bin/setfacl", "-m", "user:vmail:r", echobot_password_path],
+        )
 
         if not bot.is_configured():
             bot.configure(addr, password)
+
         bot.run_forever()
 
 

@@ -8,6 +8,7 @@ from chatmaild.lastlogin import get_last_login_from_userdir, write_last_login_to
 def test_login_timestamps(tmp_path):
     userdir = tmp_path.joinpath("someuser@chat.example.org")
     userdir.mkdir()
+    userdir.joinpath("password").touch()
     write_last_login_to_userdir(userdir, timestamp=100000)
     assert get_last_login_from_userdir(userdir) == 86400
 

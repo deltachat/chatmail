@@ -269,7 +269,7 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
         config=config,
-        inet_protocols=inet_protocols,
+        disable_ipv6=config.disable_ipv6,
     )
     need_restart |= main_config.changed
 
@@ -312,8 +312,6 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
     """Configures Dovecot IMAP server."""
     need_restart = False
 
-    listen_ipv4_only = "listen = *" if config.disable_ipv6 else ""
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("dovecot/dovecot.conf.j2"),
         dest="/etc/dovecot/dovecot.conf",
@@ -322,7 +320,7 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
         mode="644",
         config=config,
         debug=debug,
-        listen_ipv4_only=listen_ipv4_only,
+        disable_ipv6=config.disable_ipv6,
     )
     need_restart |= main_config.changed
     auth_config = files.put(
@@ -371,11 +369,6 @@ def _configure_nginx(config: Config, debug: bool = False) -> bool:
     """Configures nginx HTTP server."""
     need_restart = False
 
-    listen_default_server = (
-        "" if config.disable_ipv6 else "listen [::]:8443 ssl default_server;"
-    )
-    listen_redirect = "" if config.disable_ipv6 else "listen [::]:8443 ssl;"
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("nginx/nginx.conf.j2"),
         dest="/etc/nginx/nginx.conf",
@@ -383,8 +376,7 @@ def _configure_nginx(config: Config, debug: bool = False) -> bool:
         group="root",
         mode="644",
         config={"domain_name": config.mail_domain},
-        listen_default_server=listen_default_server,
-        listen_redirect=listen_redirect,
+        disable_ipv6=config.disable_ipv6,
     )
     need_restart |= main_config.changed
 

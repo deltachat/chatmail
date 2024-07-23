@@ -1,6 +1,8 @@
 ## Dovecot configuration file
 
-{{ listen_ipv4_only }}
+{% if disable_ipv6 %}
+listen = *
+{% endif %}
 
 protocols = imap lmtp
 

@@ -45,7 +45,8 @@ http {
 	server {
   
 		listen 8443 ssl default_server;
-		{{ listen_default_server }}
+		{% if not disable_ipv6 %}
+		listen [::]:8443 ssl default_server
 
 		root /var/www/html;
 
@@ -97,7 +98,9 @@ http {
 	# Redirect www. to non-www
 	server {
 		listen 8443 ssl;
-		{{ listen_redirect }}
+		{% if not disable_ipv6 %}
+		listen [::]:8443 ssl;
+		{% endif %}
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 		access_log syslog:server=unix:/dev/log,facility=local7;

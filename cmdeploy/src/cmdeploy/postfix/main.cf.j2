@@ -66,7 +66,11 @@ mailbox_size_limit = 0
 message_size_limit = 31457280
 recipient_delimiter = +
 inet_interfaces = all
-inet_protocols = {{ inet_protocols }}
+{% if disable_ipv6 %}
+inet_protocols = ipv4
+{% else}
+inet_protocols = all
+{% endif}
 
 virtual_transport = lmtp:unix:private/dovecot-lmtp
 virtual_mailbox_domains = {{ config.mail_domain }}

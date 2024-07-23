@@ -1,7 +1,7 @@
 ;; Zone file for staging-ipv4.testrun.org
 
-\$ORIGIN staging-ipv4.testrun.org.
-\$TTL 300
+$ORIGIN staging-ipv4.testrun.org.
+$TTL 300
 
 @  IN  SOA     ns.testrun.org. root.nine.testrun.org (
   2023010101 ; Serial

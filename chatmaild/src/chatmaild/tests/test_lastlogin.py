@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from chatmaild.doveauth import AuthDictProxy
 from chatmaild.lastlogin import (
     LastLoginDictProxy,
     get_last_login_from_userdir,
@@ -15,6 +16,9 @@ def testaddr():
 
 def test_handle_dovecot_request_last_login(testaddr, example_config):
     dictproxy = LastLoginDictProxy(config=example_config)
+
+    authproxy = AuthDictProxy(config=example_config)
+    authproxy.lookup_passdb(testaddr, "1l2k3j1l2k3jl123")
 
     userdir = dictproxy.config.get_user_maildir(testaddr)
 
@@ -41,8 +45,9 @@ def test_handle_dovecot_request_last_login(testaddr, example_config):
 
 def test_login_timestamp(testaddr, example_config):
     dictproxy = LastLoginDictProxy(config=example_config)
+    authproxy = AuthDictProxy(config=example_config)
+    authproxy.lookup_passdb(testaddr, "1l2k3j1l2k3jl123")
     userdir = dictproxy.config.get_user_maildir(testaddr)
-    userdir.mkdir()
     write_last_login_to_userdir(userdir, timestamp=100000)
     assert get_last_login_from_userdir(userdir) == 86400
 

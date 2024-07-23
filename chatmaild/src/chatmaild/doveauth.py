@@ -54,28 +54,6 @@ def is_allowed_to_create(config: Config, user, cleartext_password) -> bool:
     return True
 
 
-def lookup_userdb(config: Config, user):
-    userdir = config.get_user_maildir(user)
-    password_path = userdir.joinpath("password")
-    result = {}
-    if password_path.exists():
-        result = dict(addr=user, password=password_path.read_text())
-        result.update(config.get_user_dict(user))
-    return result
-
-
-def lookup_passdb(config: Config, user, cleartext_password):
-    userdata = lookup_userdb(config, user)
-    if userdata:
-        return userdata
-    if not is_allowed_to_create(config, user, cleartext_password):
-        return
-
-    enc_password = encrypt_password(cleartext_password)
-    config.set_user_password(user, enc_password=enc_password)
-    return config.get_user_dict(user, enc_password=enc_password)
-
-
 def split_and_unescape(s):
     """Split strings using double quote as a separator and backslash as escape character
     into parts."""
@@ -122,7 +100,7 @@ class AuthDictProxy(DictProxy):
             if type == "userdb":
                 user = args[0]
                 if user.endswith(f"@{config.mail_domain}"):
-                    res = lookup_userdb(config, user)
+                    res = self.lookup_userdb(user)
                 if res:
                     reply_command = "O"
                 else:
@@ -130,7 +108,7 @@ class AuthDictProxy(DictProxy):
             elif type == "passdb":
                 user = args[1]
                 if user.endswith(f"@{config.mail_domain}"):
-                    res = lookup_passdb(config, user, cleartext_password=args[0])
+                    res = self.lookup_passdb(user, cleartext_password=args[0])
                 if res:
                     reply_command = "O"
                 else:
@@ -150,6 +128,26 @@ class AuthDictProxy(DictProxy):
         """Get a list of all user addresses."""
         getuserpaths = self.config.mailboxes_dir.iterdir()
         return [x.name for x in getuserpaths if "@" in x.name]
+
+    def lookup_userdb(self, user):
+        userdir = self.config.get_user_maildir(user)
+        password_path = userdir.joinpath("password")
+        result = {}
+        if password_path.exists():
+            result = dict(addr=user, password=password_path.read_text())
+            result.update(self.config.get_user_dict(user))
+        return result
+
+    def lookup_passdb(self, user, cleartext_password):
+        userdata = self.lookup_userdb(user)
+        if userdata:
+            return userdata
+        if not is_allowed_to_create(self.config, user, cleartext_password):
+            return
+
+        enc_password = encrypt_password(cleartext_password)
+        self.config.set_user_password(user, enc_password=enc_password)
+        return self.config.get_user_dict(user, enc_password=enc_password)
 
 
 def main():

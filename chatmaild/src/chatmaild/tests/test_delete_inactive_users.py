@@ -19,7 +19,7 @@ def test_login_timestamps(tmp_path):
     assert get_last_login_from_userdir(userdir) == 86400 * 2
 
 
-def test_delete_skips_non_email_dir(db, example_config):
+def test_delete_skips_non_email_dir(example_config):
     userdir = example_config.get_user_maildir("something")
     userdir.mkdir()
     get_last_login_from_userdir(userdir)

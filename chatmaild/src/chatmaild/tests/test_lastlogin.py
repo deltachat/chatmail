@@ -43,6 +43,30 @@ def test_handle_dovecot_request_last_login(testaddr, example_config):
     assert len(dictproxy.transactions) == 0
 
 
+def test_handle_dovecot_request_last_login_echobot(example_config):
+    dictproxy = LastLoginDictProxy(config=example_config)
+
+    authproxy = AuthDictProxy(config=example_config)
+    testaddr = f"echo@{example_config.mail_domain}"
+    authproxy.lookup_passdb(testaddr, "ignore")
+    userdir = dictproxy.config.get_user_maildir(testaddr)
+
+    # set last-login info for user
+    tx = "1111"
+    msg = f"B{tx}\t{testaddr}"
+    res = dictproxy.handle_dovecot_request(msg)
+    assert not res
+    assert dictproxy.transactions == {tx: dict(addr=testaddr, res="O\n")}
+
+    timestamp = int(time.time())
+    msg = f"S{tx}\tshared/last-login/{testaddr}\t{timestamp}"
+    res = dictproxy.handle_dovecot_request(msg)
+    assert not res
+    assert len(dictproxy.transactions) == 1
+    read_timestamp = get_last_login_from_userdir(userdir)
+    assert read_timestamp == time.time() // 86400 * 86400
+
+
 def test_login_timestamp(testaddr, example_config):
     dictproxy = LastLoginDictProxy(config=example_config)
     authproxy = AuthDictProxy(config=example_config)

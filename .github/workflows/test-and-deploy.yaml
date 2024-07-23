@@ -15,10 +15,14 @@ jobs:
   deploy:
     name: deploy on staging2.testrun.org, and run tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     concurrency:
-      group: staging-deploy
-      cancel-in-progress: true
+      group: ci-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ !contains(github.ref, '$GITHUB_REF') }}
     steps:
+      - uses: jsok/serialize-workflow-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
 
       - name: prepare SSH
@@ -72,12 +76,12 @@ jobs:
 
       - run: cmdeploy init staging2.testrun.org
 
-      - run: cmdeploy run
+      - run: cmdeploy run --verbose
 
       - name: set DNS entries
         run: |
-          ssh -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org chown opendkim:opendkim -R /etc/dkimkeys
-          cmdeploy dns --zonefile staging-generated.zone
+          ssh -o StrictHostKeyChecking=accept-new root@staging2.testrun.org chown opendkim:opendkim -R /etc/dkimkeys
+          cmdeploy dns --zonefile staging-generated.zone --verbose
           cat staging-generated.zone >> .github/workflows/staging.testrun.org-default.zone
           cat .github/workflows/staging.testrun.org-default.zone
           scp .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging2.testrun.org.zone
@@ -88,5 +92,5 @@ jobs:
         run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
 
       - name: cmdeploy dns (try 3 times)
-        run: cmdeploy dns || cmdeploy dns || cmdeploy dns
+        run: cmdeploy dns -v || cmdeploy dns -v || cmdeploy dns -v
 

@@ -1,24 +1,10 @@
 import logging
-import os
 import sys
-from pathlib import Path
-from socketserver import (
-    StreamRequestHandler,
-    ThreadingMixIn,
-    UnixStreamServer,
-)
 
 from .config import read_config
+from .dictproxy import DictProxy
 from .filedict import FileDict
 from .notifier import Notifier
-
-DICTPROXY_HELLO_CHAR = "H"
-DICTPROXY_LOOKUP_CHAR = "L"
-DICTPROXY_ITERATE_CHAR = "I"
-DICTPROXY_BEGIN_TRANSACTION_CHAR = "B"
-DICTPROXY_SET_CHAR = "S"
-DICTPROXY_COMMIT_TRANSACTION_CHAR = "C"
-DICTPROXY_TRANSACTION_CHARS = "BSC"
 
 
 class Metadata:
@@ -49,91 +35,55 @@ class Metadata:
         return mdict.get(self.DEVICETOKEN_KEY, [])
 
 
-def handle_dovecot_protocol(rfile, wfile, notifier, metadata, iroh_relay=None):
-    transactions = {}
-    while True:
-        msg = rfile.readline().strip().decode()
-        if not msg:
-            break
+class MetadataDictProxy(DictProxy):
+    def __init__(self, notifier, metadata, iroh_relay=None):
+        super().__init__()
+        self.notifier = notifier
+        self.metadata = metadata
+        self.iroh_relay = iroh_relay
 
-        res = handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay)
-        if res:
-            wfile.write(res.encode("ascii"))
-            wfile.flush()
-
-
-def handle_dovecot_request(msg, transactions, notifier, metadata, iroh_relay=None):
-    # see https://doc.dovecot.org/3.0/developer_manual/design/dict_protocol/
-    short_command = msg[0]
-    parts = msg[1:].split("\t")
-    if short_command == DICTPROXY_LOOKUP_CHAR:
+    def handle_lookup(self, parts):
         # Lpriv/43f5f508a7ea0366dff30200c15250e3/devicetoken\tlkj123poi@c2.testrun.org
         keyparts = parts[0].split("/", 2)
         if keyparts[0] == "priv":
             keyname = keyparts[2]
             addr = parts[1]
-            if keyname == metadata.DEVICETOKEN_KEY:
-                res = " ".join(metadata.get_tokens_for_addr(addr))
+            if keyname == self.metadata.DEVICETOKEN_KEY:
+                res = " ".join(self.metadata.get_tokens_for_addr(addr))
                 return f"O{res}\n"
         elif keyparts[0] == "shared":
             keyname = keyparts[2]
             if (
                 keyname == "vendor/vendor.dovecot/pvt/server/vendor/deltachat/irohrelay"
-                and iroh_relay
+                and self.iroh_relay
             ):
                 # Handle `GETMETADATA "" /shared/vendor/deltachat/irohrelay`
-                return f"O{iroh_relay}\n"
-        logging.warning("lookup ignored: %r", msg)
+                return f"O{self.iroh_relay}\n"
+        logging.warning(f"lookup ignored: {parts!r}")
         return "N\n"
-    elif short_command == DICTPROXY_ITERATE_CHAR:
-        # Empty line means ITER_FINISHED.
-        # If we don't return empty line Dovecot will timeout.
-        return "\n"
-    elif short_command == DICTPROXY_HELLO_CHAR:
-        return  # no version checking
 
-    if short_command not in (DICTPROXY_TRANSACTION_CHARS):
-        logging.warning("unknown dictproxy request: %r", msg)
-        return
-
-    transaction_id = parts[0]
-
-    if short_command == DICTPROXY_BEGIN_TRANSACTION_CHAR:
-        addr = parts[1]
-        transactions[transaction_id] = dict(addr=addr, res="O\n")
-    elif short_command == DICTPROXY_COMMIT_TRANSACTION_CHAR:
-        # each set devicetoken operation persists directly
-        # and does not wait until a "commit" comes
-        # because our dovecot config does not involve
-        # multiple set-operations in a single commit
-        return transactions.pop(transaction_id)["res"]
-    elif short_command == DICTPROXY_SET_CHAR:
+    def handle_set(self, transaction_id, parts):
         # For documentation on key structure see
         # https://github.com/dovecot/core/blob/main/src/lib-storage/mailbox-attribute.h
-
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
-        addr = transactions[transaction_id]["addr"]
-        if keyname[0] == "priv" and keyname[2] == metadata.DEVICETOKEN_KEY:
-            metadata.add_token_to_addr(addr, value)
+        addr = self.transactions[transaction_id]["addr"]
+        if keyname[0] == "priv" and keyname[2] == self.metadata.DEVICETOKEN_KEY:
+            self.metadata.add_token_to_addr(addr, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
-            notifier.new_message_for_addr(addr, metadata)
+            self.notifier.new_message_for_addr(addr, self.metadata)
         else:
             # Transaction failed.
-            transactions[transaction_id]["res"] = "F\n"
-
-
-class ThreadedUnixStreamServer(ThreadingMixIn, UnixStreamServer):
-    request_queue_size = 100
+            self.transactions[transaction_id]["res"] = "F\n"
 
 
 def main():
-    socket, vmail_dir, config_path = sys.argv[1:]
+    socket, config_path = sys.argv[1:]
 
     config = read_config(config_path)
     iroh_relay = config.iroh_relay
 
-    vmail_dir = Path(vmail_dir)
+    vmail_dir = config.mailboxes_dir
     if not vmail_dir.exists():
         logging.error("vmail dir does not exist: %r", vmail_dir)
         return 1
@@ -144,23 +94,8 @@ def main():
     notifier = Notifier(queue_dir)
     notifier.start_notification_threads(metadata.remove_token_from_addr)
 
-    class Handler(StreamRequestHandler):
-        def handle(self):
-            try:
-                handle_dovecot_protocol(
-                    self.rfile, self.wfile, notifier, metadata, iroh_relay
-                )
-            except Exception:
-                logging.exception("Exception in the dovecot dictproxy handler")
-                raise
+    dictproxy = MetadataDictProxy(
+        notifier=notifier, metadata=metadata, iroh_relay=iroh_relay
+    )
 
-    try:
-        os.unlink(socket)
-    except FileNotFoundError:
-        pass
-
-    with ThreadedUnixStreamServer(socket, Handler) as server:
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            pass
+    dictproxy.serve_forever_from_socket(socket)

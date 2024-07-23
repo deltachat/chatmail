@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import sys
-import time
 from pathlib import Path
 
 
@@ -16,9 +15,15 @@ def main(vmail_dir=None):
         if path.name[:3] in ("ci-", "ac_"):
             ci_accounts += 1
 
-    timestamp = int(time.time() * 1000)
-    print(f"accounts {accounts} {timestamp}")
-    print(f"ci_accounts {ci_accounts} {timestamp}")
+    print("# HELP total number of accounts")
+    print("# TYPE accounts gauge")
+    print(f"accounts {accounts}")
+    print("# HELP number of CI accounts")
+    print("# TYPE ci_accounts gauge")
+    print(f"ci_accounts {ci_accounts}")
+    print("# HELP number of non-CI accounts")
+    print("# TYPE nonci_accounts gauge")
+    print(f"nonci_accounts {accounts - ci_accounts}")
 
 
 if __name__ == "__main__":

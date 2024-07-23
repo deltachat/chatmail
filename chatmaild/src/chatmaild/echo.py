@@ -21,9 +21,9 @@ hooks = events.HookCollection()
 @hooks.on(events.RawEvent)
 def log_event(event):
     if event.kind == EventType.INFO:
-        logging.info("%s", event.msg)
+        logging.info(event.msg)
     elif event.kind == EventType.WARNING:
-        logging.warning("%s", event.msg)
+        logging.warning(event.msg)
 
 
 @hooks.on(events.RawEvent(EventType.ERROR))
@@ -45,7 +45,7 @@ def on_group_image_changed(event):
 
 @hooks.on(events.GroupNameChanged)
 def on_group_name_changed(event):
-    logging.info("group name changed, old name: %s", event.old_name)
+    logging.info(f"group name changed, old name: {event.old_name}")
 
 
 @hooks.on(events.NewMessage(func=lambda e: not e.command))
@@ -72,7 +72,7 @@ def main():
     with Rpc() as rpc:
         deltachat = DeltaChat(rpc)
         system_info = deltachat.get_system_info()
-        logging.info("Running deltachat core %s", system_info.deltachat_core_version)
+        logging.info(f"Running deltachat core {system_info.deltachat_core_version}")
 
         accounts = deltachat.get_all_accounts()
         account = accounts[0] if accounts else deltachat.add_account()

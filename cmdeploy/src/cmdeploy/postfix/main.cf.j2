@@ -77,3 +77,7 @@ mua_helo_restrictions = permit_mynetworks, reject_invalid_helo_hostname, reject_
 
 # 1:1 map MAIL FROM to SASL login name.
 smtpd_sender_login_maps = regexp:/etc/postfix/login_map
+
+# Do not lookup SMTP client hostnames to reduce delays
+# and avoid unnecessary DNS requests.
+smtpd_peername_lookup = no

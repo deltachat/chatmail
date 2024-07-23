@@ -8,9 +8,10 @@ def test_main(tmp_path, capsys):
     out, _ = capsys.readouterr()
     d = {}
     for line in out.split("\n"):
-        if line.strip():
-            name, num, _ = line.split()
+        if line.strip() and not line.startswith("#"):
+            name, num = line.split()
             d[name] = int(num)
 
     assert d["accounts"] == 4
     assert d["ci_accounts"] == 3
+    assert d["nonci_accounts"] == 1

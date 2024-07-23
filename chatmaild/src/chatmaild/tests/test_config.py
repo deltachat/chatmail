@@ -1,3 +1,4 @@
+import pytest
 from chatmaild.config import read_config
 
 
@@ -30,3 +31,31 @@ def test_read_config_testrun(make_config):
     assert config.password_min_length == 9
     assert "privacy@testrun.org" in config.passthrough_recipients
     assert config.passthrough_senders == []
+
+
+def test_config_userstate_paths(make_config, tmp_path):
+    config = make_config("something.testrun.org")
+    mailboxes_dir = config.mailboxes_dir
+    passdb_path = config.passdb_path
+    assert mailboxes_dir.name == "something.testrun.org"
+    assert passdb_path.name == "passdb.sqlite"
+    assert passdb_path.is_relative_to(tmp_path)
+    assert config.mail_domain == "something.testrun.org"
+    path = config.get_user_maildir("user1@something.testrun.org")
+    assert not path.exists()
+    assert path == mailboxes_dir.joinpath("user1@something.testrun.org")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir("")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir(None)
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir("../some@something.testrun.org")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir("..")
+
+    with pytest.raises(ValueError):
+        config.get_user_maildir(".")

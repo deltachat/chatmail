@@ -1,6 +1,6 @@
 From: {from_addr}
 To: {to_addr}
-Subject: ...
+Subject: {subject}
 Date: Sun, 15 Oct 2023 16:43:21 +0000
 Message-ID: <Mr.UVyJWZmkCKM.hGzNc6glBE_@c2.testrun.org>
 In-Reply-To: <Mr.MvmCz-GQbi_.6FGRkhDf05c@c2.testrun.org>

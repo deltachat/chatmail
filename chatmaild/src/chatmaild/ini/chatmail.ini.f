@@ -8,17 +8,20 @@ mail_domain = {mail_domain}
 #
 
 #
-# Account Restrictions
+# Restrictions on user addresses
 #
 
 # how many mails a user can send out per minute
 max_user_send_per_minute = 60
 
-# maximum mailbox size of a chatmail account
+# maximum mailbox size of a chatmail address
 max_mailbox_size = 100M
 
 # days after which mails are unconditionally deleted
 delete_mails_after = 20
+
+# days after which users without a login are deleted (database and mails)
+delete_inactive_users_after = 100
 
 # minimum length a username must have
 username_min_length = 9
@@ -29,7 +32,7 @@ username_max_length = 9
 # minimum length a password must have
 password_min_length = 9
 
-# list of chatmail accounts which can send outbound un-encrypted mail
+# list of chatmail addresses which can send outbound un-encrypted mail
 passthrough_senders =
 
 # list of e-mail recipients for which to accept outbound un-encrypted mails
@@ -38,6 +41,12 @@ passthrough_recipients = xstore@testrun.org groupsbot@hispanilandia.net
 #
 # Deployment Details
 #
+
+# Directory where user mailboxes are stored
+mailboxes_dir = /home/vmail/mail/{mail_domain}
+
+# user address sqlite database path
+passdb_path = /home/vmail/passdb.sqlite
 
 # where the filtermail SMTP service listens
 filtermail_smtp_port = 10080
@@ -63,4 +72,3 @@ privacy_pdo =
 
 # postal address of the privacy supervisor
 privacy_supervisor =
-

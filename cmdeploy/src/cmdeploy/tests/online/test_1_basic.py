@@ -2,6 +2,56 @@ import smtplib
 
 import pytest
 
+from cmdeploy import remote_funcs
+from cmdeploy.sshexec import SSHExec
+
+
+class TestSSHExecutor:
+    @pytest.fixture(scope="class")
+    def sshexec(self, sshdomain):
+        return SSHExec(sshdomain, remote_funcs)
+
+    def test_ls(self, sshexec):
+        out = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
+        out2 = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
+        assert out == out2
+
+    def test_perform_initial(self, sshexec, maildomain):
+        res = sshexec(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        assert res["A"] or res["AAAA"]
+
+    def test_logged(self, sshexec, maildomain, capsys):
+        sshexec.logged(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        out, err = capsys.readouterr()
+        assert err.startswith("Collecting")
+        assert err.endswith("....\n")
+        assert err.count("\n") == 1
+
+        sshexec.verbose = True
+        sshexec.logged(
+            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+        )
+        out, err = capsys.readouterr()
+        lines = err.split("\n")
+        assert len(lines) > 4
+        assert remote_funcs.perform_initial_checks.__doc__ in lines[0]
+
+    def test_exception(self, sshexec, capsys):
+        try:
+            sshexec.logged(
+                remote_funcs.perform_initial_checks,
+                kwargs=dict(mail_domain=None),
+            )
+        except sshexec.FuncError as e:
+            assert "remote_funcs.py" in str(e)
+            assert "AssertionError" in str(e)
+        else:
+            pytest.fail("didn't raise exception")
+
 
 def test_remote(remote, imap_or_smtp):
     lineproducer = remote.iter_output(imap_or_smtp.logcmd)
@@ -90,12 +140,12 @@ def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
 def test_expunged(remote, chatmail_config):
     outdated_days = int(chatmail_config.delete_mails_after) + 1
     find_cmds = [
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/cur/*' -mtime +{outdated_days} -type f",
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/cur/*' -mtime +{outdated_days} -type f",
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/new/*' -mtime +{outdated_days} -type f",
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/new/*' -mtime +{outdated_days} -type f",
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/tmp/*' -mtime +{outdated_days} -type f",
-        f"find /home/vmail/mail/{chatmail_config.mail_domain} -path '*/.*/tmp/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/cur/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/.*/cur/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/new/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/.*/new/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/tmp/*' -mtime +{outdated_days} -type f",
+        f"find {chatmail_config.mailboxes_dir} -path '*/.*/tmp/*' -mtime +{outdated_days} -type f",
     ]
     for cmd in find_cmds:
         for line in remote.iter_output(cmd):

@@ -54,10 +54,16 @@ def test_filtermail_no_encryption_detection(maildata):
 
 
 def test_filtermail_encryption_detection(maildata):
-    msg = maildata("encrypted.eml", from_addr="1@example.org", to_addr="2@example.org")
-    assert check_encrypted(msg)
+    for subject in ("...", "[...]"):
+        msg = maildata(
+            "encrypted.eml",
+            from_addr="1@example.org",
+            to_addr="2@example.org",
+            subject=subject,
+        )
+        assert check_encrypted(msg)
 
-    # if the subject is not "..." it is not considered ac-encrypted
+    # if the subject is not a known encrypted subject value, it is not considered ac-encrypted
     msg.replace_header("Subject", "Click this link")
     assert not check_encrypted(msg)
 
@@ -72,7 +78,7 @@ def test_filtermail_unencrypted_mdn(maildata, gencreds):
     """Unencrypted MDNs should not pass."""
     from_addr = gencreds()[0]
     to_addr = gencreds()[0] + ".other"
-    msg = maildata("mdn.eml", from_addr, to_addr)
+    msg = maildata("mdn.eml", from_addr=from_addr, to_addr=to_addr)
 
     assert not check_encrypted(msg)
 
@@ -95,7 +101,7 @@ def test_excempt_privacy(maildata, gencreds, handler):
     handler.config.passthrough_recipients = [to_addr]
     false_to = "privacy@something.org"
 
-    msg = maildata("plain.eml", from_addr, to_addr)
+    msg = maildata("plain.eml", from_addr=from_addr, to_addr=to_addr)
 
     class env:
         mail_from = from_addr
@@ -118,7 +124,7 @@ def test_passthrough_senders(gencreds, handler, maildata):
     to_addr = "recipient@something.org"
     handler.config.passthrough_senders = [acc1]
 
-    msg = maildata("plain.eml", acc1, to_addr)
+    msg = maildata("plain.eml", from_addr=acc1, to_addr=to_addr)
 
     class env:
         mail_from = acc1
@@ -167,3 +173,19 @@ UN4fiB0KR9JyG2ayUdNJVkXZSZLnHyRgiaadlpUo16LVvw==\r
 """
 
     assert check_armored_payload(payload) == True
+
+    payload = """-----BEGIN PGP MESSAGE-----\r
+\r
+HELLOWORLD
+-----END PGP MESSAGE-----\r
+\r
+"""
+    assert check_armored_payload(payload) == False
+
+    payload = """-----BEGIN PGP MESSAGE-----\r
+\r
+=njUN
+-----END PGP MESSAGE-----\r
+\r
+"""
+    assert check_armored_payload(payload) == False

@@ -92,7 +92,7 @@ class Notifier:
     def requeue_persistent_queue_items(self):
         for queue_path in self.queue_dir.iterdir():
             if queue_path.name.endswith(".tmp"):
-                logging.warning("removing spurious queue item: %r", queue_path)
+                logging.warning(f"removing spurious queue item: {queue_path!r}")
                 queue_path.unlink()
                 continue
             queue_item = PersistentQueueItem.read_from_path(queue_path)
@@ -104,7 +104,7 @@ class Notifier:
         deadline = queue_item.start_ts + self.DROP_DEADLINE
         if retry_num >= len(self.retry_queues) or when > deadline:
             queue_item.delete()
-            logging.error("notification exceeded deadline: %r", queue_item.token)
+            logging.error(f"notification exceeded deadline: {queue_item.token!r}")
             return
 
         self.retry_queues[retry_num].put((when, queue_item))
@@ -162,5 +162,5 @@ class NotifyThread(Thread):
                 queue_item.delete()
                 return
 
-        logging.warning("Notification request failed: %r", res)
+        logging.warning(f"Notification request failed: {res!r}")
         self.notifier.queue_for_retry(queue_item, retry_num=self.retry_num + 1)

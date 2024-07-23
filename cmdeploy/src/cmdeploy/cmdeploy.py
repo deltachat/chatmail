@@ -7,6 +7,7 @@ import argparse
 import importlib.resources
 import importlib.util
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -15,7 +16,8 @@ from pathlib import Path
 from chatmaild.config import read_config, write_initial_config
 from termcolor import colored
 
-from cmdeploy.dns import check_necessary_dns, show_dns
+from . import dns, remote_funcs
+from .sshexec import SSHExec
 
 #
 # cmdeploy sub commands and options
@@ -35,8 +37,9 @@ def init_cmd(args, out):
     mail_domain = args.chatmail_domain
     if args.inipath.exists():
         print(f"Path exists, not modifying: {args.inipath}")
+        return 1
     else:
-        write_initial_config(args.inipath, mail_domain)
+        write_initial_config(args.inipath, mail_domain, overrides={})
         out.green(f"created config file for {mail_domain} in {args.inipath}")
 
 
@@ -51,41 +54,72 @@ def run_cmd_options(parser):
 
 def run_cmd(args, out):
     """Deploy chatmail services on the remote server."""
-    mail_domain = args.config.mail_domain
-    if not check_necessary_dns(
-        out,
-        mail_domain,
-    ):
-        sys.exit(1)
+
+    sshexec = args.get_sshexec()
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
+    if not dns.check_initial_remote_data(remote_data, print=out.red):
+        return 1
 
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
-    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
+    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path} -y"
 
-    out.check_call(cmd, env=env)
-    print("Deploy completed, call `cmdeploy dns` next.")
+    retcode = out.check_call(cmd, env=env)
+    if retcode == 0:
+        out.green("Deploy completed, call `cmdeploy dns` next.")
+    elif not remote_data["acme_account_url"]:
+        out.red("Deploy completed but letsencrypt not configured")
+        out.red("Run 'cmdeploy run' again")
+        retcode = 0
+    else:
+        out.red("Deploy failed")
+    return retcode
 
 
 def dns_cmd_options(parser):
     parser.add_argument(
         "--zonefile",
         dest="zonefile",
-        help="print the whole zonefile for deploying directly",
+        type=pathlib.Path,
+        default=None,
+        help="write out a zonefile",
     )
 
 
 def dns_cmd(args, out):
-    """Generate dns zone file."""
-    exit_code = show_dns(args, out)
-    exit(exit_code)
+    """Check DNS entries and optionally generate dns zone file."""
+    sshexec = args.get_sshexec()
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
+    if not remote_data:
+        return 1
+
+    if not remote_data["acme_account_url"]:
+        out.red("could not get letsencrypt account url, please run 'cmdeploy run'")
+        return 1
+
+    if not remote_data["dkim_entry"]:
+        out.red("could not determine dkim_entry, please run 'cmdeploy run'")
+        return 1
+
+    zonefile = dns.get_filled_zone_file(remote_data)
+
+    if args.zonefile:
+        args.zonefile.write_text(zonefile)
+        out.green(f"DNS records successfully written to: {args.zonefile}")
+        return 0
+
+    retcode = dns.check_full_zone(
+        sshexec, remote_data=remote_data, zonefile=zonefile, out=out
+    )
+    return retcode
 
 
 def status_cmd(args, out):
     """Display status for online chatmail instance."""
 
-    ssh = f"ssh root@{args.config.mail_domain}"
+    sshexec = args.get_sshexec()
 
     out.green(f"chatmail domain: {args.config.mail_domain}")
     if args.config.privacy_mail:
@@ -93,10 +127,8 @@ def status_cmd(args, out):
     else:
         out.red("no privacy settings")
 
-    s1 = "systemctl --type=service --state=running"
-    for line in out.shell_output(f"{ssh} -- {s1}").split("\n"):
-        if line.startswith("  "):
-            print(line)
+    for line in sshexec(remote_funcs.get_systemd_running):
+        print(line)
 
 
 def test_cmd_options(parser):
@@ -125,7 +157,7 @@ def test_cmd(args, out):
         "-n4",
         "-rs",
         "-x",
-        "-vrx",
+        "-v",
         "--durations=5",
     ]
     if args.slow:
@@ -135,14 +167,6 @@ def test_cmd(args, out):
 
 
 def fmt_cmd_options(parser):
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        dest="verbose",
-        action="store_true",
-        help="provide information on invocations",
-    )
-
     parser.add_argument(
         "--check",
         "-c",
@@ -172,7 +196,6 @@ def fmt_cmd(args, out):
 
     out.check_call(" ".join(format_args), quiet=not args.verbose)
     out.check_call(" ".join(check_args), quiet=not args.verbose)
-    return 0
 
 
 def bench_cmd(args, out):
@@ -208,16 +231,6 @@ class Out:
         color = "red" if red else ("green" if green else None)
         print(colored(msg, color), file=file)
 
-    def shell_output(self, arg, no_print=False, timeout=10):
-        if not no_print:
-            self(f"[$ {arg}]", file=sys.stderr)
-            output = subprocess.STDOUT
-        else:
-            output = subprocess.DEVNULL
-        return subprocess.check_output(
-            arg, shell=True, timeout=timeout, stderr=output
-        ).decode()
-
     def check_call(self, arg, env=None, quiet=False):
         if not quiet:
             self(f"[$ {arg}]", file=sys.stderr)
@@ -239,6 +252,14 @@ def add_config_option(parser):
         default=Path("chatmail.ini"),
         type=Path,
         help="path to the chatmail.ini file",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="provide verbose logging",
     )
 
 
@@ -279,11 +300,18 @@ def get_parser():
 
 
 def main(args=None):
-    """Provide main entry point for 'xdcget' CLI invocation."""
+    """Provide main entry point for 'cmdeploy' CLI invocation."""
     parser = get_parser()
     args = parser.parse_args(args=args)
     if not hasattr(args, "func"):
         return parser.parse_args(["-h"])
+
+    def get_sshexec():
+        print(f"[ssh] login to {args.config.mail_domain}")
+        return SSHExec(args.config.mail_domain, remote_funcs, verbose=args.verbose)
+
+    args.get_sshexec = get_sshexec
+
     out = Out()
     kwargs = {}
     if args.func.__name__ not in ("init_cmd", "fmt_cmd"):
@@ -301,7 +329,6 @@ def main(args=None):
         if res is None:
             res = 0
         return res
-
     except KeyboardInterrupt:
         out.red("KeyboardInterrupt")
         sys.exit(130)

@@ -21,10 +21,33 @@ mail_debug = yes
 #   master: Warning: service(stats): client_limit (1000) reached, client connections are being dropped
 default_client_limit = 20000
 
+# Increase number of logged in IMAP connections.
+# Each connection is handled by a separate `imap` process.
+# `imap` process should have `client_limit=1` as described in
+# <https://doc.dovecot.org/configuration_manual/service_configuration/#service-limits>
+# so each logged in IMAP session will need its own `imap` process.
+#
+# If this limit is reached,
+# users will fail to LOGIN as `imap-login` process
+# will accept them logging in but fail to transfer logged in
+# connection to `imap` process until someone logs out and
+# the following warning will be logged:
+#   Warning: service(imap): process_limit (1024) reached, client connections are being dropped
+service imap {
+  process_limit = 50000
+}
+
 mail_server_admin = mailto:root@{{ config.mail_domain }}
 mail_server_comment = Chatmail server
 
-mail_plugins = quota
+# `zlib` enables compressing messages stored in the maildir.
+# See
+# <https://doc.dovecot.org/configuration_manual/zlib_plugin/>
+# for documentation.
+#
+# quota plugin documentation:
+# <https://doc.dovecot.org/configuration_manual/quota_plugin/>
+mail_plugins = zlib quota
 
 # these are the capabilities Delta Chat cares about actually 
 # so let's keep the network overhead per login small
@@ -46,7 +69,7 @@ userdb {
 ##
 
 # Mailboxes are stored in the "mail" directory of the vmail user home.
-mail_location = maildir:/home/vmail/mail/%d/%u
+mail_location = maildir:{{ config.mailboxes_dir }}/%u
 
 namespace inbox {
   inbox = yes
@@ -82,7 +105,7 @@ mail_privileged_group = vmail
 # Pass all IMAP METADATA requests to the server implementing Dovecot's dict protocol.
 mail_attribute_dict = proxy:/run/chatmail-metadata/metadata.socket:metadata
 
-# Enable IMAP COMPRESS (RFC 4978).
+# `imap_zlib` enables IMAP COMPRESS (RFC 4978).
 # <https://datatracker.ietf.org/doc/html/rfc4978.html>
 protocol imap {
   mail_plugins = $mail_plugins imap_zlib imap_quota
@@ -90,9 +113,6 @@ protocol imap {
 }
 
 protocol lmtp {
-  # quota plugin documentation:
-  # <https://doc.dovecot.org/configuration_manual/quota_plugin/>
-  #
   # notify plugin is a dependency of push_notification plugin:
   # <https://doc.dovecot.org/settings/plugin/notify-plugin/>
   #
@@ -101,10 +121,11 @@ protocol lmtp {
   #
   # mail_lua and push_notification_lua are needed for Lua push notification handler.
   # <https://doc.dovecot.org/configuration_manual/push_notification/#configuration>
-  #
-  # Sieve to mark messages that should not be notified as \Seen
-  # <https://doc.dovecot.org/configuration_manual/sieve/configuration/>
-  mail_plugins = $mail_plugins quota mail_lua notify push_notification push_notification_lua sieve
+  mail_plugins = $mail_plugins mail_lua notify push_notification push_notification_lua
+}
+
+plugin {
+  zlib_save = gz
 }
 
 plugin {
@@ -124,10 +145,6 @@ plugin {
 plugin {
   # <https://doc.dovecot.org/configuration_manual/push_notification/#lua-lua>
   push_notification_driver = lua:file=/etc/dovecot/push_notification.lua
-}
-
-plugin {
-  sieve_default = file:/etc/dovecot/default.sieve
 }
 
 service lmtp {

@@ -70,6 +70,9 @@ def check_openpgp_payload(payload: bytes):
             # Symmetric-Key Encrypted Session Key Packet (SKESK)
             return False
 
+    if i == 0:
+        return False
+
     if i > len(payload):
         # Payload is truncated.
         return False
@@ -108,7 +111,7 @@ def check_encrypted(message):
     """
     if not message.is_multipart():
         return False
-    if message.get("subject") != "...":
+    if message.get("subject") not in {"...", "[...]"}:
         return False
     if message.get_content_type() != "multipart/encrypted":
         return False

@@ -86,9 +86,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=accept-new -v root@staging-ipv4.testrun.org chown opendkim:opendkim -R /etc/dkimkeys
           cmdeploy dns --zonefile staging-generated.zone
-          cat staging-generated.zone >> .github/workflows/staging.testrun.org-default.zone
-          cat .github/workflows/staging.testrun.org-default.zone
-          scp .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging-ipv4.testrun.org.zone
+          cat staging-generated.zone >> .github/workflows/staging-ipv4.testrun.org-default.zone
+          cat .github/workflows/staging-ipv4.testrun.org-default.zone
+          scp .github/workflows/staging-ipv4.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging-ipv4.testrun.org.zone
           ssh root@ns.testrun.org nsd-checkzone staging-ipv4.testrun.org /etc/nsd/staging-ipv4.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 

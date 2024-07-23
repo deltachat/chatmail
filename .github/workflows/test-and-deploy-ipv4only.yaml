@@ -35,8 +35,8 @@ jobs:
           rsync -avz root@staging-ipv4.testrun.org:/var/lib/acme . || true
           rsync -avz root@staging-ipv4.testrun.org:/etc/dkimkeys . || true
           # store previous acme & dkim state on ns.testrun.org, if it contains useful certs
-          mv dkimkeys dkimkeys-ipv4
-          mv acme acme-ipv4
+          mv dkimkeys dkimkeys-ipv4 || true
+          mv acme acme-ipv4 || true
           if [ -f dkimkeys-ipv4/opendkim.private ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys-ipv4 root@ns.testrun.org:/tmp/ || true; fi
           if [ "$(ls -A acme-ipv4/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme-ipv4 root@ns.testrun.org:/tmp/ || true; fi
           # make sure CAA record isn't set

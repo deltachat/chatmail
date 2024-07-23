@@ -39,10 +39,8 @@ class Config:
         return open(self._inipath, "rb")
 
     def get_user_maildir(self, addr):
-        if addr and addr != "." and "/" not in addr:
-            res = self.mailboxes_dir.joinpath(addr).resolve()
-            if res.is_relative_to(self.mailboxes_dir):
-                return res
+        if addr and addr != "." and addr != ".." and "/" not in addr:
+            return self.mailboxes_dir.joinpath(addr)
         raise ValueError(f"invalid address {addr!r}")
 
     def get_user_dict(self, addr, enc_password):

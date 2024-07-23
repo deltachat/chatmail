@@ -1,7 +1,7 @@
 import time
 
 from chatmaild.delete_inactive_users import delete_inactive_users
-from chatmaild.doveauth import lookup_passdb
+from chatmaild.doveauth import AuthDictProxy
 from chatmaild.lastlogin import get_last_login_from_userdir, write_last_login_to_userdir
 
 
@@ -28,9 +28,10 @@ def test_delete_skips_non_email_dir(db, example_config):
 def test_delete_inactive_users(example_config):
     new = time.time()
     old = new - (example_config.delete_inactive_users_after * 86400) - 1
+    dictproxy = AuthDictProxy(example_config)
 
     def create_user(addr, last_login):
-        lookup_passdb(example_config, addr, "q9mr3faue")
+        dictproxy.lookup_passdb(addr, "q9mr3faue")
         md = example_config.get_user_maildir(addr)
         md.joinpath("cur").mkdir()
         md.joinpath("cur", "something").mkdir()

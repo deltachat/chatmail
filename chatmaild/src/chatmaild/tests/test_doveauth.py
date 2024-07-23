@@ -9,30 +9,31 @@ import pytest
 from chatmaild.doveauth import (
     AuthDictProxy,
     is_allowed_to_create,
-    lookup_passdb,
-    lookup_userdb,
 )
 from chatmaild.newemail import create_newemail_dict
 
 
-def test_basic(example_config):
-    lookup_passdb(example_config, "asdf12345@chat.example.org", "q9mr3faue")
-    data = lookup_userdb(example_config, "asdf12345@chat.example.org")
+@pytest.fixture
+def dictproxy(example_config):
+    return AuthDictProxy(config=example_config)
+
+
+def test_basic(dictproxy, gencreds):
+    addr, password = gencreds()
+    dictproxy.lookup_passdb(addr, password)
+    data = dictproxy.lookup_userdb(addr)
     assert data
-    data2 = lookup_passdb(
-        example_config, "asdf12345@chat.example.org", "q9mr3jewvadsfaue"
-    )
+    data2 = dictproxy.lookup_passdb(addr, password)
     assert data == data2
 
 
-def test_iterate_addresses(example_config):
+def test_iterate_addresses(dictproxy):
     addresses = []
 
     for i in range(10):
         addresses.append(f"asdf1234{i}@chat.example.org")
-        lookup_passdb(example_config, addresses[-1], "q9mr3faue")
+        dictproxy.lookup_passdb(addresses[-1], "q9mr3faue")
 
-    dictproxy = AuthDictProxy(config=example_config)
     res = dictproxy.iter_userdb()
     assert set(res) == set(addresses)
 
@@ -51,28 +52,26 @@ def test_invalid_username_length(example_config):
     )
 
 
-def test_dont_overwrite_password_on_wrong_login(example_config):
+def test_dont_overwrite_password_on_wrong_login(dictproxy):
     """Test that logging in with a different password doesn't create a new user"""
-    res = lookup_passdb(
-        example_config, "newuser12@chat.example.org", "kajdlkajsldk12l3kj1983"
+    res = dictproxy.lookup_passdb(
+        "newuser12@chat.example.org", "kajdlkajsldk12l3kj1983"
     )
     assert res["password"]
-    res2 = lookup_passdb(example_config, "newuser12@chat.example.org", "kajdslqwe")
+    res2 = dictproxy.lookup_passdb("newuser12@chat.example.org", "kajdslqwe")
     # this function always returns a password hash, which is actually compared by dovecot.
     assert res["password"] == res2["password"]
 
 
-def test_nocreate_file(monkeypatch, tmpdir, example_config):
+def test_nocreate_file(monkeypatch, tmpdir, dictproxy):
     p = tmpdir.join("nocreate")
     p.write("")
     monkeypatch.setattr(chatmaild.doveauth, "NOCREATE_FILE", str(p))
-    lookup_passdb(example_config, "newuser12@chat.example.org", "zequ0Aimuchoodaechik")
-    assert not lookup_userdb(example_config, "newuser12@chat.example.org")
+    dictproxy.lookup_passdb("newuser12@chat.example.org", "zequ0Aimuchoodaechik")
+    assert not dictproxy.lookup_userdb("newuser12@chat.example.org")
 
 
-def test_handle_dovecot_request(example_config):
-    dictproxy = AuthDictProxy(config=example_config)
-
+def test_handle_dovecot_request(dictproxy):
     # Test that password can contain ", ', \ and /
     msg = (
         'Lshared/passdb/laksjdlaksjdlak\\\\sjdlk\\"12j\\\'3l1/k2j3123"'
@@ -108,8 +107,8 @@ def test_handle_dovecot_protocol_user_not_exists(example_config):
 
 def test_handle_dovecot_protocol_iterate(gencreds, example_config):
     dictproxy = AuthDictProxy(config=example_config)
-    lookup_passdb(example_config, "asdf00000@chat.example.org", "q9mr3faue")
-    lookup_passdb(example_config, "asdf11111@chat.example.org", "q9mr3faue")
+    dictproxy.lookup_passdb("asdf00000@chat.example.org", "q9mr3faue")
+    dictproxy.lookup_passdb("asdf11111@chat.example.org", "q9mr3faue")
     rfile = io.BytesIO(b"H3\t2\t0\t\tauth\nI0\t0\tshared/userdb/")
     wfile = io.BytesIO()
     dictproxy.loop_forever(rfile, wfile)
@@ -119,7 +118,7 @@ def test_handle_dovecot_protocol_iterate(gencreds, example_config):
     assert not lines[2]
 
 
-def test_50_concurrent_lookups_different_accounts(gencreds, example_config):
+def test_50_concurrent_lookups_different_accounts(gencreds, dictproxy):
     num_threads = 50
     req_per_thread = 5
     results = queue.Queue()
@@ -128,7 +127,7 @@ def test_50_concurrent_lookups_different_accounts(gencreds, example_config):
         for i in range(req_per_thread):
             addr, password = gencreds()
             try:
-                lookup_passdb(example_config, addr, password)
+                dictproxy.lookup_passdb(addr, password)
             except Exception:
                 results.put(traceback.format_exc())
             else:

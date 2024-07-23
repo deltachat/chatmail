@@ -4,9 +4,8 @@ import logging
 import os
 import sys
 
-from .config import Config, echobot_password_path, read_config
+from .config import Config, read_config
 from .dictproxy import DictProxy
-from .lastlogin import set_user_password
 from .migrate_db import migrate_from_db_to_maildir
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
@@ -128,37 +127,22 @@ class AuthDictProxy(DictProxy):
 
     def iter_userdb(self) -> list:
         """Get a list of all user addresses."""
-        getuserpaths = self.config.mailboxes_dir.iterdir()
-        return [x.name for x in getuserpaths if "@" in x.name]
+        return [x for x in os.listdir(self.config.mailboxes_dir) if "@" in x]
 
-    def lookup_userdb(self, user):
-        userdir = self.config.get_user_maildir(user)
-        if user.startswith("echo@"):
-            password_path = echobot_password_path
-        else:
-            password_path = userdir.joinpath("password")
+    def lookup_userdb(self, addr):
+        return self.config.get_user(addr).get_userdb_dict()
 
-        try:
-            enc_password = password_path.read_text()
-        except FileNotFoundError:
-            return {}
-        else:
-            if not enc_password:
-                # writing the password might have crashed and file is empty
-                return {}
-            return self.config.get_user_dict(user, enc_password=enc_password)
-
-    def lookup_passdb(self, user, cleartext_password):
-        userdata = self.lookup_userdb(user)
+    def lookup_passdb(self, addr, cleartext_password):
+        user = self.config.get_user(addr)
+        userdata = user.get_userdb_dict()
         if userdata:
             return userdata
-        if not is_allowed_to_create(self.config, user, cleartext_password):
+        if not is_allowed_to_create(self.config, addr, cleartext_password):
             return
 
-        enc_password = encrypt_password(cleartext_password)
-        set_user_password(self.config, user, enc_password=enc_password)
+        user.set_password(encrypt_password(cleartext_password))
         print(f"Created address: {user}", file=sys.stderr)
-        return self.config.get_user_dict(user, enc_password=enc_password)
+        return user.get_userdb_dict()
 
 
 def main():

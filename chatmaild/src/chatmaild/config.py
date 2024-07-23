@@ -2,6 +2,8 @@ from pathlib import Path
 
 import iniconfig
 
+from chatmaild.user import User
+
 echobot_password_path = Path("/run/echobot/password")
 
 
@@ -38,16 +40,17 @@ class Config:
     def _getbytefile(self):
         return open(self._inipath, "rb")
 
-    def get_user_maildir(self, addr):
-        if addr and addr != "." and addr != ".." and "/" not in addr:
-            return self.mailboxes_dir.joinpath(addr)
-        raise ValueError(f"invalid address {addr!r}")
+    def get_user(self, addr):
+        if not addr or "@" not in addr or "/" in addr:
+            raise ValueError(f"invalid address {addr!r}")
 
-    def get_user_dict(self, addr, enc_password):
-        home = self.get_user_maildir(addr)
-        return dict(
-            addr=addr, home=str(home), uid="vmail", gid="vmail", password=enc_password
-        )
+        maildir = self.mailboxes_dir.joinpath(addr)
+        if addr.startswith("echo@"):
+            password_path = echobot_password_path
+        else:
+            password_path = maildir.joinpath("password")
+
+        return User(maildir, addr, password_path, uid="vmail", gid="vmail")
 
 
 def write_initial_config(inipath, mail_domain, overrides):

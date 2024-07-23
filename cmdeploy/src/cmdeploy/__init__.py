@@ -260,8 +260,6 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
     """Configures Postfix SMTP server."""
     need_restart = False
 
-    inet_protocols = "ipv4" if config.disable_ipv6 else "all"
-
     main_config = files.template(
         src=importlib.resources.files(__package__).joinpath("postfix/main.cf.j2"),
         dest="/etc/postfix/main.cf",

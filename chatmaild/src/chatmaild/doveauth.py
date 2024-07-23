@@ -6,6 +6,8 @@ import sys
 
 from .config import Config, echobot_password_path, read_config
 from .dictproxy import DictProxy
+from .lastlogin import set_user_password
+from .migrate_db import migrate_from_db_to_maildir
 
 NOCREATE_FILE = "/etc/chatmail-nocreate"
 
@@ -141,6 +143,9 @@ class AuthDictProxy(DictProxy):
         except FileNotFoundError:
             return {}
         else:
+            if not enc_password:
+                # writing the password might have crashed and file is empty
+                return {}
             return self.config.get_user_dict(user, enc_password=enc_password)
 
     def lookup_passdb(self, user, cleartext_password):
@@ -151,13 +156,16 @@ class AuthDictProxy(DictProxy):
             return
 
         enc_password = encrypt_password(cleartext_password)
-        self.config.set_user_password(user, enc_password=enc_password)
+        set_user_password(self.config, user, enc_password=enc_password)
+        print(f"Created address: {user}", file=sys.stderr)
         return self.config.get_user_dict(user, enc_password=enc_password)
 
 
 def main():
     socket, cfgpath = sys.argv[1:]
     config = read_config(cfgpath)
+
+    migrate_from_db_to_maildir(config)
 
     dictproxy = AuthDictProxy(config=config)
 

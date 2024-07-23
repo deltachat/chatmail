@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 
 import iniconfig
@@ -52,19 +50,6 @@ class Config:
         return dict(
             addr=addr, home=str(home), uid="vmail", gid="vmail", password=enc_password
         )
-
-    def set_user_password(self, addr, enc_password):
-        # reading and writing user data needs to be atomic
-        # to allow concurrent logins to succeed.
-        assert not addr.startswith("echo@"), addr
-        userdir = self.get_user_maildir(addr)
-        userdir.mkdir(exist_ok=True)
-        password_path = userdir.joinpath("password")
-        password_path_tmp = userdir.joinpath("password.tmp")
-        password_path_tmp.write_text(enc_password)
-        os.rename(password_path_tmp, password_path)
-        print(f"Created address: {addr}", file=sys.stderr)
-        return self.get_user_dict(addr=addr, enc_password=enc_password)
 
 
 def write_initial_config(inipath, mail_domain, overrides):

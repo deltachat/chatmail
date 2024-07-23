@@ -2,13 +2,13 @@
 migration code from old sqlite databases into per-maildir "password" files
 where mtime reflects and is updated to be the "last-login" time.
 """
+
 import logging
 import os
 import sqlite3
 import sys
 
 from chatmaild.config import read_config
-from chatmaild.lastlogin import set_user_password, write_last_login_to_userdir
 
 
 def get_all_rows(path):
@@ -29,6 +29,7 @@ def migrate_from_db_to_maildir(config, chunking=10000):
 
     all_rows = get_all_rows(path)
 
+    # don't transfer special/CI accounts
     rows = [row for row in all_rows if row[0][:3] not in ("ci-", "ac_")]
 
     logging.info(f"ignoring {len(all_rows)-len(rows)} CI accounts")
@@ -36,15 +37,13 @@ def migrate_from_db_to_maildir(config, chunking=10000):
 
     for i, row in enumerate(rows):
         addr = row[0]
-        # don't transfer special/CI accounts (IOLO)
-        if addr.startswith("echo@"):
-            continue
         enc_password = row[1]
-        set_user_password(config, addr, enc_password=enc_password)
+        user = config.get_user(addr)
+        user.set_password(enc_password)
+
         if len(row) == 3 and row[2]:
-            homedir = config.mailboxes_dir.joinpath(addr)
             timestamp = int(row[2])
-            write_last_login_to_userdir(homedir, timestamp)
+            user.set_last_login_timestamp(timestamp)
 
         if i > 0 and i % chunking == 0:
             logging.info(f"migration-progress: {i} passwords transferred")

@@ -36,6 +36,11 @@ def maildomain(example_config):
 
 
 @pytest.fixture
+def testaddr(maildomain):
+    return f"user.name@{maildomain}"
+
+
+@pytest.fixture
 def gencreds(maildomain):
     count = itertools.count()
     next(count)

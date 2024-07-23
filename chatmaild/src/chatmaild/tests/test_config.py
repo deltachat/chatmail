@@ -41,32 +41,21 @@ def test_config_userstate_paths(make_config, tmp_path):
     assert passdb_path.name == "passdb.sqlite"
     assert passdb_path.is_relative_to(tmp_path)
     assert config.mail_domain == "something.testrun.org"
-    path = config.get_user_maildir("user1@something.testrun.org")
+    path = config.get_user("user1@something.testrun.org").maildir
     assert not path.exists()
     assert path == mailboxes_dir.joinpath("user1@something.testrun.org")
 
     with pytest.raises(ValueError):
-        config.get_user_maildir("")
+        config.get_user("")
 
     with pytest.raises(ValueError):
-        config.get_user_maildir(None)
+        config.get_user(None)
 
     with pytest.raises(ValueError):
-        config.get_user_maildir("../some@something.testrun.org")
+        config.get_user("../some@something.testrun.org").maildir
 
     with pytest.raises(ValueError):
-        config.get_user_maildir("..")
+        config.get_user("..").maildir
 
     with pytest.raises(ValueError):
-        config.get_user_maildir(".")
-
-
-def test_config_get_user_dict(make_config, tmp_path):
-    config = make_config("something.testrun.org")
-    addr = "user1@something.org"
-    enc_password = "l1k2j31lk2j3l1k23j123"
-    data = config.get_user_dict(addr, enc_password=enc_password)
-    assert addr in str(data["home"])
-    assert data["uid"] == "vmail"
-    assert data["gid"] == "vmail"
-    assert data["password"] == enc_password
+        config.get_user(".")

@@ -261,7 +261,6 @@ def gencreds(chatmail_config):
     return lambda domain=None: next(gen(domain))
 
 
-
 #
 # Delta Chat testplugin re-use
 # use the cmfactory fixture to get chatmail instance accounts

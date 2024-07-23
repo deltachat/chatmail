@@ -1,47 +1,7 @@
-import os
 import sys
-import time
-
-import filelock
 
 from .config import read_config
 from .dictproxy import DictProxy
-
-# this file's mtime reflects the last login-time for a user
-LAST_LOGIN = "password"
-
-
-def get_daytimestamp(timestamp) -> int:
-    return int(timestamp) // 86400 * 86400
-
-
-def write_last_login_to_userdir(userdir, timestamp):
-    target = userdir.joinpath(LAST_LOGIN)
-    timestamp = get_daytimestamp(timestamp)
-    try:
-        s = os.stat(target)
-    except FileNotFoundError:
-        pass
-    else:
-        if int(s.st_mtime) != timestamp:
-            os.utime(target, (timestamp, timestamp))
-
-
-def get_last_login_from_userdir(userdir) -> int:
-    if "@" not in userdir.name or userdir.name.startswith("echo@"):
-        return get_daytimestamp(time.time())
-    target = userdir.joinpath(LAST_LOGIN)
-    return int(target.stat().st_mtime)
-
-
-def set_user_password(config, addr, enc_password):
-    assert not addr.startswith("echo@"), addr
-    userdir = config.get_user_maildir(addr)
-    userdir.mkdir(exist_ok=True)
-    password_path = userdir.joinpath("password")
-    lock_path = password_path.with_suffix(".lock")
-    with filelock.FileLock(lock_path):
-        password_path.write_bytes(enc_password.encode("ascii"))
 
 
 class LastLoginDictProxy(DictProxy):
@@ -58,8 +18,8 @@ class LastLoginDictProxy(DictProxy):
                 return
             addr = keyname[2]
             timestamp = int(value)
-            userdir = self.config.get_user_maildir(addr)
-            write_last_login_to_userdir(userdir, timestamp)
+            user = self.config.get_user(addr)
+            user.set_last_login_timestamp(timestamp)
         else:
             # Transaction failed.
             self.transactions[transaction_id]["res"] = "F\n"

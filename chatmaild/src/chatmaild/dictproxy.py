@@ -20,6 +20,7 @@ class DictProxy:
 
     def handle_dovecot_request(self, msg):
         # see https://doc.dovecot.org/developer_manual/design/dict_protocol/#dovecot-dict-protocol
+        print(f"handling msg: {msg!r}")
         short_command = msg[0]
         parts = msg[1:].split("\t")
 

@@ -78,9 +78,8 @@ class MetadataDictProxy(DictProxy):
                 self.transactions[transaction_id]["res"] = "F\n"
             except KeyError:
                 logging.error(
-                    f"clearing transaction failed: {transaction_id} {self.transactions}"
+                    f"could not mark tx as failed: {transaction_id} {self.transactions}"
                 )
-                raise
 
 
 def main():

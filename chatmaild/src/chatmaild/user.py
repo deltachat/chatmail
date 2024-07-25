@@ -1,8 +1,6 @@
 import logging
 import os
 
-import filelock
-
 
 def get_daytimestamp(timestamp) -> int:
     return int(timestamp) // 86400 * 86400
@@ -39,20 +37,19 @@ class User:
     def set_password(self, enc_password):
         """Set the specified password for this user.
 
-        If called concurrently from multiple threads
-        the last password set call will be persisted.
+        NOTE that this method is not multi-thread/process safe.
+        The caller has to ensure only a single thread writes to the same
+        user's password file.
         """
         self.maildir.mkdir(exist_ok=True)
-        lock_path = self.maildir.joinpath("password.lock")
         password = enc_password.encode("ascii")
 
-        with filelock.FileLock(lock_path):
-            try:
-                self.password_path.write_bytes(password)
-            except PermissionError:
-                if not self.addr.startswith("echo@"):
-                    logging.error(f"could not write password for: {self.addr}")
-                    raise
+        try:
+            self.password_path.write_bytes(password)
+        except PermissionError:
+            if not self.addr.startswith("echo@"):
+                logging.error(f"could not write password for: {self.addr}")
+                raise
 
     def set_last_login_timestamp(self, timestamp):
         """Track login time with daily granularity

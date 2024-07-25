@@ -67,7 +67,7 @@ def run_cmd(args, out):
     env["CHATMAIL_INI"] = args.inipath
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
-    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path}"
+    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path} -y"
     if version.parse(pyinfra.__version__) < version.parse("3"):
         out.red("Please re-run scripts/initenv.sh to update pyinfra to version 3.")
         return 1

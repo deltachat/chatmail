@@ -1,6 +1,8 @@
 import logging
 import os
 
+from chatmaild.filedict import write_bytes_atomic
+
 
 def get_daytimestamp(timestamp) -> int:
     return int(timestamp) // 86400 * 86400
@@ -37,15 +39,14 @@ class User:
     def set_password(self, enc_password):
         """Set the specified password for this user.
 
-        NOTE that this method is not multi-thread/process safe.
-        The caller has to ensure only a single thread writes to the same
-        user's password file.
+        This method can be called concurrently
+        but there is no guarantee which of the password-set calls will win.
         """
         self.maildir.mkdir(exist_ok=True, parents=True)
         password = enc_password.encode("ascii")
 
         try:
-            self.password_path.write_bytes(password)
+            write_bytes_atomic(self.password_path, password)
         except PermissionError:
             if not self.addr.startswith("echo@"):
                 logging.error(f"could not write password for: {self.addr}")

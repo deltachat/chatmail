@@ -41,7 +41,7 @@ class User:
         The caller has to ensure only a single thread writes to the same
         user's password file.
         """
-        self.maildir.mkdir(exist_ok=True)
+        self.maildir.mkdir(exist_ok=True, parents=True)
         password = enc_password.encode("ascii")
 
         try:

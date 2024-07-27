@@ -30,3 +30,13 @@ def test_get_user_dict(make_config, tmp_path):
     assert data["uid"] == "vmail"
     assert data["gid"] == "vmail"
     assert data["password"] == enc_password
+
+
+def test_no_mailboxes_dir(testaddr, example_config, tmp_path):
+    p = tmp_path.joinpath("a", "mailboxes")
+    example_config.mailboxes_dir = p
+
+    user = example_config.get_user(testaddr)
+    user.set_password("someeqkjwelkqwjleqwe")
+    user.set_last_login_timestamp(100000)
+    assert user.get_last_login_timestamp() == 86400

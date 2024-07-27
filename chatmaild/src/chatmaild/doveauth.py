@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import sys
-from threading import RLock
 
 from .config import Config, read_config
 from .dictproxy import DictProxy
@@ -86,10 +85,6 @@ class AuthDictProxy(DictProxy):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        # We serialize all password-writes in the single doveauth process
-        # so that threads can not mangle the password when writing.
-        # Setting a password is a quite rare event anyway.
-        self._password_write_lock = RLock()
 
     def handle_lookup(self, parts):
         # Dovecot <2.3.17 has only one part,
@@ -145,8 +140,7 @@ class AuthDictProxy(DictProxy):
         if not is_allowed_to_create(self.config, addr, cleartext_password):
             return
 
-        with self._password_write_lock:
-            user.set_password(encrypt_password(cleartext_password))
+        user.set_password(encrypt_password(cleartext_password))
         print(f"Created address: {user}", file=sys.stderr)
         return user.get_userdb_dict()
 

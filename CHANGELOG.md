@@ -2,8 +2,12 @@
 
 ## untagged
 
-- Migrate and remove sqlite database in favor of password/lastlogin tracking 
-  in a user's maildir.  This removes the need for "passdb" setting in ini file
+- allow current K9/Thunderbird-mail releases to send encrypted messages
+  outside by accepting their localized "encrypted subject" strings. 
+  ([#370](https://github.com/deltachat/chatmail/pull/370))
+
+- migrate and remove sqlite database in favor of password/lastlogin tracking 
+  in a user's maildir.  this removes the need for "passdb" setting in ini file
   which was introduced through #351 below. 
   ([#379](https://github.com/deltachat/chatmail/pull/379))
 

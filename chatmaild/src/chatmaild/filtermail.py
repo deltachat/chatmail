@@ -12,65 +12,8 @@ from smtplib import SMTP as SMTPClient
 
 from aiosmtpd.controller import Controller
 
+from .common_encrypted_subjects import common_encrypted_subjects
 from .config import read_config
-
-"""Generated from deltachat, draft-ietf-lamps-header-protection, and
-encrypted_subject localizations in
-https://github.com/thunderbird/thunderbird-android/
-"""
-common_encrypted_subjects = {
-    "...",
-    "[...]",
-    "암호화된 메시지",
-    "Ĉifrita mesaĝo",
-    "Courriel chiffré",
-    "Dulrituð skilaboð",
-    "Encrypted Message",
-    "Fersifere berjocht",
-    "Kemennadenn enrineget",
-    "Krüptitud kiri",
-    "Krypterat meddelande",
-    "Krypteret besked",
-    "Kryptert melding",
-    "Mensagem criptografada",
-    "Mensagem encriptada",
-    "Mensaje cifrado",
-    "Mensaxe cifrada",
-    "Mesaj Criptat",
-    "Mesazh i Fshehtëzuar",
-    "Messaggio criptato",
-    "Messaghju cifratu",
-    "Missatge encriptat",
-    "Neges wedi'i Hamgryptio",
-    "Pesan terenkripsi",
-    "Salattu viesti",
-    "Şifreli İleti",
-    "Šifrēta ziņa",
-    "Šifrirana poruka",
-    "Šifrirano sporočilo",
-    "Šifruotas laiškas",
-    "Tin nhắn được mã hóa",
-    "Titkosított üzenet",
-    "Verschlüsselte Nachricht",
-    "Versleuteld bericht",
-    "Zašifrovaná zpráva",
-    "Zaszyfrowana wiadomość",
-    "Zifratu mezua",
-    "Κρυπτογραφημένο μήνυμα",
-    "Зашифроване повідомлення",
-    "Зашифрованное сообщение",
-    "Зашыфраваны ліст",
-    "Криптирано съобщение",
-    "Шифрована порука",
-    "დაშიფრული წერილი",
-    "הודעה מוצפנת",
-    "پیام رمزنگاری‌شده",
-    "رسالة مشفّرة",
-    "എൻക്രിപ്റ്റുചെയ്‌ത സന്ദേശം",
-    "加密邮件",
-    "已加密的訊息",
-    "暗号化されたメッセージ",
-}
 
 
 def check_openpgp_payload(payload: bytes):

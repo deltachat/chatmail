@@ -7,6 +7,9 @@
   which was introduced through #351 below. 
   ([#379](https://github.com/deltachat/chatmail/pull/379))
 
+- Require pyinfra V3 installed on the client side. 
+  ([#378](https://github.com/deltachat/chatmail/pull/378))
+
 - BREAKING: new required chatmail.ini values:
 
   mailboxes_dir = /home/vmail/mail/{mail_domain}

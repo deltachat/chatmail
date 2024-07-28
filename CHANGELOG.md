@@ -1,6 +1,6 @@
 # Changelog for chatmail deployment 
 
-## untagged
+## 1.4.0 2024-07-28
 
 - Add `disable_ipv6` config option to chatmail.ini.
   Required if the server doesn't have IPv6 connectivity.

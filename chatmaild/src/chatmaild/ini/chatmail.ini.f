@@ -45,9 +45,6 @@ passthrough_recipients = xstore@testrun.org groupsbot@hispanilandia.net
 # Directory where user mailboxes are stored
 mailboxes_dir = /home/vmail/mail/{mail_domain}
 
-# user address sqlite database path
-passdb_path = /home/vmail/passdb.sqlite
-
 # where the filtermail SMTP service listens
 filtermail_smtp_port = 10080
 

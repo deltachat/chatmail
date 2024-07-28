@@ -28,7 +28,6 @@ class Config:
         self.passthrough_senders = params["passthrough_senders"].split()
         self.passthrough_recipients = params["passthrough_recipients"].split()
         self.mailboxes_dir = Path(params["mailboxes_dir"].strip())
-        self.passdb_path = Path(params["passdb_path"].strip())
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.iroh_relay = params.get("iroh_relay")
@@ -36,6 +35,9 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+
+        # old unused option (except for first migration from sqlite to maildir store)
+        self.passdb_path = Path(params.get("passdb_path", "/home/vmail/passdb.sqlite"))
 
     def _getbytefile(self):
         return open(self._inipath, "rb")

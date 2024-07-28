@@ -2,6 +2,10 @@
 
 ## untagged
 
+- Add `disable_ipv6` config option to chatmail.ini.
+  Required if the server doesn't have IPv6 connectivity.
+  ([#312](https://github.com/deltachat/chatmail/pull/312))
+
 - Migrate and remove sqlite database in favor of password/lastlogin tracking 
   in a user's maildir.  This removes the need for "passdb" setting in ini file
   which was introduced through #351 below. 

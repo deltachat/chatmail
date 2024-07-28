@@ -15,7 +15,7 @@ def get_initial_remote_data(sshexec, mail_domain):
 def check_initial_remote_data(remote_data, print=print):
     mail_domain = remote_data["mail_domain"]
     if not remote_data["A"] and not remote_data["AAAA"]:
-        print("Missing A and/or AAAA DNS records for {mail_domain}!")
+        print(f"Missing A and/or AAAA DNS records for {mail_domain}!")
     elif not remote_data["MTA_STS"]:
         print("Missing MTA-STS CNAME record:")
         print(f"mta-sts.{mail_domain}.   CNAME  {mail_domain}")

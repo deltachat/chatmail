@@ -14,10 +14,11 @@ from chatmaild.config import read_config, write_initial_config
 def make_config(tmp_path):
     inipath = tmp_path.joinpath("chatmail.ini")
 
-    def make_conf(mail_domain):
+    def make_conf(mail_domain, settings=None):
         basedir = tmp_path.joinpath(f"vmail/{mail_domain}")
         basedir.mkdir(parents=True, exist_ok=True)
-        overrides = dict(mailboxes_dir=str(basedir))
+        overrides = settings.copy() if settings else {}
+        overrides["mailboxes_dir"] = str(basedir)
         write_initial_config(inipath, mail_domain, overrides=overrides)
         return read_config(inipath)
 

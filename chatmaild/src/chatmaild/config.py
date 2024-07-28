@@ -27,7 +27,6 @@ class Config:
         self.password_min_length = int(params["password_min_length"])
         self.passthrough_senders = params["passthrough_senders"].split()
         self.passthrough_recipients = params["passthrough_recipients"].split()
-        self.mailboxes_dir = Path(params["mailboxes_dir"].strip())
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.iroh_relay = params.get("iroh_relay")
@@ -35,6 +34,10 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+
+        # deprecated option
+        mbdir = params.get("mailboxes_dir", f"/home/vmail/mail/{self.mail_domain}")
+        self.mailboxes_dir = Path(mbdir.strip())
 
         # old unused option (except for first migration from sqlite to maildir store)
         self.passdb_path = Path(params.get("passdb_path", "/home/vmail/passdb.sqlite"))
@@ -65,12 +68,17 @@ def write_initial_config(inipath, mail_domain, overrides):
 
     # apply config overrides
     new_lines = []
+    extra = overrides.copy()
     for line in content.split("\n"):
         new_line = line.strip()
         if new_line and new_line[0] not in "#[":
             name, value = map(str.strip, new_line.split("=", maxsplit=1))
-            value = overrides.get(name, value)
+            value = overrides.pop(name, value)
             new_line = f"{name} = {value}"
+        new_lines.append(new_line)
+
+    for name, value in extra.items():
+        new_line = f"{name} = {value}"
         new_lines.append(new_line)
 
     content = "\n".join(new_lines)

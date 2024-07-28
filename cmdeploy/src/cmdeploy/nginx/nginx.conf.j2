@@ -43,8 +43,11 @@ http {
 	gzip on;
 
 	server {
+  
 		listen 8443 ssl default_server;
+		{% if not disable_ipv6 %}
 		listen [::]:8443 ssl default_server;
+		{% endif %}
 
 		root /var/www/html;
 
@@ -96,7 +99,9 @@ http {
 	# Redirect www. to non-www
 	server {
 		listen 8443 ssl;
+		{% if not disable_ipv6 %}
 		listen [::]:8443 ssl;
+		{% endif %}
 		server_name www.{{ config.domain_name }};
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 		access_log syslog:server=unix:/dev/log,facility=local7;

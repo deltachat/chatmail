@@ -51,6 +51,9 @@ filtermail_smtp_port = 10080
 # postfix accepts on the localhost reinject SMTP port
 postfix_reinject_port = 10025
 
+# if set to "True" IPv6 is disabled
+disable_ipv6 = False
+
 #
 # Privacy Policy
 #

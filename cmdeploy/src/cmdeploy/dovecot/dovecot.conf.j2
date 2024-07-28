@@ -1,5 +1,9 @@
 ## Dovecot configuration file
 
+{% if disable_ipv6 %}
+listen = *
+{% endif %}
+
 protocols = imap lmtp
 
 auth_mechanisms = plain

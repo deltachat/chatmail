@@ -2,6 +2,10 @@
 
 ## untagged
 
+- Add `disable_ipv6` config option to chatmail.ini.
+  Required if the server doesn't have IPv6 connectivity.
+  ([#312](https://github.com/deltachat/chatmail/pull/312))
+
 - allow current K9/Thunderbird-mail releases to send encrypted messages
   outside by accepting their localized "encrypted subject" strings. 
   ([#370](https://github.com/deltachat/chatmail/pull/370))

@@ -41,9 +41,9 @@ class TestDC:
 
         def dc_ping_pong():
             chat.send_text("ping")
-            msg = ac2.wait_next_incoming_message()
+            msg = ac2._evtracker.wait_next_incoming_message()
             msg.chat.send_text("pong")
-            ac1.wait_next_incoming_message()
+            ac1._evtracker.wait_next_incoming_message()
 
         benchmark(dc_ping_pong, 5)
 
@@ -55,6 +55,6 @@ class TestDC:
             for i in range(10):
                 chat.send_text(f"hello {i}")
             for i in range(10):
-                ac2.wait_next_incoming_message()
+                ac2._evtracker.wait_next_incoming_message()
 
         benchmark(dc_send_10_receive_10, 5)

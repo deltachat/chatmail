@@ -74,7 +74,12 @@ class MetadataDictProxy(DictProxy):
             self.notifier.new_message_for_addr(addr, self.metadata)
         else:
             # Transaction failed.
-            self.transactions[transaction_id]["res"] = "F\n"
+            try:
+                self.transactions[transaction_id]["res"] = "F\n"
+            except KeyError:
+                logging.error(
+                    f"could not mark tx as failed: {transaction_id} {self.transactions}"
+                )
 
 
 def main():

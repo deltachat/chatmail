@@ -110,8 +110,14 @@ mail_attribute_dict = proxy:/run/chatmail-metadata/metadata.socket:metadata
 # `imap_zlib` enables IMAP COMPRESS (RFC 4978).
 # <https://datatracker.ietf.org/doc/html/rfc4978.html>
 protocol imap {
-  mail_plugins = $mail_plugins imap_zlib imap_quota
+  mail_plugins = $mail_plugins imap_zlib imap_quota last_login
   imap_metadata = yes
+}
+
+plugin {
+  last_login_dict = proxy:/run/chatmail-lastlogin/lastlogin.socket:lastlogin
+  #last_login_key = last-login/%u # default
+  last_login_precision = s
 }
 
 protocol lmtp {

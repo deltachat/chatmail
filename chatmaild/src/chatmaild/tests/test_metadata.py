@@ -34,11 +34,6 @@ def dictproxy(notifier, metadata):
 
 
 @pytest.fixture
-def testaddr():
-    return "user.name@example.org"
-
-
-@pytest.fixture
 def testaddr2():
     return "user2@example.org"
 

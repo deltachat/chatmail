@@ -454,6 +454,7 @@ def deploy_chatmail(config_path: Path) -> None:
 
     server.group(name="Create vmail group", group="vmail", system=True)
     server.user(name="Create vmail user", user="vmail", group="vmail", system=True)
+    server.user(name="Create filtermail user", user="filtermail", system=True)
     server.group(name="Create opendkim group", group="opendkim", system=True)
     server.user(
         name="Create opendkim user",

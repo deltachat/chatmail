@@ -20,6 +20,7 @@ class Config:
         self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.max_mailbox_size = params["max_mailbox_size"]
+        self.max_message_size = int(params.get("max_message_size", "31457280"))
         self.delete_mails_after = params["delete_mails_after"]
         self.delete_inactive_users_after = int(params["delete_inactive_users_after"])
         self.username_min_length = int(params["username_min_length"])
@@ -27,8 +28,6 @@ class Config:
         self.password_min_length = int(params["password_min_length"])
         self.passthrough_senders = params["passthrough_senders"].split()
         self.passthrough_recipients = params["passthrough_recipients"].split()
-        self.mailboxes_dir = Path(params["mailboxes_dir"].strip())
-        self.passdb_path = Path(params["passdb_path"].strip())
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.disable_ipv6 = (
@@ -39,6 +38,13 @@ class Config:
         self.privacy_mail = params.get("privacy_mail")
         self.privacy_pdo = params.get("privacy_pdo")
         self.privacy_supervisor = params.get("privacy_supervisor")
+
+        # deprecated option
+        mbdir = params.get("mailboxes_dir", f"/home/vmail/mail/{self.mail_domain}")
+        self.mailboxes_dir = Path(mbdir.strip())
+
+        # old unused option (except for first migration from sqlite to maildir store)
+        self.passdb_path = Path(params.get("passdb_path", "/home/vmail/passdb.sqlite"))
 
     def _getbytefile(self):
         return open(self._inipath, "rb")
@@ -66,12 +72,17 @@ def write_initial_config(inipath, mail_domain, overrides):
 
     # apply config overrides
     new_lines = []
+    extra = overrides.copy()
     for line in content.split("\n"):
         new_line = line.strip()
         if new_line and new_line[0] not in "#[":
             name, value = map(str.strip, new_line.split("=", maxsplit=1))
-            value = overrides.get(name, value)
+            value = extra.pop(name, value)
             new_line = f"{name} = {value}"
+        new_lines.append(new_line)
+
+    for name, value in extra.items():
+        new_line = f"{name} = {value}"
         new_lines.append(new_line)
 
     content = "\n".join(new_lines)

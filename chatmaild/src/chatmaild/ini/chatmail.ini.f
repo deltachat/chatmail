@@ -17,6 +17,9 @@ max_user_send_per_minute = 60
 # maximum mailbox size of a chatmail address
 max_mailbox_size = 100M
 
+# maximum message size for an e-mail in bytes
+max_message_size = 31457280
+
 # days after which mails are unconditionally deleted
 delete_mails_after = 20
 
@@ -41,12 +44,6 @@ passthrough_recipients = xstore@testrun.org groupsbot@hispanilandia.net
 #
 # Deployment Details
 #
-
-# Directory where user mailboxes are stored
-mailboxes_dir = /home/vmail/mail/{mail_domain}
-
-# user address sqlite database path
-passdb_path = /home/vmail/passdb.sqlite
 
 # where the filtermail SMTP service listens
 filtermail_smtp_port = 10080

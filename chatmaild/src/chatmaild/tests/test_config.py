@@ -58,3 +58,8 @@ def test_config_userstate_paths(make_config, tmp_path):
 
     with pytest.raises(ValueError):
         config.get_user(".")
+
+
+def test_config_max_message_size(make_config, tmp_path):
+    config = make_config("something.testrun.org", dict(max_message_size="10000"))
+    assert config.max_message_size == 10000

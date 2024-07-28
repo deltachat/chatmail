@@ -20,6 +20,7 @@ class Config:
         self.mail_domain = params["mail_domain"]
         self.max_user_send_per_minute = int(params["max_user_send_per_minute"])
         self.max_mailbox_size = params["max_mailbox_size"]
+        self.max_message_size = int(params.get("max_message_size", "31457280"))
         self.delete_mails_after = params["delete_mails_after"]
         self.delete_inactive_users_after = int(params["delete_inactive_users_after"])
         self.username_min_length = int(params["username_min_length"])
@@ -73,7 +74,7 @@ def write_initial_config(inipath, mail_domain, overrides):
         new_line = line.strip()
         if new_line and new_line[0] not in "#[":
             name, value = map(str.strip, new_line.split("=", maxsplit=1))
-            value = overrides.pop(name, value)
+            value = extra.pop(name, value)
             new_line = f"{name} = {value}"
         new_lines.append(new_line)
 

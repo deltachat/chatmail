@@ -12,11 +12,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from packaging import version
 
 import pyinfra
-
 from chatmaild.config import read_config, write_initial_config
+from packaging import version
 from termcolor import colored
 
 from . import dns, remote_funcs

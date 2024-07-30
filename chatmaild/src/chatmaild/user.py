@@ -26,7 +26,6 @@ class User:
         try:
             pw = self.password_path.read_text()
         except FileNotFoundError:
-            logging.error(f"password not set for: {self.addr}")
             return {}
 
         if not pw:

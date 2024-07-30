@@ -635,3 +635,14 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Ensure cron is installed",
         packages=["cron"],
     )
+
+    mtail_conf = files.put(
+        name="Mtail configuration",
+        src=importlib.resources.files(__package__).joinpath(
+            "mtail/delivered_mail.mtail"
+        ),
+        dest="/etc/mtail/delivered_mail.mtail",
+        user="root",
+        group="root",
+        mode="644",
+    )

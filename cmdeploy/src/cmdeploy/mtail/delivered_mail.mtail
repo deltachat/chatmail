@@ -1,0 +1,64 @@
+counter delivered_mail
+/saved mail to INBOX$/ {
+  delivered_mail++
+}
+
+counter quota_exceeded
+/Quota exceeded \(mailbox for user is full\)$/ {
+  quota_exceeded++
+}
+
+# Essentially the number of outgoing messages.
+counter dkim_signed
+/DKIM-Signature field added/ {
+  dkim_signed++
+}
+
+counter created_accounts
+counter created_ci_accounts
+counter created_nonci_accounts
+
+/: Created address: (?P<addr>.*)$/ {
+  created_accounts++
+
+  $addr =~ /ci-/ {
+    created_ci_accounts++
+  } else {
+    created_nonci_accounts++
+  }
+}
+
+counter postfix_timeouts
+/timeout after DATA/ {
+  postfix_timeouts++
+}
+
+counter postfix_noqueue
+/postfix\/.*NOQUEUE/ {
+  postfix_noqueue++
+}
+
+counter warning_count
+/warning/ {
+  warning_count++
+}
+
+
+counter filtered_mail_count
+
+counter encrypted_mail_count
+/Filtering encrypted mail\./ {
+  encrypted_mail_count++
+  filtered_mail_count++
+}
+
+counter unencrypted_mail_count
+/Filtering unencrypted mail\./ {
+  unencrypted_mail_count++
+  filtered_mail_count++
+}
+
+counter rejected_unencrypted_mail_count
+/Rejected unencrypted mail\./ {
+  rejected_unencrypted_mail_count++
+}

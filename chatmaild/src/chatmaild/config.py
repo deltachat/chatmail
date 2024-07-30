@@ -30,6 +30,7 @@ class Config:
         self.passthrough_recipients = params["passthrough_recipients"].split()
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
+        self.mtail_address = params["mtail_address"]
         self.disable_ipv6 = params.get("disable_ipv6", "false").lower() == "true"
         self.imap_rawlog = params.get("imap_rawlog", "false").lower() == "true"
         self.iroh_relay = params.get("iroh_relay")

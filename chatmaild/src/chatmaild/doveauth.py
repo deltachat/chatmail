@@ -141,7 +141,7 @@ class AuthDictProxy(DictProxy):
             return
 
         user.set_password(encrypt_password(cleartext_password))
-        print(f"Created address: {user}", file=sys.stderr)
+        print(f"Created address: {addr}", file=sys.stderr)
         return user.get_userdb_dict()
 
 

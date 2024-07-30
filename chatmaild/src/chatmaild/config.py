@@ -31,6 +31,7 @@ class Config:
         self.filtermail_smtp_port = int(params["filtermail_smtp_port"])
         self.postfix_reinject_port = int(params["postfix_reinject_port"])
         self.disable_ipv6 = params.get("disable_ipv6", "false").lower() == "true"
+        self.imap_rawlog = params.get("imap_rawlog", "false").lower() == "true"
         self.iroh_relay = params.get("iroh_relay")
         self.privacy_postal = params.get("privacy_postal")
         self.privacy_mail = params.get("privacy_mail")

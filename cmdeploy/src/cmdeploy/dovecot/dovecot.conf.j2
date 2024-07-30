@@ -203,3 +203,24 @@ ssl_key = </var/lib/acme/live/{{ config.mail_domain }}/privkey
 ssl_dh = </usr/share/dovecot/dh.pem
 ssl_min_protocol = TLSv1.2
 ssl_prefer_server_ciphers = yes
+
+
+{% if config.imap_rawlog %}
+service postlogin {
+  executable = script-login -d rawlog
+  unix_listener postlogin {
+ }  
+} 
+service imap {
+  executable = imap postlogin 
+} 
+  
+protocol imap { 
+  #rawlog_dir = /tmp/rawlog/%u
+  # Put .in and .out imap protocol logging files into per-user homedir 
+  # You can use a command like this to combine into one protocol stream:
+  # sort -sn <(sed 's/ / C: /' *.in) <(sed 's/ / S: /' cat *.out)
+
+  rawlog_dir = %h 
+} 
+{% endif %}

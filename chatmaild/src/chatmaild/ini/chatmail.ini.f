@@ -55,6 +55,17 @@ postfix_reinject_port = 10025
 disable_ipv6 = False
 
 #
+# Debugging options 
+#
+
+# set to True if you want to track imap protocol execution
+# in per-maildir ".in/.out" files. 
+# Note that you need to manually cleanup these files
+# so use this option with caution on production servers. 
+imap_rawlog = false 
+
+
+#
 # Privacy Policy
 #
 

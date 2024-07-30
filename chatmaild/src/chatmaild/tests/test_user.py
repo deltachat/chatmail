@@ -12,11 +12,11 @@ def test_get_user_dict_not_set(testaddr, example_config, caplog):
     user = example_config.get_user(testaddr)
     assert not caplog.records
     assert user.get_userdb_dict() == {}
-    assert len(caplog.records) == 1
+    assert len(caplog.records) == 0
 
     user.set_password("")
     assert user.get_userdb_dict() == {}
-    assert len(caplog.records) == 2
+    assert len(caplog.records) == 1
 
 
 def test_get_user_dict(make_config, tmp_path):

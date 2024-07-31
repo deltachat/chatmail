@@ -1,6 +1,6 @@
 # Changelog for chatmail deployment 
 
-## untagged 
+## 1.4.1 2024-07-31
 
 - fix metadata dictproxy which would confuse transactions
   resulting in missed notifications and other issues. 

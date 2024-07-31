@@ -8,11 +8,9 @@ for the usage in chats, especially DeltaChat.
 
 ### Choosing a chatmail address instead of using a random one
 
-In the Delta Chat account setup 
-you may tap `I already have a profile`
-and fill the two fields like this: 
+In the Delta Chat account setup you may tap `Create a profile` then `Use other server` and choose `Classic e-mail login`. Here fill the two fields like this: 
 
-- `Address`: invent a word with
+- `E-Mail Address`: invent a word with
 {% if username_min_length == username_max_length %}
   *exactly* {{ username_min_length }}
 {% else %}
@@ -26,7 +24,7 @@ and fill the two fields like this:
   characters
   and append `@{{config.mail_domain}}` to it.
 
-- `Password`: invent at least {{ password_min_length }} characters.
+- `Existing Password`: invent at least {{ password_min_length }} characters.
 
 If the e-mail address is not yet taken, you'll get that account. 
 The first login sets your password. 

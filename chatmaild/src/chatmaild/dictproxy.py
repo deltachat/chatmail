@@ -44,7 +44,10 @@ class DictProxy:
         elif short_command == "C":
             return self.handle_commit_transaction(transaction_id, parts, transactions)
         elif short_command == "S":
-            return self.handle_set(transaction_id, parts, transactions)
+            addr = transactions[transaction_id]["addr"]
+            if not self.handle_set(addr, parts):
+                transactions[transaction_id]["res"] = "F\n"
+                logging.error(f"dictproxy-set failed for {addr!r}: {msg!r}")
 
     def handle_lookup(self, parts):
         logging.warning(f"lookup ignored: {parts!r}")
@@ -59,11 +62,10 @@ class DictProxy:
         addr = parts[1]
         transactions[transaction_id] = dict(addr=addr, res="O\n")
 
-    def handle_set(self, transaction_id, parts, transactions):
+    def handle_set(self, addr, parts):
         # For documentation on key structure see
         # https://github.com/dovecot/core/blob/main/src/lib-storage/mailbox-attribute.h
-
-        transactions[transaction_id]["res"] = "F\n"
+        return False
 
     def handle_commit_transaction(self, transaction_id, parts, transactions):
         # return whatever "set" command(s) set as result.

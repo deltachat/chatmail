@@ -9,10 +9,10 @@ class LastLoginDictProxy(DictProxy):
         super().__init__()
         self.config = config
 
-    def handle_set(self, transaction_id, parts):
+    def handle_set(self, transaction_id, parts, transactions):
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
-        addr = self.transactions[transaction_id]["addr"]
+        addr = transactions[transaction_id]["addr"]
         if keyname[0] == "shared" and keyname[1] == "last-login":
             if addr.startswith("echo@"):
                 return
@@ -22,7 +22,7 @@ class LastLoginDictProxy(DictProxy):
             user.set_last_login_timestamp(timestamp)
         else:
             # Transaction failed.
-            self.transactions[transaction_id]["res"] = "F\n"
+            transactions[transaction_id]["res"] = "F\n"
 
 
 def main():

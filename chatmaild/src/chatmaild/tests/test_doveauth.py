@@ -72,12 +72,13 @@ def test_nocreate_file(monkeypatch, tmpdir, dictproxy):
 
 
 def test_handle_dovecot_request(dictproxy):
+    transactions = {}
     # Test that password can contain ", ', \ and /
     msg = (
         'Lshared/passdb/laksjdlaksjdlak\\\\sjdlk\\"12j\\\'3l1/k2j3123"'
         "some42123@chat.example.org\tsome42123@chat.example.org"
     )
-    res = dictproxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg, transactions)
     assert res
     assert res[0] == "O" and res.endswith("\n")
     userdata = json.loads(res[1:].strip())

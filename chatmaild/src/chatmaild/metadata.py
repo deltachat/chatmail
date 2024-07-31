@@ -62,12 +62,12 @@ class MetadataDictProxy(DictProxy):
         logging.warning(f"lookup ignored: {parts!r}")
         return "N\n"
 
-    def handle_set(self, transaction_id, parts):
+    def handle_set(self, transaction_id, parts, transactions):
         # For documentation on key structure see
         # https://github.com/dovecot/core/blob/main/src/lib-storage/mailbox-attribute.h
         keyname = parts[1].split("/")
         value = parts[2] if len(parts) > 2 else ""
-        addr = self.transactions[transaction_id]["addr"]
+        addr = transactions[transaction_id]["addr"]
         if keyname[0] == "priv" and keyname[2] == self.metadata.DEVICETOKEN_KEY:
             self.metadata.add_token_to_addr(addr, value)
         elif keyname[0] == "priv" and keyname[2] == "messagenew":
@@ -75,10 +75,10 @@ class MetadataDictProxy(DictProxy):
         else:
             # Transaction failed.
             try:
-                self.transactions[transaction_id]["res"] = "F\n"
+                transactions[transaction_id]["res"] = "F\n"
             except KeyError:
                 logging.error(
-                    f"could not mark tx as failed: {transaction_id} {self.transactions}"
+                    f"could not mark tx as failed: {transaction_id} {transactions}"
                 )
 
 

@@ -88,42 +88,45 @@ def test_notifier_remove_without_set(metadata, testaddr):
 
 
 def test_handle_dovecot_request_lookup_fails(dictproxy, testaddr):
-    res = dictproxy.handle_dovecot_request(f"Lpriv/123/chatmail\t{testaddr}")
+    transactions = {}
+    res = dictproxy.handle_dovecot_request(
+        f"Lpriv/123/chatmail\t{testaddr}", transactions
+    )
     assert res == "N\n"
 
 
 def test_handle_dovecot_request_happy_path(dictproxy, testaddr, token):
     metadata = dictproxy.metadata
-    transactions = dictproxy.transactions
+    transactions = {}
     notifier = dictproxy.notifier
 
     # set device token in a transaction
     tx = "1111"
     msg = f"B{tx}\t{testaddr}"
-    res = dictproxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg, transactions)
     assert not res and not metadata.get_tokens_for_addr(testaddr)
     assert transactions == {tx: dict(addr=testaddr, res="O\n")}
 
     msg = f"S{tx}\tpriv/guid00/devicetoken\t{token}"
-    res = dictproxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg, transactions)
     assert not res
     assert len(transactions) == 1
     assert metadata.get_tokens_for_addr(testaddr) == [token]
 
     msg = f"C{tx}"
-    res = dictproxy.handle_dovecot_request(msg)
+    res = dictproxy.handle_dovecot_request(msg, transactions)
     assert res == "O\n"
     assert len(transactions) == 0
     assert metadata.get_tokens_for_addr(testaddr) == [token]
 
     # trigger notification for incoming message
     tx2 = "2222"
-    assert dictproxy.handle_dovecot_request(f"B{tx2}\t{testaddr}") is None
+    assert dictproxy.handle_dovecot_request(f"B{tx2}\t{testaddr}", transactions) is None
     msg = f"S{tx2}\tpriv/guid00/messagenew"
-    assert dictproxy.handle_dovecot_request(msg) is None
+    assert dictproxy.handle_dovecot_request(msg, transactions) is None
     queue_item = notifier.retry_queues[0].get()[1]
     assert queue_item.token == token
-    assert dictproxy.handle_dovecot_request(f"C{tx2}") == "O\n"
+    assert dictproxy.handle_dovecot_request(f"C{tx2}", transactions) == "O\n"
     assert not transactions
     assert queue_item.path.exists()
 

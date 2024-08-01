@@ -2,29 +2,29 @@ import smtplib
 
 import pytest
 
-from cmdeploy import remote_funcs
+from cmdeploy import remote
 from cmdeploy.sshexec import SSHExec
 
 
 class TestSSHExecutor:
     @pytest.fixture(scope="class")
     def sshexec(self, sshdomain):
-        return SSHExec(sshdomain, remote_funcs)
+        return SSHExec(sshdomain)
 
     def test_ls(self, sshexec):
-        out = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
-        out2 = sshexec(call=remote_funcs.shell, kwargs=dict(command="ls"))
+        out = sshexec(call=remote.rdns.shell, kwargs=dict(command="ls"))
+        out2 = sshexec(call=remote.rdns.shell, kwargs=dict(command="ls"))
         assert out == out2
 
     def test_perform_initial(self, sshexec, maildomain):
         res = sshexec(
-            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         assert res["A"] or res["AAAA"]
 
     def test_logged(self, sshexec, maildomain, capsys):
         sshexec.logged(
-            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
         assert err.startswith("Collecting")
@@ -33,21 +33,21 @@ class TestSSHExecutor:
 
         sshexec.verbose = True
         sshexec.logged(
-            remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
         lines = err.split("\n")
         assert len(lines) > 4
-        assert remote_funcs.perform_initial_checks.__doc__ in lines[0]
+        assert remote.rdns.perform_initial_checks.__doc__ in lines[0]
 
     def test_exception(self, sshexec, capsys):
         try:
             sshexec.logged(
-                remote_funcs.perform_initial_checks,
+                remote.rdns.perform_initial_checks,
                 kwargs=dict(mail_domain=None),
             )
         except sshexec.FuncError as e:
-            assert "remote_funcs.py" in str(e)
+            assert "rdns.py" in str(e)
             assert "AssertionError" in str(e)
         else:
             pytest.fail("didn't raise exception")

@@ -489,6 +489,7 @@ def deploy_chatmail(config_path: Path) -> None:
     )
 
     apt.update(name="apt update", cache_time=24 * 3600)
+    apt.upgrade(name="upgrade apt packages", auto_remove=True)
 
     apt.packages(
         name="Install rsync",

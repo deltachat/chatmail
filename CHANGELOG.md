@@ -3,6 +3,9 @@
 ## untagged
 
 
+- trigger "apt upgrade" during "cmdeploy run" 
+  ([#398](https://github.com/deltachat/chatmail/pull/398))
+
 ## 1.4.1 2024-07-31
 
 - fix metadata dictproxy which would confuse transactions

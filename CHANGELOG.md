@@ -7,8 +7,8 @@
 
 - fix metadata dictproxy which would confuse transactions
   resulting in missed notifications and other issues. 
-  ([#393](https://github.com/deltachat/chatmail/pull/388))
-  ([#394](https://github.com/deltachat/chatmail/pull/389))
+  ([#393](https://github.com/deltachat/chatmail/pull/393))
+  ([#394](https://github.com/deltachat/chatmail/pull/394))
 
 - add optional "imap_rawlog" config option. If true, 
   .in/.out files are created in user home dirs 

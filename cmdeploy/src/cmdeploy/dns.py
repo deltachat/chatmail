@@ -3,12 +3,12 @@ import importlib
 
 from jinja2 import Template
 
-from . import remote_funcs
+from . import remote
 
 
 def get_initial_remote_data(sshexec, mail_domain):
     return sshexec.logged(
-        call=remote_funcs.perform_initial_checks, kwargs=dict(mail_domain=mail_domain)
+        call=remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=mail_domain)
     )
 
 
@@ -42,7 +42,7 @@ def check_full_zone(sshexec, remote_data, out, zonefile) -> int:
     and return (exitcode, remote_data) tuple."""
 
     required_diff, recommended_diff = sshexec.logged(
-        remote_funcs.check_zonefile, kwargs=dict(zonefile=zonefile)
+        remote.rdns.check_zonefile, kwargs=dict(zonefile=zonefile)
     )
 
     if required_diff:

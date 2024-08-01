@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from chatmaild.config import Config, read_config
-from pyinfra import host
+from pyinfra import host, facts
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from pyinfra.operations import apt, files, pip, server, systemd
@@ -441,6 +441,68 @@ def check_config(config):
     return config
 
 
+def deploy_mtail(config):
+    if host.get_fact(facts.server.Arch) == "x86_64":
+        files.download(
+            "https://github.com/google/mtail/releases/download/v3.0.7/mtail_3.0.7_linux_amd64.tar.gz",
+            "/tmp/mtail_3.0.7_linux_amd64.tar.gz",
+            user="root",
+            group="root",
+            sha256sum="624c31a563acd76440e316bba6cdca604f5ec4106a0b25f2b185ab2b1dbb7f4a",
+        )
+        server.shell(
+            name="Setup mtail",
+            commands=[
+                "tar -xf /tmp/mtail_3.0.7_linux_amd64.tar.gz mtail --to-stdout >/usr/local/bin/mtail",
+                "chmod +x /usr/local/bin/mtail",
+            ],
+        )
+    elif host.get_fact(facts.server.Arch) == "aarch64":
+        files.download(
+            "https://github.com/google/mtail/releases/download/v3.0.7/mtail_3.0.7_linux_arm64.tar.gz",
+            "/tmp/mtail_3.0.7_linux_arm64.tar.gz",
+            user="root",
+            group="root",
+            sha256sum="0a1da15d41ac04e4f51385f4a00c819dd1f551826341560a9082dd7fd4efab79",
+        )
+        server.shell(
+            name="Setup mtail",
+            commands=[
+                "tar -xf /tmp/mtail_3.0.7_linux_arm64.tar.gz mtail --to-stdout >/usr/local/bin/mtail",
+                "chmod +x /usr/local/bin/mtail",
+            ],
+        )
+
+    files.template(
+        src=importlib.resources.files(__package__).joinpath("mtail/mtail.service.j2"),
+        dest="/etc/systemd/system/mtail.service",
+        user="root",
+        group="root",
+        mode="644",
+        address="127.0.0.1",  # TODO read from config
+        port=3903,
+    )
+
+    mtail_conf = files.put(
+        name="Mtail configuration",
+        src=importlib.resources.files(__package__).joinpath(
+            "mtail/delivered_mail.mtail"
+        ),
+        dest="/etc/mtail/delivered_mail.mtail",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
+    systemd.service(
+        name="Start and enable mtail",
+        service="mtail.service",
+        running=True,
+        enabled=True,
+        restarted=mtail_conf.changed,
+    )
+
+
 def deploy_chatmail(config_path: Path) -> None:
     """Deploy a chat-mail instance.
 
@@ -636,13 +698,4 @@ def deploy_chatmail(config_path: Path) -> None:
         packages=["cron"],
     )
 
-    mtail_conf = files.put(
-        name="Mtail configuration",
-        src=importlib.resources.files(__package__).joinpath(
-            "mtail/delivered_mail.mtail"
-        ),
-        dest="/etc/mtail/delivered_mail.mtail",
-        user="root",
-        group="root",
-        mode="644",
-    )
+    deploy_mtail(config)

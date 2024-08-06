@@ -8,6 +8,10 @@
 - trigger "apt upgrade" during "cmdeploy run" 
   ([#398](https://github.com/deltachat/chatmail/pull/398))
 
+- drop hispanilandia passthrough address
+  ([#401](https://github.com/deltachat/chatmail/pull/401))
+
+
 ## 1.4.1 2024-07-31
 
 - fix metadata dictproxy which would confuse transactions

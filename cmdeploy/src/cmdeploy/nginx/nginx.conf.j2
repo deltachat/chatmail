@@ -19,7 +19,9 @@ stream {
 
         server {
                 listen 443;
+                {% if not disable_ipv6 %}
                 listen [::]:443;
+                {% endif %}
                 proxy_pass $proxy;
                 ssl_preread on;
         }

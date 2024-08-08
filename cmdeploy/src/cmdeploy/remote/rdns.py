@@ -11,23 +11,8 @@ All functions of this module
 """
 
 import re
-import traceback
-from subprocess import CalledProcessError, check_output
 
-
-def shell(command, fail_ok=False):
-    print(f"$ {command}")
-    try:
-        return check_output(command, shell=True).decode().rstrip()
-    except CalledProcessError:
-        if not fail_ok:
-            raise
-        return ""
-
-
-def get_systemd_running():
-    lines = shell("systemctl --type=service --state=running").split("\n")
-    return [line for line in lines if line.startswith("  ")]
+from .rshell import ShellError, shell
 
 
 def perform_initial_checks(mail_domain):
@@ -59,7 +44,7 @@ def get_dkim_entry(mail_domain, dkim_selector):
             f"openssl rsa -in /etc/dkimkeys/{dkim_selector}.private "
             "-pubout 2>/dev/null | awk '/-/{next}{printf(\"%s\",$0)}'"
         )
-    except CalledProcessError:
+    except ShellError:
         return
     dkim_value_raw = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
     dkim_value = '" "'.join(re.findall(".{1,255}", dkim_value_raw))
@@ -99,37 +84,3 @@ def check_zonefile(zonefile):
                 recommended_diff.append(zf_line)
 
     return required_diff, recommended_diff
-
-
-## Function Execution server
-
-
-def _run_loop(cmd_channel):
-    while 1:
-        cmd = cmd_channel.receive()
-        if cmd is None:
-            break
-
-        cmd_channel.send(_handle_one_request(cmd))
-
-
-def _handle_one_request(cmd):
-    func_name, kwargs = cmd
-    try:
-        res = globals()[func_name](**kwargs)
-        return ("finish", res)
-    except:
-        data = traceback.format_exc()
-        return ("error", data)
-
-
-# check if this module is executed remotely
-# and setup a simple serialized function-execution loop
-
-if __name__ == "__channelexec__":
-    channel = channel  # noqa (channel object gets injected)
-
-    # enable simple "print" logging for anyone changing this module
-    globals()["print"] = lambda x="": channel.send(("log", x))
-
-    _run_loop(channel)

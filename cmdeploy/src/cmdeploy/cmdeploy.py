@@ -18,7 +18,7 @@ from chatmaild.config import read_config, write_initial_config
 from packaging import version
 from termcolor import colored
 
-from . import dns, remote_funcs
+from . import dns, remote
 from .sshexec import SSHExec
 
 #
@@ -132,7 +132,7 @@ def status_cmd(args, out):
     else:
         out.red("no privacy settings")
 
-    for line in sshexec(remote_funcs.get_systemd_running):
+    for line in sshexec(remote.rshell.get_systemd_running):
         print(line)
 
 
@@ -313,7 +313,7 @@ def main(args=None):
 
     def get_sshexec():
         print(f"[ssh] login to {args.config.mail_domain}")
-        return SSHExec(args.config.mail_domain, remote_funcs, verbose=args.verbose)
+        return SSHExec(args.config.mail_domain, verbose=args.verbose)
 
     args.get_sshexec = get_sshexec
 

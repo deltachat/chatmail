@@ -6,11 +6,7 @@ import traceback
 
 
 def _run_loop(cmd_channel):
-    while 1:
-        cmd = cmd_channel.receive()
-        if cmd is None:
-            break
-
+    while cmd := cmd_channel.receive():
         cmd_channel.send(_handle_one_request(cmd))
 
 

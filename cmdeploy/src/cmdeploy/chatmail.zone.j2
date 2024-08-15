@@ -7,10 +7,11 @@
 {% if AAAA %}
 {{ mail_domain }}.                   AAAA  {{ AAAA }}
 {% endif %}
-{{ mail_domain }}.                   MX 10 {{ mail_domain }}.
+{{ mail_domain }}.                   MX 10 mx.{{ mail_domain }}.
 _mta-sts.{{ mail_domain }}.          TXT "v=STSv1; id={{ sts_id }}"
 mta-sts.{{ mail_domain }}.           CNAME {{ mail_domain }}.
 www.{{ mail_domain }}.               CNAME {{ mail_domain }}.
+mx.{{ mail_domain }}.                CNAME {{ mail_domain }}.
 {{ dkim_entry }}
 
 ;

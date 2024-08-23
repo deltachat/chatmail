@@ -7,6 +7,13 @@
     <displayShortName>{{ config.domain_name }}</displayShortName>
     <incomingServer type="imap">
       <hostname>{{ config.domain_name }}</hostname>
+      <port>443</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILADDRESS%</username>
+    </incomingServer>
+    <incomingServer type="imap">
+      <hostname>{{ config.domain_name }}</hostname>
       <port>993</port>
       <socketType>SSL</socketType>
       <authentication>password-cleartext</authentication>
@@ -19,13 +26,13 @@
       <authentication>password-cleartext</authentication>
       <username>%EMAILADDRESS%</username>
     </incomingServer>
-    <incomingServer type="imap">
+    <outgoingServer type="smtp">
       <hostname>{{ config.domain_name }}</hostname>
       <port>443</port>
       <socketType>SSL</socketType>
       <authentication>password-cleartext</authentication>
       <username>%EMAILADDRESS%</username>
-    </incomingServer>
+    </outgoingServer>
     <outgoingServer type="smtp">
       <hostname>{{ config.domain_name }}</hostname>
       <port>465</port>
@@ -37,13 +44,6 @@
       <hostname>{{ config.domain_name }}</hostname>
       <port>587</port>
       <socketType>STARTTLS</socketType>
-      <authentication>password-cleartext</authentication>
-      <username>%EMAILADDRESS%</username>
-    </outgoingServer>
-    <outgoingServer type="smtp">
-      <hostname>{{ config.domain_name }}</hostname>
-      <port>443</port>
-      <socketType>SSL</socketType>
       <authentication>password-cleartext</authentication>
       <username>%EMAILADDRESS%</username>
     </outgoingServer>

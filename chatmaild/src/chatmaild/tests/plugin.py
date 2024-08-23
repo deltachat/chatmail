@@ -7,6 +7,7 @@ from email.parser import BytesParser
 from pathlib import Path
 
 import pytest
+
 from chatmaild.config import read_config, write_initial_config
 
 

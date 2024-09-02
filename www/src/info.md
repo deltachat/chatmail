@@ -43,6 +43,20 @@ The first login sets your password.
 - You can store up to [{{ config.max_mailbox_size }} messages on the server](https://delta.chat/en/help#what-happens-if-i-turn-on-delete-old-messages-from-server).
 
 
+### <a name="account-deletion"></a> Account deletion 
+
+If you remove a {{ config.mail_domain }} profile from within the Delta Chat app, 
+then the according account on the server, along with all associated data,
+is automatically deleted {{ config.delete_inactive_users_after }} days afterwards. 
+
+If you use multiple devices 
+then you need to remove the according chat profile from each device
+in order for all account data to be removed on the server side. 
+
+If you have any further questions or requests regarding account deletion
+please send a message from your account to {{ config.privacy_mail }}. 
+
+
 ### Who are the operators? Which software is running? 
 
 This chatmail provider is run by a small voluntary group of devs and sysadmins,

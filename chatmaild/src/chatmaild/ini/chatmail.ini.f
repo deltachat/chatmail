@@ -23,8 +23,8 @@ max_message_size = 31457280
 # days after which mails are unconditionally deleted
 delete_mails_after = 20
 
-# days after which users without a login are deleted (database and mails)
-delete_inactive_users_after = 100
+# days after which users without a successful login are deleted (database and mails)
+delete_inactive_users_after = 90
 
 # minimum length a username must have
 username_min_length = 9

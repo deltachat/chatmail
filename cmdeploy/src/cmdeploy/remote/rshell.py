@@ -1,12 +1,11 @@
-from subprocess import CalledProcessError as ShellError
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 
 
 def shell(command, fail_ok=False):
     print(f"$ {command}")
     try:
         return check_output(command, shell=True).decode().rstrip()
-    except ShellError:
+    except CalledProcessError:
         if not fail_ok:
             raise
         return ""

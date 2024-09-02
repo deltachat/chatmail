@@ -2,6 +2,9 @@
 
 ## untagged
 
+- add a paragraph about "account deletion" to info page 
+  ([#405](https://github.com/deltachat/chatmail/pull/405))
+
 - avoid nginx listening on ipv6 if v6 is dsiabled 
   ([#402](https://github.com/deltachat/chatmail/pull/402))
 

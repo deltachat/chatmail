@@ -18,6 +18,8 @@
 - drop hispanilandia passthrough address
   ([#401](https://github.com/deltachat/chatmail/pull/401))
 
+- Move MX record to its own subdomain
+  ([#403](https://github.com/deltachat/chatmail/pull/403))
 
 ## 1.4.1 2024-07-31
 

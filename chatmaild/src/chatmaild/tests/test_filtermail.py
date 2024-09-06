@@ -121,6 +121,30 @@ def test_excempt_privacy(maildata, gencreds, handler):
     assert "500" in handler.check_DATA(envelope=env2)
 
 
+def test_passthrough_domains(maildata, gencreds, handler):
+    from_addr = gencreds()[0]
+    to_addr = "privacy@x.y.z"
+    handler.config.passthrough_recipients = ["@x.y.z"]
+    false_to = "something@x.y"
+
+    msg = maildata("plain.eml", from_addr=from_addr, to_addr=to_addr)
+
+    class env:
+        mail_from = from_addr
+        rcpt_tos = [to_addr]
+        content = msg.as_bytes()
+
+    # assert that None/no error is returned
+    assert not handler.check_DATA(envelope=env)
+
+    class env2:
+        mail_from = from_addr
+        rcpt_tos = [to_addr, false_to]
+        content = msg.as_bytes()
+
+    assert "500" in handler.check_DATA(envelope=env2)
+
+
 def test_passthrough_senders(gencreds, handler, maildata):
     acc1 = gencreds()[0]
     to_addr = "recipient@something.org"

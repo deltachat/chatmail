@@ -28,6 +28,9 @@
 - fix checking for required DNS records
   ([#412](https://github.com/deltachat/chatmail/pull/412))
 
+- add support for specifying whole domains for recipient passthrough list
+  ([#408](https://github.com/deltachat/chatmail/pull/408))
+
 - add a paragraph about "account deletion" to info page 
   ([#405](https://github.com/deltachat/chatmail/pull/405))
 

@@ -142,6 +142,15 @@ async def asyncmain_beforequeue(config):
     Controller(BeforeQueueHandler(config), hostname="127.0.0.1", port=port).start()
 
 
+def recipient_matches_passthrough(recipient, passthrough_recipients):
+    for addr in passthrough_recipients:
+        if recipient == addr:
+            return True
+        if addr[0] == "@" and recipient.endswith(addr):
+            return True
+    return False
+
+
 class BeforeQueueHandler:
     def __init__(self, config):
         self.config = config
@@ -205,7 +214,7 @@ class BeforeQueueHandler:
             if envelope.mail_from == recipient:
                 # Always allow sending emails to self.
                 continue
-            if recipient in passthrough_recipients:
+            if recipient_matches_passthrough(recipient, passthrough_recipients):
                 continue
             res = recipient.split("@")
             if len(res) != 2:

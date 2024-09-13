@@ -19,6 +19,9 @@ def check_initial_remote_data(remote_data, print=print):
     elif remote_data["MTA_STS"] != f"{mail_domain}.":
         print("Missing MTA-STS CNAME record:")
         print(f"mta-sts.{mail_domain}.   CNAME  {mail_domain}.")
+    elif remote_data["WWW"] != f"{mail_domain}.":
+        print("Missing www CNAME record:")
+        print(f"www.{mail_domain}.   CNAME  {mail_domain}.")
     else:
         return remote_data
 
@@ -42,7 +45,7 @@ def check_full_zone(sshexec, remote_data, out, zonefile) -> int:
     and return (exitcode, remote_data) tuple."""
 
     required_diff, recommended_diff = sshexec.logged(
-        remote.rdns.check_zonefile, kwargs=dict(zonefile=zonefile)
+        remote.rdns.check_zonefile, kwargs=dict(zonefile=zonefile, mail_domain=remote_data["mail_domain"])
     )
 
     if required_diff:

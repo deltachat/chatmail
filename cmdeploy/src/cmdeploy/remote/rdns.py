@@ -24,9 +24,10 @@ def perform_initial_checks(mail_domain):
     A = query_dns("A", mail_domain)
     AAAA = query_dns("AAAA", mail_domain)
     MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
+    WWW = query_dns("CNAME", f"www.{mail_domain}")
 
-    res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS)
-    if not MTA_STS or (not A and not AAAA):
+    res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS, WWW=WWW)
+    if not MTA_STS or not WWW or (not A and not AAAA):
         return res
 
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
@@ -59,7 +60,7 @@ def query_dns(typ, domain):
     return ""
 
 
-def check_zonefile(zonefile):
+def check_zonefile(zonefile, mail_domain):
     """Check expected zone file entries."""
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     required = True

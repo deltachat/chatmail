@@ -1,4 +1,5 @@
 import pytest
+
 from chatmaild.filtermail import (
     BeforeQueueHandler,
     SendRateLimiter,

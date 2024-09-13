@@ -4,8 +4,9 @@ import queue
 import threading
 import traceback
 
-import chatmaild.doveauth
 import pytest
+
+import chatmaild.doveauth
 from chatmaild.doveauth import (
     AuthDictProxy,
     is_allowed_to_create,

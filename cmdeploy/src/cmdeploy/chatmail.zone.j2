@@ -20,7 +20,7 @@ www.{{ mail_domain }}.               CNAME {{ mail_domain }}.
 _dmarc.{{ mail_domain }}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 
 {% if acme_account_url %}
-{{ mail_domain }}.                   CAA 128 issue "letsencrypt.org;accounturi={{ acme_account_url }}"
+{{ mail_domain }}.                   CAA 0 issue "letsencrypt.org;accounturi={{ acme_account_url }}"
 {% endif %}
 _adsp._domainkey.{{ mail_domain }}.  TXT "dkim=discardable"
 

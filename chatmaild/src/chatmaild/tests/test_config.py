@@ -1,5 +1,4 @@
 import pytest
-
 from chatmaild.config import read_config
 
 

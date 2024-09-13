@@ -3,7 +3,6 @@ import time
 
 import pytest
 import requests
-
 from chatmaild.metadata import (
     Metadata,
     MetadataDictProxy,

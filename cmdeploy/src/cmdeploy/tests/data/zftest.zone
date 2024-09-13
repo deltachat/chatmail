@@ -11,7 +11,7 @@ _submission._tcp.zftest.testrun.org.  SRV 0 1 587 zftest.testrun.org.
 _submissions._tcp.zftest.testrun.org. SRV 0 1 465 zftest.testrun.org.
 _imap._tcp.zftest.testrun.org.        SRV 0 1 143 zftest.testrun.org.
 _imaps._tcp.zftest.testrun.org.       SRV 0 1 993 zftest.testrun.org.
-zftest.testrun.org.                   CAA 128 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/1371472956"
+zftest.testrun.org.                   CAA 0 issue "letsencrypt.org;accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/1371472956"
 zftest.testrun.org.                   TXT "v=spf1 a:zftest.testrun.org ~all"
 _dmarc.zftest.testrun.org.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 _adsp._domainkey.zftest.testrun.org.  TXT "dkim=discardable"

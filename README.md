@@ -34,8 +34,8 @@ Please substitute it with your own domain.
     scripts/cmdeploy init chat.example.org  # <-- use your domain 
    ```
 
-3. Setup first DNS records for your chatmail domain, 
-   according to the hints provided by `cmdeploy init`.
+3. Point your domain to the server's IP address,
+   if you haven't done so already.
    Verify that SSH root login works:
 
    ```
@@ -47,7 +47,8 @@ Please substitute it with your own domain.
    ```
     scripts/cmdeploy run
    ```
-   This script will also show you additional DNS records
+   This script will check that you have all necessary DNS records.
+   If DNS records are missing, it will recommend
    which you should configure at your DNS provider
    (it can take some time until they are public).
 
@@ -59,7 +60,7 @@ To check the status of your remotely running chatmail service:
 scripts/cmdeploy status
 ```
 
-To check whether your DNS records are correct:
+To display and check all recommended DNS records:
 
 ```
 scripts/cmdeploy dns

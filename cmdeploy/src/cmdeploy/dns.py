@@ -18,7 +18,7 @@ def check_initial_remote_data(remote_data, print=print):
         print(f"Missing A and/or AAAA DNS records for {mail_domain}!")
     elif not remote_data["MTA_STS"]:
         print("Missing MTA-STS CNAME record:")
-        print(f"mta-sts.{mail_domain}.   CNAME  {mail_domain}")
+        print(f"mta-sts.{mail_domain}.   CNAME  {mail_domain}.")
     else:
         return remote_data
 

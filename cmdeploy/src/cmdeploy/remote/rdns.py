@@ -18,6 +18,9 @@ from .rshell import CalledProcessError, shell
 def perform_initial_checks(mail_domain):
     """Collecting initial DNS settings."""
     assert mail_domain
+    if not shell("dig", fail_ok=True):
+        shell("apt-get install -y dnsutils")
+    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     A = query_dns("A", mail_domain)
     AAAA = query_dns("AAAA", mail_domain)
     MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
@@ -27,9 +30,6 @@ def perform_initial_checks(mail_domain):
         return res
 
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
-    if not shell("dig", fail_ok=True):
-        shell("apt-get install -y dnsutils")
-    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
 
     # parse out sts-id if exists, example: "v=STSv1; id=2090123"
@@ -61,6 +61,7 @@ def query_dns(typ, domain):
 
 def check_zonefile(zonefile):
     """Check expected zone file entries."""
+    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     required = True
     required_diff = []
     recommended_diff = []

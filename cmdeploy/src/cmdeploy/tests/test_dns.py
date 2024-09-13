@@ -24,7 +24,10 @@ def mockdns(mockdns_base):
         {
             "A": {"some.domain": "1.1.1.1"},
             "AAAA": {"some.domain": "fde5:cd7a:9e1c:3240:5a99:936f:cdac:53ae"},
-            "CNAME": {"mta-sts.some.domain": "some.domain"},
+            "CNAME": {
+                "mta-sts.some.domain": "some.domain.",
+                "www.some.domain": "some.domain.",
+            },
         }
     )
     return mockdns_base
@@ -33,13 +36,15 @@ def mockdns(mockdns_base):
 class TestPerformInitialChecks:
     def test_perform_initial_checks_ok1(self, mockdns):
         remote_data = remote.rdns.perform_initial_checks("some.domain")
-        assert len(remote_data) == 7
+        assert remote_data["A"] == mockdns["A"]["some.domain"]
+        assert remote_data["AAAA"] == mockdns["AAAA"]["some.domain"]
+        assert remote_data["MTA_STS"] == mockdns["CNAME"]["mta-sts.some.domain"]
+        assert remote_data["WWW"] == mockdns["CNAME"]["www.some.domain"]
 
     @pytest.mark.parametrize("drop", ["A", "AAAA"])
     def test_perform_initial_checks_with_one_of_A_AAAA(self, mockdns, drop):
         del mockdns[drop]
         remote_data = remote.rdns.perform_initial_checks("some.domain")
-        assert len(remote_data) == 7
         assert not remote_data[drop]
 
         l = []
@@ -48,9 +53,8 @@ class TestPerformInitialChecks:
         assert not l
 
     def test_perform_initial_checks_no_mta_sts(self, mockdns):
-        del mockdns["CNAME"]
+        del mockdns["CNAME"]["mta-sts.some.domain"]
         remote_data = remote.rdns.perform_initial_checks("some.domain")
-        assert len(remote_data) == 4
         assert not remote_data["MTA_STS"]
 
         l = []
@@ -85,14 +89,18 @@ class TestZonefileChecks:
     def test_check_zonefile_all_ok(self, cm_data, mockdns_base):
         zonefile = cm_data.get("zftest.zone")
         parse_zonefile_into_dict(zonefile, mockdns_base)
-        required_diff, recommended_diff = remote.rdns.check_zonefile(zonefile)
+        required_diff, recommended_diff = remote.rdns.check_zonefile(
+            zonefile, "some.domain"
+        )
         assert not required_diff and not recommended_diff
 
     def test_check_zonefile_recommended_not_set(self, cm_data, mockdns_base):
         zonefile = cm_data.get("zftest.zone")
         zonefile_mocked = zonefile.split("; Recommended")[0]
         parse_zonefile_into_dict(zonefile_mocked, mockdns_base)
-        required_diff, recommended_diff = remote.rdns.check_zonefile(zonefile)
+        required_diff, recommended_diff = remote.rdns.check_zonefile(
+            zonefile, "some.domain"
+        )
         assert not required_diff
         assert len(recommended_diff) == 8
 
@@ -101,6 +109,7 @@ class TestZonefileChecks:
         zonefile_mocked = zonefile.split("; Recommended")[0]
         parse_zonefile_into_dict(zonefile_mocked, mockdns_base, only_required=True)
         mssh = MockSSHExec()
+        mockdns_base["mail_domain"] = "some.domain"
         res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
         assert res == 0
         assert "WARNING" in mockout.captured_plain[0]
@@ -110,6 +119,7 @@ class TestZonefileChecks:
         zonefile = cm_data.get("zftest.zone")
         parse_zonefile_into_dict(zonefile, mockdns_base)
         mssh = MockSSHExec()
+        mockdns_base["mail_domain"] = "some.domain"
         res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
         assert res == 0
         assert not mockout.captured_red

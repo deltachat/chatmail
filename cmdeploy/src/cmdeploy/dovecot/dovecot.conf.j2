@@ -51,10 +51,7 @@ mail_server_comment = Chatmail server
 # <https://doc.dovecot.org/configuration_manual/quota_plugin/>
 mail_plugins = zlib quota
 
-# these are the capabilities Delta Chat cares about actually 
-# so let's keep the network overhead per login small
-# https://github.com/deltachat/deltachat-core-rust/blob/master/src/imap/capabilities.rs
-imap_capability = IMAP4rev1 IDLE MOVE QUOTA CONDSTORE NOTIFY METADATA XDELTAPUSH XCHATMAIL
+imap_capability = +XDELTAPUSH XCHATMAIL
 
 
 # Authentication for system users.

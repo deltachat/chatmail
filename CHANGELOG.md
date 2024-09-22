@@ -23,6 +23,9 @@
 
 - set CAA record flags to 0
 
+- add IMAP capabilities instead of overwriting them
+  ([#413](https://github.com/deltachat/chatmail/pull/413))
+
 
 ## 1.4.1 2024-07-31
 

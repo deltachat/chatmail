@@ -187,3 +187,225 @@ to MAIL FROM with
 and rejects incorrectly authenticated emails with [`reject_sender_login_mismatch`](reject_sender_login_mismatch) policy.
 `From:` header must correspond to envelope MAIL FROM,
 this is ensured by `filtermail` proxy.
+
+## Migrating chatmail server to a new host
+
+If you want to migrate your chatmail server to a new host,
+follow these steps:
+
+1. Block all ports except 80 and 22 with firewall on a new server.
+
+   To do this, add the following config to `/etc/nftables.conf`:
+```
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        # Accept ICMP.
+        # It is especially important to accept ICMPv6 ND messages,
+        # otherwise IPv6 connectivity breaks.
+        icmp type { echo-request } accept
+        icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert, nd-neighbor-advert } accept
+
+        tcp dport { ssh, http } accept
+
+        ct state established accept
+    }
+    chain forward {
+        type filter hook forward priority filter;
+    }
+    chain output {
+        type filter hook output priority filter;
+    }
+}
+```
+   Then execute `nft -f /etc/nftables.conf` as root.
+
+   This will ensure users will not connect to the new server
+   and mails will not be delivered to the new server
+   before you finish the setup.
+
+   Port 22 is needed for SSH access
+   and port 80 is needed to get a TLS certificate.
+   They are not used by Delta Chat
+   or by other email servers trying to deliver the messages.
+
+2. Point DNS to the new IP addresses.
+
+   You can already remove the old IP addresses from DNS.
+   Existing Delta Chat users will still be able to connect
+   to the old server, send and receive messages,
+   but new users will fail to create new profiles
+   with your chatmail server.
+
+3. Setup the new server with `cmdeploy`.
+
+   This step is similar to initial setup.
+   However, because ports Delta Chat uses are blocked,
+   new server will not become usable immediately.
+   If other servers try to deliver messages to your new server they will fail,
+   but normally email servers will retry delivering messages
+   for at least a week, so messages will not be lost.
+
+4. Firewall all ports except `ssh` (22) on the old server.
+   Existing users will not be able to connect from now on
+   and no more messages will be delivered to your old chatmail server.
+
+   Blocking users from connecting to the new server
+   until mailboxes are migrated is needed to avoid UID validity change.
+   If Delta Chat connects to the new server before it is fully set up,
+   it will lose track of the IMAP message UID
+   and miss messages that arrived during migration.
+
+   Same for SMTP port 25, you want it blocked during migration so no new mails arrive
+   while the server is moving.
+
+5. Use `rsync -avz` over SSH to copy /home/vmail/mail from the old server to the new one
+   preserving file permissions and timestamps.
+
+6. Unblock ports used by Delta Chat and SMTP message exchange.
+   For that you can modify `/etc/nftables.conf` as follows:
+```
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        # Accept ICMP.
+        # It is especially important to accept ICMPv6 ND messages,
+        # otherwise IPv6 connectivity breaks.
+        icmp type { echo-request } accept
+        icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert, nd-neighbor-advert } accept
+
+        tcp dport { ssh, smtp, http, https, imap, imaps, submission, submissions } accept
+
+        ct state established accept
+    }
+    chain forward {
+        type filter hook forward priority filter;
+    }
+    chain output {
+        type filter hook output priority filter;
+    }
+}
+```
+Execute `nft -f /etc/nftables.conf` as root to apply the changes.
+
+## Setting up a reverse proxy
+
+chatmail server does not depend on the client IP address
+for its operation, so it can be run behind a reverse proxy.
+This will not even affect incoming mail authentication
+as DKIM only checks cryptographic signature
+of the message and does not use the IP address as the input.
+
+For example, you may want to self-host your chatmail server
+and only use hosted VPS to provide a public IP address
+for client connections and incoming mail.
+You can also setup multiple reverse proxies
+for your chatmail server in different networks
+to ensure your server is reachable even when
+one of the IPs becomes inaccessible due to
+hosting or routing problems.
+
+Note that your server still needs
+to be able to make outgoing connections on port 25
+to send messages outside.
+
+To setup a reverse proxy
+(or rather Destination NAT, DNAT)
+for your chatmail server,
+put the following configuration in `/etc/nftables.conf`:
+```
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+define wan = eth0
+
+# Which ports to proxy.
+#
+# Note that SSH is not proxied
+# so it is possible to log into the proxy server
+# and not the original one.
+define ports = { smtp, http, https, imap, imaps, submission, submissions }
+
+# The host we want to proxy to.
+define ipv4_address = AAA.BBB.CCC.DDD
+define ipv6_address = [XXX::1]
+
+table ip nat {
+        chain prerouting {
+                type nat hook prerouting priority dstnat; policy accept;
+                iif $wan tcp dport $ports dnat to $ipv4_address
+        }
+
+        chain postrouting {
+                type nat hook postrouting priority 0;
+
+                oifname $wan masquerade
+        }
+}
+
+table ip6 nat {
+        chain prerouting {
+                type nat hook prerouting priority dstnat; policy accept;
+                iif $wan tcp dport $ports dnat to $ipv6_address
+        }
+
+        chain postrouting {
+                type nat hook postrouting priority 0;
+
+                oifname $wan masquerade
+        }
+}
+
+table inet filter {
+        chain input {
+                type filter hook input priority filter; policy drop;
+
+                # Accept ICMP.
+                # It is especially important to accept ICMPv6 ND messages,
+                # otherwise IPv6 connectivity breaks.
+                icmp type { echo-request } accept
+                icmpv6 type { echo-request, nd-neighbor-solicit, nd-router-advert, nd-neighbor-advert } accept
+
+                # Allow incoming SSH connections.
+                tcp dport { ssh } accept
+
+                ct state established accept
+        }
+        chain forward {
+                type filter hook forward priority filter; policy drop;
+
+                ct state established accept
+                ip daddr $ipv4_address counter accept
+                ip6 daddr $ipv6_address counter accept
+        }
+        chain output {
+                type filter hook output priority filter;
+        }
+}
+```
+
+Run `systemctl enable nftables.service`
+to ensure configuration is reloaded when the proxy server reboots.
+
+Uncomment in `/etc/sysctl.conf` the following two lines:
+
+```
+net.ipv4.ip_forward=1
+net.ipv6.conf.all.forwarding=1
+```
+
+Then reboot the server or do `sysctl -p` and `nft -f /etc/nftables.conf`.
+
+Once proxy server is set up,
+you can add its IP address to the DNS.

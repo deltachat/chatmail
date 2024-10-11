@@ -18,18 +18,19 @@ from .rshell import CalledProcessError, shell
 def perform_initial_checks(mail_domain):
     """Collecting initial DNS settings."""
     assert mail_domain
-    A = query_dns("A", mail_domain)
-    AAAA = query_dns("AAAA", mail_domain)
-    MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
-
-    res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS)
-    if not MTA_STS or (not A and not AAAA):
-        return res
-
-    res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
     if not shell("dig", fail_ok=True):
         shell("apt-get install -y dnsutils")
     shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
+    A = query_dns("A", mail_domain)
+    AAAA = query_dns("AAAA", mail_domain)
+    MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
+    WWW = query_dns("CNAME", f"www.{mail_domain}")
+
+    res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS, WWW=WWW)
+    if not MTA_STS or not WWW or (not A and not AAAA):
+        return res
+
+    res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
 
     # parse out sts-id if exists, example: "v=STSv1; id=2090123"
@@ -59,8 +60,9 @@ def query_dns(typ, domain):
     return ""
 
 
-def check_zonefile(zonefile):
+def check_zonefile(zonefile, mail_domain):
     """Check expected zone file entries."""
+    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     required = True
     required_diff = []
     recommended_diff = []

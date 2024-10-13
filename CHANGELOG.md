@@ -2,6 +2,9 @@
 
 ## untagged
 
+- add support for specifying whole domains for recipient passthrough list
+  ([#408](https://github.com/deltachat/chatmail/pull/408))
+
 - fix checking for required DNS records
   ([#412](https://github.com/deltachat/chatmail/pull/412))
 

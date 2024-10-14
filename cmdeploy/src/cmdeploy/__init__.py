@@ -455,7 +455,7 @@ def deploy_mtail(config):
         user="root",
         group="root",
         mode="644",
-        address=config.mtail_address,
+        address=config.mtail_address or "127.0.0.1",
         port=3903,
     )
 
@@ -473,8 +473,8 @@ def deploy_mtail(config):
     systemd.service(
         name="Start and enable mtail",
         service="mtail.service",
-        running=True,
-        enabled=True,
+        running=bool(config.mtail_address),
+        enabled=bool(config.mtail_address),
         restarted=mtail_conf.changed,
     )
 

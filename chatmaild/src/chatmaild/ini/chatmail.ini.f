@@ -66,7 +66,10 @@ disable_ipv6 = False
 #
 # WARNING: do not expose this service
 # to the public IP address.
-mtail_address = 127.0.0.1
+#
+# `mtail is not running if the setting is not set.
+
+# mtail_address = 127.0.0.1
 
 #
 # Debugging options 

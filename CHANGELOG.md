@@ -2,13 +2,14 @@
 
 ## untagged
 
-There is a new required setting in `chatmail.ini`: `mtail_address`.
+There is a new setting in `chatmail.ini`: `mtail_address`.
 This defines the address on which [`mtail`](https://google.github.io/mtail/)
 exposes its metrics collected from the logs.
 If you want to collect the metrics with Prometheus,
 setup a private network (e.g. WireGuard interface)
 and assign an IP address from this network to the host.
-If unsure, set this setting to `127.0.0.1`.
+If you do not plan to collect metrics,
+keep this setting unset.
 
 - add mtail
   ([#388](https://github.com/deltachat/chatmail/pull/388))

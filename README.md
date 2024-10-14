@@ -199,6 +199,12 @@ of the message and does not use the IP address as the input.
 For example, you may want to self-host your chatmail server
 and only use hosted VPS to provide a public IP address
 for client connections and incoming mail.
+You can connect chatmail server to VPS
+using a tunnel protocol
+such as [WireGuard](https://www.wireguard.com/)
+and setup a reverse proxy on a VPS
+to forward connections to the chatmail server
+over the tunnel.
 You can also setup multiple reverse proxies
 for your chatmail server in different networks
 to ensure your server is reachable even when

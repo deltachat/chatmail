@@ -441,6 +441,44 @@ def check_config(config):
     return config
 
 
+def deploy_mtail(config):
+    apt.packages(
+        name="Install mtail",
+        packages=["mtail"],
+    )
+
+    # Using our own systemd unit instead of `/usr/lib/systemd/system/mtail.service`.
+    # This allows to read from journalctl instead of log files.
+    files.template(
+        src=importlib.resources.files(__package__).joinpath("mtail/mtail.service.j2"),
+        dest="/etc/systemd/system/mtail.service",
+        user="root",
+        group="root",
+        mode="644",
+        address=config.mtail_address or "127.0.0.1",
+        port=3903,
+    )
+
+    mtail_conf = files.put(
+        name="Mtail configuration",
+        src=importlib.resources.files(__package__).joinpath(
+            "mtail/delivered_mail.mtail"
+        ),
+        dest="/etc/mtail/delivered_mail.mtail",
+        user="root",
+        group="root",
+        mode="644",
+    )
+
+    systemd.service(
+        name="Start and enable mtail",
+        service="mtail.service",
+        running=bool(config.mtail_address),
+        enabled=bool(config.mtail_address),
+        restarted=mtail_conf.changed,
+    )
+
+
 def deploy_chatmail(config_path: Path) -> None:
     """Deploy a chat-mail instance.
 
@@ -636,3 +674,5 @@ def deploy_chatmail(config_path: Path) -> None:
         name="Ensure cron is installed",
         packages=["cron"],
     )
+
+    deploy_mtail(config)

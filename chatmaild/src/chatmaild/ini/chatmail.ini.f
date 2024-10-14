@@ -55,6 +55,22 @@ postfix_reinject_port = 10025
 # if set to "True" IPv6 is disabled
 disable_ipv6 = False
 
+# Address on which `mtail` listens,
+# e.g. 127.0.0.1 or some private network
+# address like 192.168.10.1.
+# You can point Prometheus
+# or some other OpenMetrics-compatible
+# collector to
+# http://{{mtail_address}}:3903/metrics
+# and display collected metrics with Grafana.
+#
+# WARNING: do not expose this service
+# to the public IP address.
+#
+# `mtail is not running if the setting is not set.
+
+# mtail_address = 127.0.0.1
+
 #
 # Debugging options 
 #

@@ -183,15 +183,29 @@ class BeforeQueueHandler:
         mail_encrypted = check_encrypted(message)
 
         _, from_addr = parseaddr(message.get("from").strip())
+        envelope_from_domain = from_addr.split("@").pop()
+
         logging.info(f"mime-from: {from_addr} envelope-from: {envelope.mail_from!r}")
         if envelope.mail_from.lower() != from_addr.lower():
             return f"500 Invalid FROM <{from_addr!r}> for <{envelope.mail_from!r}>"
+
+        if mail_encrypted:
+            print("Filtering encrypted mail.", file=sys.stderr)
+        else:
+            print("Filtering unencrypted mail.", file=sys.stderr)
 
         if envelope.mail_from in self.config.passthrough_senders:
             return
 
         passthrough_recipients = self.config.passthrough_recipients
-        envelope_from_domain = from_addr.split("@").pop()
+
+        is_securejoin = message.get("secure-join") in [
+            "vc-request",
+            "vg-request",
+        ]
+        if is_securejoin:
+            return
+
         for recipient in envelope.rcpt_tos:
             if envelope.mail_from == recipient:
                 # Always allow sending emails to self.
@@ -205,12 +219,8 @@ class BeforeQueueHandler:
 
             is_outgoing = recipient_domain != envelope_from_domain
             if is_outgoing and not mail_encrypted:
-                is_securejoin = message.get("secure-join") in [
-                    "vc-request",
-                    "vg-request",
-                ]
-                if not is_securejoin:
-                    return f"500 Invalid unencrypted mail to <{recipient}>"
+                print("Rejected unencrypted mail.", file=sys.stderr)
+                return f"500 Invalid unencrypted mail to <{recipient}>"
 
 
 class SendRateLimiter:

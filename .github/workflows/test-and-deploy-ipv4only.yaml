@@ -93,6 +93,6 @@ jobs:
       - name: cmdeploy test
         run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
 
-      - name: cmdeploy dns (try 3 times)
-        run: cmdeploy dns || cmdeploy dns || cmdeploy dns
+      - name: cmdeploy dns
+        run: cmdeploy dns -v
 

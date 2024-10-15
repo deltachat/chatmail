@@ -107,9 +107,12 @@ This repository has four directories:
 
 The `cmdeploy/src/cmdeploy/cmdeploy.py` command line tool
 helps with setting up and managing the chatmail service.
-`cmdeploy run` uses [pyinfra-based scripting](https://pyinfra.com/)
-in `cmdeploy/src/cmdeploy/__init__.py`
-to automatically install all chatmail components on a server:
+`cmdeploy init` creates the `chatmail.ini` config file.
+`cmdeploy run` uses a [pyinfra](https://pyinfra.com/)-based [script](`cmdeploy/src/cmdeploy/__init__.py`)
+to automatically install or upgrade all chatmail components on a server,
+according to the `chatmail.ini` config.
+
+The components of chatmail are:
 
 - [postfix smtp server](https://www.postfix.org) accepts sent messages (both from your users and from other servers)
 - [dovecot imap server](https://www.dovecot.org) stores messages for your users until they download them

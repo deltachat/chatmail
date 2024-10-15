@@ -2,6 +2,9 @@
 
 ## untagged
 
+- query autoritative nameserver to bypass DNS cache
+  ([#424](https://github.com/deltachat/chatmail/pull/424))
+
 - add mtail support (new optional `mail_address` ini value)
   This defines the address on which [`mtail`](https://google.github.io/mtail/)
   exposes its metrics collected from the logs.

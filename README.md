@@ -80,31 +80,81 @@ scripts/cmdeploy bench
 
 ## Overview of this repository
 
-This repository drives the development of chatmail services, 
-comprised of minimal setups of
+This repository has four directories:
 
-- [postfix smtp server](https://www.postfix.org)
-- [dovecot imap server](https://www.dovecot.org)
+- [cmdeploy](https://github.com/deltachat/chatmail/tree/main/cmdeploy)
+  is a collection of configuration files
+  and a [pyinfra](https://pyinfra.com)-based deployment script.
+- [chatmaild](https://github.com/deltachat/chatmail/tree/main/chatmaild)
+  is a python package containing several small services
+  which handle authentication,
+  trigger push notifications on new messages,
+  ensure that outbound mails are encrypted,
+  delete inactive users,
+  and some other minor things.
+  chatmaild can also be installed as a stand-alone python package.
+- [www](https://github.com/deltachat/chatmail/tree/main/www)
+  contains the html, css, and markdown files
+  which make up a chatmail server's web page.
+  Edit them before deploying to make your chatmail server stand out.
+- [scripts](https://github.com/deltachat/chatmail/tree/main/scripts)
+  offers two convenience tools for beginners;
+  `initenv.sh` installs the necessary dependencies to a local virtual environment,
+  and the `scripts/cmdeploy` script enables you
+  to run the `cmdeploy` command line tool in the local virtual environment.
 
-as well as custom services that are integrated with these two:
+### cmdeploy
 
-- `chatmaild/src/chatmaild/doveauth.py` implements
+The `cmdeploy/src/cmdeploy/cmdeploy.py` command line tool
+helps with setting up and managing the chatmail service.
+`cmdeploy run` uses [pyinfra-based scripting](https://pyinfra.com/)
+in `cmdeploy/src/cmdeploy/__init__.py`
+to automatically install all chatmail components on a server:
+
+- [postfix smtp server](https://www.postfix.org) accepts sent messages (both from your users and from other servers)
+- [dovecot imap server](https://www.dovecot.org) stores messages for your users until they download them
+- [nginx](https://nginx.org/) shows the web page with your privacy policy and additional information
+- [acmetool](https://hlandau.github.io/acmetool/) manages TLS certificates for dovecot, postfix, and nginx
+- [opendkim](http://www.opendkim.org/) for signing messages with DKIM and rejecting inbound messages without DKIM
+- [mtail](https://google.github.io/mtail/) for collecting anonymized metrics in case you have monitoring
+- and the chatmaild services, explained in the next section:
+
+### chatmaild
+
+chatmaild offers several commands
+which differentiate a *chatmail* server from a classic mail server.
+If you deploy them with cmdeploy,
+they are run by systemd services in the background.
+A short overview:
+
+- [`doveauth`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/doveauth.py) implements
   create-on-login account creation semantics and is used
   by Dovecot during login authentication and by Postfix
   which in turn uses [Dovecot SASL](https://doc.dovecot.org/configuration_manual/authentication/dict/#complete-example-for-authenticating-via-a-unix-socket)
   to authenticate users
   to send mails for them.
-
-- `chatmaild/src/chatmaild/filtermail.py` prevents
+- [`filtermail`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/filtermail.py) prevents
   unencrypted e-mail from leaving the chatmail service
   and is integrated into postfix's outbound mail pipelines.
-
-There is also the `cmdeploy/src/cmdeploy/cmdeploy.py` command line tool
-which helps with setting up and managing the chatmail service.
-`cmdeploy run` uses [pyinfra-based scripting](https://pyinfra.com/)
-in `cmdeploy/src/cmdeploy/__init__.py`
-to automatically install all chatmail components on a server.
-
+- [`chatmail-metadata`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/metadata.py) is contacted by a
+  [dovecot lua script](https://github.com/deltachat/chatmail/blob/main/cmdeploy/src/cmdeploy/dovecot/push_notification.lua)
+  to store user-specific server-side config.
+  On new messages,
+  it [passes the user's push notification token](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/notifier.py)
+  to [notifications.delta.chat](https://delta.chat/help#instant-delivery)
+  so the push notifications on the user's phone can be triggered
+  by Apple/Google.
+- [`delete_inactive_users`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/delete_inactive_users.py)
+  deletes users if they have not logged in for a very long time.
+  The timeframe can be configured in `chatmail.ini`.
+- [`lastlogin`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/lastlogin.py)
+  is contacted by dovecot when a user logs in
+  and stores the date of the login.
+- [`echobot`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/echo.py)
+  is a small bot for test purposes.
+  It simply echoes back messages from users.
+- [`chatmail-metrics`](https://github.com/deltachat/chatmail/blob/main/chatmaild/src/chatmaild/metrics.py)
+  collects some metrics and displays them at `https://example.org/metrics`.
 
 ### Home page and getting started for users
 

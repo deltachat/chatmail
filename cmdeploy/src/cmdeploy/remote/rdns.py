@@ -27,11 +27,11 @@ def perform_initial_checks(mail_domain):
     WWW = query_dns("CNAME", f"www.{mail_domain}")
 
     res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS, WWW=WWW)
-    if not MTA_STS or not WWW or (not A and not AAAA):
-        return res
-
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
     res["dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
+
+    if not MTA_STS or not WWW or (not A and not AAAA):
+        return res
 
     # parse out sts-id if exists, example: "v=STSv1; id=2090123"
     parts = query_dns("TXT", f"_mta-sts.{mail_domain}").split("id=")

@@ -20,7 +20,6 @@ def perform_initial_checks(mail_domain):
     assert mail_domain
     if not shell("dig", fail_ok=True):
         shell("apt-get install -y dnsutils")
-    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     A = query_dns("A", mail_domain)
     AAAA = query_dns("AAAA", mail_domain)
     MTA_STS = query_dns("CNAME", f"mta-sts.{mail_domain}")
@@ -53,8 +52,20 @@ def get_dkim_entry(mail_domain, dkim_selector):
 
 
 def query_dns(typ, domain):
-    res = shell(f"dig -r -q {domain} -t {typ} +short")
-    print(res)
+    # Get autoritative nameserver from the SOA record.
+    soa_answers = [
+        x.split()
+        for x in shell(f"dig -r -q {domain} -t SOA +noall +authority +answer").split(
+            "\n"
+        )
+    ]
+    soa = [a for a in soa_answers if len(a) >= 3 and a[3] == "SOA"]
+    if not soa:
+        return
+    ns = soa[0][4]
+
+    # Query authoritative nameserver directly to bypass DNS cache.
+    res = shell(f"dig @{ns} -r -q {domain} -t {typ} +short")
     if res:
         return res.split("\n")[0]
     return ""
@@ -62,7 +73,6 @@ def query_dns(typ, domain):
 
 def check_zonefile(zonefile, mail_domain):
     """Check expected zone file entries."""
-    shell(f"unbound-control flush_zone {mail_domain}", fail_ok=True)
     required = True
     required_diff = []
     recommended_diff = []

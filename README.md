@@ -256,6 +256,86 @@ and rejects incorrectly authenticated emails with [`reject_sender_login_mismatch
 `From:` header must correspond to envelope MAIL FROM,
 this is ensured by `filtermail` proxy.
 
+## Migrating chatmail server to a new host
+
+If you want to migrate chatmail from an old machine
+to a new machine,
+you can use these steps.
+They were tested with a linux laptop;
+you might need to adjust some of the steps to your environment.
+
+Let's assume that your `mail_domain` is `mail.example.org`,
+all involved machines run Debian 12,
+your old server's IP address is `13.37.13.37`,
+and your new server's IP address is `13.12.23.42`.
+
+1. First, copy `/var/lib/acme` to your local machine with `rsync -avz mail.example.org:/var/lib/acme .`
+
+2. Now, in your local `/etc/hosts`, point your domain to the new machine: `13.12.23.42 mail.example.org`
+
+3. You need to run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` so you can connect to the new machine via SSH.
+
+4. Upload /var/lib/acme to the new machine with `rsync -avz acme mail.example.org:/var/lib/`.
+
+5. On the server, run `chown root: -R /var/lib/acme` to make sure the permissions are correct.
+
+6. Run `cmdeploy run --disable-mail` to install chatmail on the new machine.
+   postfix and dovecot are disabled for now,
+   we will enable them later.
+
+7. Now, point DNS to the new IP addresses.
+
+   You can already remove the old IP addresses from DNS.
+   Existing Delta Chat users will still be able to connect
+   to the old server, send and receive messages,
+   but new users will fail to create new profiles
+   with your chatmail server.
+
+   If other servers try to deliver messages to your new server they will fail,
+   but normally email servers will retry delivering messages
+   for at least a week, so messages will not be lost.
+
+8. Then point the domain to the old machine in your local `/etc/hosts` again: `13.37.13.37 mail.example.org`
+
+9. And run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` again so you can connect to the new machine via SSH.
+
+10. Now you can run `cmdeploy run --disable-mail` to disable your old server.
+
+   Now your users will notice the migration
+   and will not be able to send or receive messages
+   until the migration is completed.
+
+11. After everything is stopped,
+    you can copy the `/home/vmail/mail` directory to the new server.
+    It includes all user data, messages, password hashes, etc.
+
+    If you have enough storage on your local machine,
+    you can simply download it with `rsync -avz mail.example.org:/home/vmail/mail .`,
+    change `/etc/hosts` and run `ssh-keygen` as in step 11 and 12,
+    and upload it again with `rsync -avz mail mail.example.org:/home/vmail/`.
+
+    The other way would be copying it
+    from the old machine to the new machine directly,
+    which requires setting up an SSH connection
+    with a new SSH key.
+
+    After this, your new server has all the necessary files to start operating :)
+
+12. If you haven't done this during the last step,
+    point your domain to the new machine in your `/etc/hosts` again: `13.12.23.42 mail.example.org`
+
+13. And run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` a final time
+    to make sure you can SSH-connect to the new machine.
+
+14. To be sure the permissions are still fine,
+    run `chown vmail: -R /home/vmail` on the new server.
+
+15. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
+    Your users can continue using the chatmail server,
+    and messages which were sent after step 9 should arrive now.
+
+16. Voilà! Consider removing the entry in your local `/etc/hosts` to clean up.
+
 ## Setting up a reverse proxy
 
 A chatmail server does not depend on the client IP address

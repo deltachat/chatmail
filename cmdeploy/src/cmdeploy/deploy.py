@@ -11,8 +11,9 @@ def main():
         "CHATMAIL_INI",
         importlib.resources.files("cmdeploy").joinpath("../../../chatmail.ini"),
     )
+    disable_mail = bool(os.environ.get('CHATMAIL_DISABLE_MAIL'))
 
-    deploy_chatmail(config_path)
+    deploy_chatmail(config_path, disable_mail)
 
 
 if pyinfra.is_cli:

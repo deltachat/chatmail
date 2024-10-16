@@ -479,10 +479,11 @@ def deploy_mtail(config):
     )
 
 
-def deploy_chatmail(config_path: Path) -> None:
+def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     """Deploy a chat-mail instance.
 
     :param config_path: path to chatmail.ini
+    :param disable_mail: whether to disable postfix & dovecot
     """
     config = read_config(config_path)
     check_config(config)
@@ -624,19 +625,19 @@ def deploy_chatmail(config_path: Path) -> None:
     # because it creates authentication socket
     # required by Postfix.
     systemd.service(
-        name="Start and enable Dovecot",
+        name="disable dovecot for now" if disable_mail else "Start and enable Dovecot",
         service="dovecot.service",
-        running=True,
-        enabled=True,
-        restarted=dovecot_need_restart,
+        running=False if disable_mail else True,
+        enabled=False if disable_mail else True,
+        restarted=dovecot_need_restart if not disable_mail else False,
     )
 
     systemd.service(
-        name="Start and enable Postfix",
+        name="disable postfix for now" if disable_mail else "Start and enable Postfix",
         service="postfix.service",
-        running=True,
-        enabled=True,
-        restarted=postfix_need_restart,
+        running=False if disable_mail else True,
+        enabled=False if disable_mail else True,
+        restarted=postfix_need_restart if not disable_mail else False,
     )
 
     systemd.service(

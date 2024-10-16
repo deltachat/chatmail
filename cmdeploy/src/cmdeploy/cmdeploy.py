@@ -52,6 +52,12 @@ def run_cmd_options(parser):
         action="store_true",
         help="don't actually modify the server",
     )
+    parser.add_argument(
+        "--disable-mail",
+        dest="disable_mail",
+        action="store_true",
+        help="install/upgrade the server, but disable postfix & dovecot for now"
+    )
 
 
 def run_cmd(args, out):
@@ -64,6 +70,7 @@ def run_cmd(args, out):
 
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
+    env["CHATMAIL_DISABLE_MAIL"] = "True" if args.disable_mail else ""
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
     cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path} -y"

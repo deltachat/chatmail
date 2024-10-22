@@ -39,6 +39,9 @@
 - add IMAP capabilities instead of overwriting them
   ([#413](https://github.com/deltachat/chatmail/pull/413))
 
+- fix OpenPGP payload check
+  ([#435](https://github.com/deltachat/chatmail/pull/435))
+
 
 ## 1.4.1 2024-07-31
 

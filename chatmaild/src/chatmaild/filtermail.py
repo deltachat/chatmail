@@ -60,10 +60,11 @@ def check_openpgp_payload(payload: bytes):
         i += body_len
 
         if i == len(payload):
-            if packet_type_id == 18:
-                # Last packet should be
-                # Symmetrically Encrypted and Integrity Protected Data Packet (SEIPD)
-                return True
+            # Last packet should be
+            # Symmetrically Encrypted and Integrity Protected Data Packet (SEIPD)
+            #
+            # This is the only place where this function may return `True`.
+            return packet_type_id == 18
         elif packet_type_id not in [1, 3]:
             # All packets except the last one must be either
             # Public-Key Encrypted Session Key Packet (PKESK)
@@ -71,13 +72,7 @@ def check_openpgp_payload(payload: bytes):
             # Symmetric-Key Encrypted Session Key Packet (SKESK)
             return False
 
-    if i == 0:
-        return False
-
-    if i > len(payload):
-        # Payload is truncated.
-        return False
-    return True
+    return False
 
 
 def check_armored_payload(payload: str):

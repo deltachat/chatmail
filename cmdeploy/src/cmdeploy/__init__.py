@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from chatmaild.config import Config, read_config
-from pyinfra import host
+from pyinfra import host, facts
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from pyinfra.operations import apt, files, pip, server, systemd
@@ -479,6 +479,55 @@ def deploy_mtail(config):
     )
 
 
+def deploy_iroh_relay(config) -> None:
+    (url, sha256sum) = {
+            "x86_64": ("https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-x86_64-unknown-linux-musl.tar.gz", "8af7f6d29d17476ce5c3053c3161db5793cb2ac49057d0bcaf689436cdccbeab"),
+            "aarch64": ("https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-aarch64-unknown-linux-musl.tar.gz", "18039f0d39df78922a5055a0d4a5a8fa98a2a0e19b1eaa4c3fe6db73b8698697")
+    }[host.get_fact(facts.server.Arch)]
+
+    server.shell(
+        name="Download iroh-relay",
+        commands=[
+            f"(echo '{sha256sum} /usr/local/bin/iroh-relay' | sha256sum -c) || curl -L {url} | gunzip | tar -x -f - ./iroh-relay -O >/usr/local/bin/iroh-relay",
+            "chmod 755 /usr/local/bin/iroh-relay",
+        ],
+    )
+
+    need_restart = False
+
+    systemd_unit = files.put(
+        name="Upload iroh-relay systemd unit",
+        src=importlib.resources.files(__package__).joinpath(
+            "iroh-relay.service"
+        ),
+        dest="/etc/systemd/system/iroh-relay.service",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= systemd_unit.changed
+
+    iroh_config = files.put(
+        name=f"Upload iroh-relay config",
+        src=importlib.resources.files(__package__).joinpath(
+            "iroh-relay.toml"
+        ),
+        dest=f"/etc/iroh-relay.toml",
+        user="iroh",
+        group="iroh",
+        mode="600",
+    )
+    need_restart |= iroh_config.changed
+
+    systemd.service(
+        name="Start and enable iroh-relay",
+        service="iroh-relay.service",
+        running=True,
+        enabled=config.enable_iroh_relay,
+        restarted=need_restart,
+    )
+
+
 def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     """Deploy a chat-mail instance.
 
@@ -508,6 +557,7 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         system=True,
     )
     server.user(name="Create echobot user", user="echobot", system=True)
+    server.user(name="Create iroh user", user="iroh", system=True)
 
     # Add our OBS repository for dovecot_no_delay
     files.put(
@@ -556,9 +606,11 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         enabled=True,
     )
 
+    deploy_iroh_relay(config)
+
     # Deploy acmetool to have TLS certificates.
     deploy_acmetool(
-        domains=[mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"],
+        domains=[mail_domain, f"mta-sts.{mail_domain}", f"iroh.{mail_domain}", f"www.{mail_domain}"],
     )
 
     apt.packages(

@@ -17,5 +17,6 @@ $TTL 300
 ;; DNS records.
 @       IN      A       37.27.24.139
 mta-sts.staging2.testrun.org.    CNAME   staging2.testrun.org.
+iroh.staging2.testrun.org.       CNAME   staging2.testrun.org.
 www.staging2.testrun.org.        CNAME   staging2.testrun.org.
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Iroh relay
+
+[Service]
+ExecStart=/usr/local/bin/iroh-relay --config-path /home/iroh-relay/iroh-relay.toml
+WorkingDirectory=/home/iroh-relay/
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

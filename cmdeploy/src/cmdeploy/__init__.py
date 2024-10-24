@@ -479,6 +479,38 @@ def deploy_mtail(config):
     )
 
 
+def deploy_iroh_relay() -> None:
+    server.shell(
+        name="Download iroh-relay",
+        commands=[
+            "(echo '8af7f6d29d17476ce5c3053c3161db5793cb2ac49057d0bcaf689436cdccbeab  /usr/local/bin/iroh-relay' | sha256sum -c) || curl -L https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-x86_64-unknown-linux-musl.tar.gz | gunzip | tar -x -f - ./iroh-relay -O >/usr/local/bin/iroh-relay",
+            "chmod 755 /usr/local/bin/iroh-relay",
+        ],
+    )
+
+    need_restart = False
+
+    systemd_unit = files.put(
+        name="Upload iroh-relay systemd unit",
+        src=importlib.resources.files(__package__).joinpath(
+            "iroh-relay.service"
+        ),
+        dest="/etc/systemd/system/iroh-relay.service",
+        user="root",
+        group="root",
+        mode="644",
+    )
+    need_restart |= systemd_unit.changed
+
+    systemd.service(
+        name="Start and enable iroh-relay",
+        service="iroh-relay.service",
+        running=True,
+        enabled=True,
+        restarted=need_restart,
+    )
+
+
 def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     """Deploy a chat-mail instance.
 
@@ -555,6 +587,8 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         running=True,
         enabled=True,
     )
+
+    deploy_iroh_relay()
 
     # Deploy acmetool to have TLS certificates.
     deploy_acmetool(

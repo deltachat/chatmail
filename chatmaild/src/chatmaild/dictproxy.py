@@ -87,8 +87,12 @@ class DictProxy:
         except FileNotFoundError:
             pass
 
-        with ThreadingUnixStreamServer(socket, Handler) as server:
+        with CustomThreadingUnixStreamServer(socket, Handler) as server:
             try:
                 server.serve_forever()
             except KeyboardInterrupt:
                 pass
+
+
+class CustomThreadingUnixStreamServer(ThreadingUnixStreamServer):
+    request_queue_size = 1000

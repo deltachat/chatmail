@@ -2,6 +2,9 @@
 
 ## untagged
 
+- increase `request_queue_size` for UNIX sockets to 1000.
+  ([#437](https://github.com/deltachat/chatmail/pull/437))
+
 - query autoritative nameserver to bypass DNS cache
   ([#424](https://github.com/deltachat/chatmail/pull/424))
 

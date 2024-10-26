@@ -3,8 +3,8 @@
 
 {% if config.mail_domain == "nine.testrun.org" %}
 Welcome to `{{config.mail_domain}}`, the default chatmail onboarding server for Delta Chat users. 
-It is operated on the side by a small sysops team employed by [merlinux](https://merlinux.eu),
-an open-source R&D company also acting as the fiscal sponsor of Delta Chat app developments. 
+It is operated on the side by a small sysops team
+on a voluntary basis.
 See [other chatmail servers](https://delta.chat/en/chatmail) for alternative server operators. 
 {% endif %}
 
@@ -253,7 +253,7 @@ is the `{{ config.privacy_supervisor }}`.
 ## 6. Validity of this privacy policy 
 
 This data protection declaration is valid
-as of *December 2023*.
+as of *October 2024*.
 Due to the further development of our service and offers
 or due to changed legal or official requirements,
 it may become necessary to revise this data protection declaration from time to time.

@@ -269,21 +269,21 @@ all involved machines run Debian 12,
 your old server's IP address is `13.37.13.37`,
 and your new server's IP address is `13.12.23.42`.
 
-1. First, copy `/var/lib/acme` to your local machine with `rsync -avz mail.example.org:/var/lib/acme .`
+During the guide, you might get a warning about changed SSH Host keys;
+in this case, just run `ssh-keygen -R "mail.example.org"` as recommended
+to make sure you can connect with SSH.
 
-2. Now, in your local `/etc/hosts`, point your domain to the new machine: `13.12.23.42 mail.example.org`
+1. First, copy `/var/lib/acme` to your local machine with `rsync -avz root@13.37.13.37:/var/lib/acme .`
 
-3. You need to run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` so you can connect to the new machine via SSH.
+2. Upload /var/lib/acme to the new machine with `rsync -avz acme root@13.12.23.42:/var/lib/`.
 
-4. Upload /var/lib/acme to the new machine with `rsync -avz acme mail.example.org:/var/lib/`.
+3. On the new server, run `chown root: -R /var/lib/acme` to make sure the permissions are correct.
 
-5. On the server, run `chown root: -R /var/lib/acme` to make sure the permissions are correct.
-
-6. Run `cmdeploy run --disable-mail` to install chatmail on the new machine.
+4. Run `cmdeploy run --disable-mail --ssh-host 13.12.23.42` to install chatmail on the new machine.
    postfix and dovecot are disabled for now,
    we will enable them later.
 
-7. Now, point DNS to the new IP addresses.
+5. Now, point DNS to the new IP addresses.
 
    You can already remove the old IP addresses from DNS.
    Existing Delta Chat users will still be able to connect
@@ -295,24 +295,19 @@ and your new server's IP address is `13.12.23.42`.
    but normally email servers will retry delivering messages
    for at least a week, so messages will not be lost.
 
-8. Then point the domain to the old machine in your local `/etc/hosts` again: `13.37.13.37 mail.example.org`
-
-9. And run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` again so you can connect to the new machine via SSH.
-
-10. Now you can run `cmdeploy run --disable-mail` to disable your old server.
+6. Now you can run `cmdeploy run --disable-mail --ssh-host 13.37.13.37` to disable your old server.
 
    Now your users will notice the migration
    and will not be able to send or receive messages
    until the migration is completed.
 
-11. After everything is stopped,
+7. After everything is stopped,
     you can copy the `/home/vmail/mail` directory to the new server.
     It includes all user data, messages, password hashes, etc.
 
     If you have enough storage on your local machine,
-    you can simply download it with `rsync -avz mail.example.org:/home/vmail/mail .`,
-    change `/etc/hosts` and run `ssh-keygen` as in step 11 and 12,
-    and upload it again with `rsync -avz mail mail.example.org:/home/vmail/`.
+    you can simply download it with `rsync -avz 13.37.13.37:/home/vmail/mail .`,
+    and upload it again with `rsync -avz mail 13.12.23.42:/home/vmail/`.
 
     The other way would be copying it
     from the old machine to the new machine directly,
@@ -321,20 +316,13 @@ and your new server's IP address is `13.12.23.42`.
 
     After this, your new server has all the necessary files to start operating :)
 
-12. If you haven't done this during the last step,
-    point your domain to the new machine in your `/etc/hosts` again: `13.12.23.42 mail.example.org`
-
-13. And run `ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "mail.example.org"` a final time
-    to make sure you can SSH-connect to the new machine.
-
-14. To be sure the permissions are still fine,
+8. To be sure the permissions are still fine,
     run `chown vmail: -R /home/vmail` on the new server.
 
-15. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
+9. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
     Your users can continue using the chatmail server,
     and messages which were sent after step 9 should arrive now.
-
-16. Voilà! Consider removing the entry in your local `/etc/hosts` to clean up.
+    Voilà!
 
 ## Setting up a reverse proxy
 

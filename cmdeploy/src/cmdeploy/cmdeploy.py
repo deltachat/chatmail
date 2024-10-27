@@ -58,6 +58,11 @@ def run_cmd_options(parser):
         action="store_true",
         help="install/upgrade the server, but disable postfix & dovecot for now"
     )
+    parser.add_argument(
+        "--ssh-host",
+        dest="ssh_host",
+        help="specify an SSH host to deploy to; uses mail_domain from chatmail.ini by default"
+    )
 
 
 def run_cmd(args, out):
@@ -73,7 +78,8 @@ def run_cmd(args, out):
     env["CHATMAIL_DISABLE_MAIL"] = "True" if args.disable_mail else ""
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
-    cmd = f"{pyinf} --ssh-user root {args.config.mail_domain} {deploy_path} -y"
+    ssh_host = args.config.mail_domain if not args.ssh_host else args.ssh_host
+    cmd = f"{pyinf} --ssh-user root {ssh_host} {deploy_path} -y"
     if version.parse(pyinfra.__version__) < version.parse("3"):
         out.red("Please re-run scripts/initenv.sh to update pyinfra to version 3.")
         return 1

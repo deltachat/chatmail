@@ -43,6 +43,7 @@
   ([#435](https://github.com/deltachat/chatmail/pull/435))
 
 - fix Dovecot quota_max_mail_size to use max_message_size config value
+  ([#438](https://github.com/deltachat/chatmail/pull/438))
 
 
 ## 1.4.1 2024-07-31

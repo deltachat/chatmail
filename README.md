@@ -321,7 +321,7 @@ to make sure you can connect with SSH.
 
 9. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
     Your users can continue using the chatmail server,
-    and messages which were sent after step 9 should arrive now.
+    and messages which were sent after step 6. should arrive now.
     Voilà!
 
 ## Setting up a reverse proxy

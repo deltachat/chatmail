@@ -5,6 +5,10 @@
 - increase `request_queue_size` for UNIX sockets to 1000.
   ([#437](https://github.com/deltachat/chatmail/pull/437))
 
+- add argument to `cmdeploy run` for specifying
+  a different SSH host than `mail_domain`
+  ([#439](https://github.com/deltachat/chatmail/pull/439))
+
 - query autoritative nameserver to bypass DNS cache
   ([#424](https://github.com/deltachat/chatmail/pull/424))
 

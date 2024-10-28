@@ -273,17 +273,16 @@ During the guide, you might get a warning about changed SSH Host keys;
 in this case, just run `ssh-keygen -R "mail.example.org"` as recommended
 to make sure you can connect with SSH.
 
-1. First, copy `/var/lib/acme` to your local machine with `rsync -avz root@13.37.13.37:/var/lib/acme .`
+1. First, copy `/var/lib/acme` to your local machine with
+   `ssh root@13.37.13.37 tar c /var/lib/acme | ssh root@13.12.23.42 tar x -C /var/lib/`.
 
-2. Upload /var/lib/acme to the new machine with `rsync -avz acme root@13.12.23.42:/var/lib/`.
+2. On the new server, run `chown root: -R /var/lib/acme` to make sure the permissions are correct.
 
-3. On the new server, run `chown root: -R /var/lib/acme` to make sure the permissions are correct.
-
-4. Run `cmdeploy run --disable-mail --ssh-host 13.12.23.42` to install chatmail on the new machine.
+3. Run `cmdeploy run --disable-mail --ssh-host 13.12.23.42` to install chatmail on the new machine.
    postfix and dovecot are disabled for now,
    we will enable them later.
 
-5. Now, point DNS to the new IP addresses.
+4. Now, point DNS to the new IP addresses.
 
    You can already remove the old IP addresses from DNS.
    Existing Delta Chat users will still be able to connect
@@ -295,13 +294,13 @@ to make sure you can connect with SSH.
    but normally email servers will retry delivering messages
    for at least a week, so messages will not be lost.
 
-6. Now you can run `cmdeploy run --disable-mail --ssh-host 13.37.13.37` to disable your old server.
+5. Now you can run `cmdeploy run --disable-mail --ssh-host 13.37.13.37` to disable your old server.
 
    Now your users will notice the migration
    and will not be able to send or receive messages
    until the migration is completed.
 
-7. After everything is stopped,
+6. After everything is stopped,
     you can copy the `/home/vmail/mail` directory to the new server.
     It includes all user data, messages, password hashes, etc.
 
@@ -316,10 +315,10 @@ to make sure you can connect with SSH.
 
     After this, your new server has all the necessary files to start operating :)
 
-8. To be sure the permissions are still fine,
+7. To be sure the permissions are still fine,
     run `chown vmail: -R /home/vmail` on the new server.
 
-9. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
+8. Finally, you can run `cmdeploy run` to turn on chatmail on the new server.
     Your users can continue using the chatmail server,
     and messages which were sent after step 6. should arrive now.
     Voilà!

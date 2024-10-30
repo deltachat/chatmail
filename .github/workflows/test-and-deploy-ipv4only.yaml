@@ -66,8 +66,8 @@ jobs:
           rsync -e "ssh -o StrictHostKeyChecking=accept-new" -avz root@ns.testrun.org:/tmp/acme-ipv4 acme-restore || true
           rsync -avz root@ns.testrun.org:/tmp/dkimkeys-ipv4 dkimkeys-restore || true
           # restore acme & dkim state to staging2.testrun.org
-          rsync -avz acme-restore/acme-ipv4/acme root@staging-ipv4.testrun.org:/var/lib/acme || true
-          rsync -avz dkimkeys-restore/dkimkeys-ipv4/dkimkeys root@staging-ipv4.testrun.org:/etc/dkimkeys || true
+          rsync -avz acme-restore/acme-ipv4/acme root@staging-ipv4.testrun.org:/var/lib/ || true
+          rsync -avz dkimkeys-restore/dkimkeys-ipv4/dkimkeys root@staging-ipv4.testrun.org:/etc/ || true
           ssh -o StrictHostKeyChecking=accept-new -v root@staging-ipv4.testrun.org chown root:root -R /var/lib/acme || true
 
       - name: run formatting checks 

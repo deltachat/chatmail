@@ -31,13 +31,13 @@ Unlike classic e-mail servers, this chatmail server
 
 - does not store Internet addresses ("IP addresses"), 
 
-- does not process IP addresses in ways which could relate them to email addresses.
+- does not process IP addresses in relation to email addresses.
 
-Due to the lack of personal data processing
-we may not need to provide a privacy policy. 
+Due to the resulting lack of personal data processing
+this chatmail server may not require a privacy policy.
 
-Nevertheless, we provide more legal details below to make life easier 
-for data protection specialists and lawyers scrutinizing chatmail operations. 
+Nevertheless, we provide legal details below to make life easier
+for data protection specialists and lawyers scrutinizing chatmail operations.
 
 
 

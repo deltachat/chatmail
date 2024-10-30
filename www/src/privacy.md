@@ -29,9 +29,9 @@ Unlike classic e-mail servers, this chatmail server
 
 - prohibits sending out un-encrypted messages,
 
-- does not store or collect Internet addresses ("IP addresses"), 
+- does not store Internet addresses ("IP addresses"), 
 
-- only uses ephemeral log files used for debugging purposes.
+- does not process IP addresses in ways which could relate them to email addresses.
 
 Due to the lack of personal data processing
 we may not need to provide a privacy policy. 

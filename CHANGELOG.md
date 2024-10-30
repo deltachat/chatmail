@@ -2,11 +2,12 @@
 
 ## untagged
 
+- deploy `iroh-relay` (requires new "iroh.{mail_domain}" DNS entry), 
+  also update "realtime relay services" in privacy policy. 
+  ([#434](https://github.com/deltachat/chatmail/pull/434))
+
 - add guide to migrate chatmail to a new server
   ([#429](https://github.com/deltachat/chatmail/pull/429))
-
-- deploy `iroh-relay` (requires new "iroh.{mail_domain}" DNS entry)
-  ([#434](https://github.com/deltachat/chatmail/pull/434))
 
 - increase `request_queue_size` for UNIX sockets to 1000.
   ([#437](https://github.com/deltachat/chatmail/pull/437))

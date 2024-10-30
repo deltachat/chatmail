@@ -38,7 +38,9 @@ jobs:
           if [ -f dkimkeys-ipv4/dkimkeys/opendkim.private ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys-ipv4 root@ns.testrun.org:/tmp/ || true; fi
           if [ "$(ls -A acme-ipv4/acme/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme-ipv4 root@ns.testrun.org:/tmp/ || true; fi
           # make sure CAA record isn't set
+          scp .github/workflows/staging-ipv4.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging-ipv4.testrun.org.zone
           ssh -o StrictHostKeyChecking=accept-new root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging-ipv4.testrun.org.zone
+          ssh root@ns.testrun.org nsd-checkzone staging-ipv4.testrun.org /etc/nsd/staging-ipv4.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 
       - name: rebuild staging-ipv4.testrun.org to have a clean VPS

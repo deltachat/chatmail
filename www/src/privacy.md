@@ -23,18 +23,22 @@ A chatmail server behaves more like the Signal messaging server
 but does not know about phone numbers and securely and automatically interoperates 
 with other chatmail and classic e-mail servers. 
 
-In particular, this chatmail server 
+Unlike classic e-mail servers, this chatmail server 
 
 - unconditionally removes messages after {{ config.delete_mails_after }} days,
 
 - prohibits sending out un-encrypted messages,
 
-- only has temporary log files used for debugging purposes.
+- does not store or collect Internet addresses ("IP addresses"), 
 
-Legally, authorities might still regard chatmail as a "classic e-mail" server
-which collects and retains personal data. 
-We do not agree on this interpretation. Nevertheless, we provide more legal details below
-to make life easier for data protection specialists and lawyers scrutinizing chatmail operations. 
+- only uses ephemeral log files used for debugging purposes.
+
+Due to the lack of personal data processing
+we may not need to provide a privacy policy. 
+
+Nevertheless, we provide more legal details below to make life easier 
+for data protection specialists and lawyers scrutinizing chatmail operations. 
+
 
 
 ## 1. Name and contact information 

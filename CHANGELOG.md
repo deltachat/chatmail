@@ -9,6 +9,9 @@
 - add guide to migrate chatmail to a new server
   ([#429](https://github.com/deltachat/chatmail/pull/429))
 
+- disable anvil authentication penalty
+  ([#414](https://github.com/deltachat/chatmail/pull/444)
+
 - increase `request_queue_size` for UNIX sockets to 1000.
   ([#437](https://github.com/deltachat/chatmail/pull/437))
 

@@ -38,7 +38,9 @@ jobs:
           if [ -f dkimkeys/opendkim.private ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" dkimkeys root@ns.testrun.org:/tmp/ || true; fi
           if [ "$(ls -A acme/certs)" ]; then rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" acme root@ns.testrun.org:/tmp/ || true; fi
           # make sure CAA record isn't set
-          ssh -o StrictHostKeyChecking=accept-new root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging2.testrun.org.zone
+          scp -o StrictHostKeyChecking=accept-new .github/workflows/staging.testrun.org-default.zone root@ns.testrun.org:/etc/nsd/staging2.testrun.org.zone
+          ssh root@ns.testrun.org sed -i '/CAA/d' /etc/nsd/staging2.testrun.org.zone
+          ssh root@ns.testrun.org nsd-checkzone staging2.testrun.org /etc/nsd/staging2.testrun.org.zone
           ssh root@ns.testrun.org systemctl reload nsd
 
       - name: rebuild staging2.testrun.org to have a clean VPS
@@ -64,8 +66,8 @@ jobs:
           rsync -e "ssh -o StrictHostKeyChecking=accept-new" -avz root@ns.testrun.org:/tmp/acme acme-restore || true
           rsync -avz root@ns.testrun.org:/tmp/dkimkeys dkimkeys-restore || true
           # restore acme & dkim state to staging2.testrun.org
-          rsync -avz acme-restore/acme/ root@staging2.testrun.org:/var/lib/acme || true
-          rsync -avz dkimkeys-restore/dkimkeys/ root@staging2.testrun.org:/etc/dkimkeys || true
+          rsync -avz acme-restore/acme root@staging2.testrun.org:/var/lib/ || true
+          rsync -avz dkimkeys-restore/dkimkeys root@staging2.testrun.org:/etc/ || true
           ssh -o StrictHostKeyChecking=accept-new -v root@staging2.testrun.org chown root:root -R /var/lib/acme || true
 
       - name: run formatting checks 

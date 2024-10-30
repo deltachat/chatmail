@@ -108,4 +108,16 @@ http {
 		return 301 $scheme://{{ config.domain_name }}$request_uri;
 		access_log syslog:server=unix:/dev/log,facility=local7;
 	}
+
+	# Pass iroh. to iroh-relay service.
+	server {
+		listen 8443 ssl;
+		{% if not disable_ipv6 %}
+		listen [::]:8443 ssl;
+		{% endif %}
+		server_name iroh.{{ config.domain_name }};
+		location / {
+			proxy_pass http://127.0.0.1:3340;
+		}
+	}
 }

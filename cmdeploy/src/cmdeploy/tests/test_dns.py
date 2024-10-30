@@ -26,6 +26,7 @@ def mockdns(mockdns_base):
             "AAAA": {"some.domain": "fde5:cd7a:9e1c:3240:5a99:936f:cdac:53ae"},
             "CNAME": {
                 "mta-sts.some.domain": "some.domain.",
+                "iroh.some.domain": "some.domain.",
                 "www.some.domain": "some.domain.",
             },
         }
@@ -35,30 +36,31 @@ def mockdns(mockdns_base):
 
 class TestPerformInitialChecks:
     def test_perform_initial_checks_ok1(self, mockdns):
-        remote_data = remote.rdns.perform_initial_checks("some.domain")
+        remote_data = remote.rdns.perform_initial_checks("some.domain", iroh_enabled=True)
         assert remote_data["A"] == mockdns["A"]["some.domain"]
         assert remote_data["AAAA"] == mockdns["AAAA"]["some.domain"]
         assert remote_data["MTA_STS"] == mockdns["CNAME"]["mta-sts.some.domain"]
+        assert remote_data["IROH"] == mockdns["CNAME"]["iroh.some.domain"]
         assert remote_data["WWW"] == mockdns["CNAME"]["www.some.domain"]
 
     @pytest.mark.parametrize("drop", ["A", "AAAA"])
     def test_perform_initial_checks_with_one_of_A_AAAA(self, mockdns, drop):
         del mockdns[drop]
-        remote_data = remote.rdns.perform_initial_checks("some.domain")
+        remote_data = remote.rdns.perform_initial_checks("some.domain", iroh_enabled=True)
         assert not remote_data[drop]
 
         l = []
-        res = check_initial_remote_data(remote_data, print=l.append)
+        res = check_initial_remote_data(remote_data, require_iroh=True, print=l.append)
         assert res
         assert not l
 
     def test_perform_initial_checks_no_mta_sts(self, mockdns):
         del mockdns["CNAME"]["mta-sts.some.domain"]
-        remote_data = remote.rdns.perform_initial_checks("some.domain")
+        remote_data = remote.rdns.perform_initial_checks("some.domain", iroh_enabled=True)
         assert not remote_data["MTA_STS"]
 
         l = []
-        res = check_initial_remote_data(remote_data, print=l.append)
+        res = check_initial_remote_data(remote_data, require_iroh=True, print=l.append)
         assert not res
         assert len(l) == 2
 

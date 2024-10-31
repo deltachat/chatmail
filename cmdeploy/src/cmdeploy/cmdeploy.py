@@ -77,6 +77,7 @@ def run_cmd(args, out):
     env = os.environ.copy()
     env["CHATMAIL_INI"] = args.inipath
     env["CHATMAIL_DISABLE_MAIL"] = "True" if args.disable_mail else ""
+    env["CHATMAIL_REQUIRE_IROH"] = "True" if require_iroh else ""
     deploy_path = importlib.resources.files(__package__).joinpath("deploy.py").resolve()
     pyinf = "pyinfra --dry" if args.dry_run else "pyinfra"
     ssh_host = args.config.mail_domain if not args.ssh_host else args.ssh_host

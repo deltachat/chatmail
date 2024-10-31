@@ -528,11 +528,12 @@ def deploy_iroh_relay(config) -> None:
     )
 
 
-def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
+def deploy_chatmail(config_path: Path, disable_mail: bool, require_iroh: bool) -> None:
     """Deploy a chat-mail instance.
 
     :param config_path: path to chatmail.ini
     :param disable_mail: whether to disable postfix & dovecot
+    :param require_iroh: whether to request a TLS certificate for iroh.$mail_domain
     """
     config = read_config(config_path)
     check_config(config)
@@ -609,8 +610,11 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     deploy_iroh_relay(config)
 
     # Deploy acmetool to have TLS certificates.
+    tls_domains = [mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"]
+    if require_iroh:
+        tls_domains.append(f"iroh.{mail_domain}")
     deploy_acmetool(
-        domains=[mail_domain, f"mta-sts.{mail_domain}", f"iroh.{mail_domain}", f"www.{mail_domain}"],
+        domains=tls_domains,
     )
 
     apt.packages(

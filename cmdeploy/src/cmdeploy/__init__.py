@@ -485,6 +485,11 @@ def deploy_iroh_relay(config) -> None:
             "aarch64": ("https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-aarch64-unknown-linux-musl.tar.gz", "18039f0d39df78922a5055a0d4a5a8fa98a2a0e19b1eaa4c3fe6db73b8698697")
     }[host.get_fact(facts.server.Arch)]
 
+    apt.packages(
+        name="Install curl",
+        packages=["curl"],
+    )
+
     server.shell(
         name="Download iroh-relay",
         commands=[

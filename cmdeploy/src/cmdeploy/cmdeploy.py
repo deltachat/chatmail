@@ -70,8 +70,8 @@ def run_cmd(args, out):
 
     sshexec = args.get_sshexec()
     require_iroh = args.config.enable_iroh_relay
-    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain, require_iroh)
-    if not dns.check_initial_remote_data(remote_data, require_iroh, print=out.red):
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
+    if not dns.check_initial_remote_data(remote_data, print=out.red):
         return 1
 
     env = os.environ.copy()
@@ -111,8 +111,7 @@ def dns_cmd_options(parser):
 def dns_cmd(args, out):
     """Check DNS entries and optionally generate dns zone file."""
     sshexec = args.get_sshexec()
-    require_iroh = args.config.enable_iroh_relay
-    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain, require_iroh)
+    remote_data = dns.get_initial_remote_data(sshexec, args.config.mail_domain)
     if not remote_data:
         return 1
 

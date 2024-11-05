@@ -2,9 +2,9 @@
 
 ## untagged
 
-- deploy `iroh-relay` (requires new "iroh.{mail_domain}" DNS entry), 
-  also update "realtime relay services" in privacy policy. 
+- deploy `iroh-relay` and also update "realtime relay services" in privacy policy. 
   ([#434](https://github.com/deltachat/chatmail/pull/434))
+  ([#451](https://github.com/deltachat/chatmail/pull/451))
 
 - add guide to migrate chatmail to a new server
   ([#429](https://github.com/deltachat/chatmail/pull/429))

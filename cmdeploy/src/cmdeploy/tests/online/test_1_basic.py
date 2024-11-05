@@ -18,13 +18,13 @@ class TestSSHExecutor:
 
     def test_perform_initial(self, sshexec, maildomain):
         res = sshexec(
-            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain, iroh_enabled=True)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         assert res["A"] or res["AAAA"]
 
     def test_logged(self, sshexec, maildomain, capsys):
         sshexec.logged(
-            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain, iroh_enabled=True)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
         assert err.startswith("Collecting")
@@ -33,7 +33,7 @@ class TestSSHExecutor:
 
         sshexec.verbose = True
         sshexec.logged(
-            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain, iroh_enabled=True)
+            remote.rdns.perform_initial_checks, kwargs=dict(mail_domain=maildomain)
         )
         out, err = capsys.readouterr()
         lines = err.split("\n")
@@ -44,7 +44,7 @@ class TestSSHExecutor:
         try:
             sshexec.logged(
                 remote.rdns.perform_initial_checks,
-                kwargs=dict(mail_domain=None, iroh_enabled=True),
+                kwargs=dict(mail_domain=None),
             )
         except sshexec.FuncError as e:
             assert "rdns.py" in str(e)

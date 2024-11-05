@@ -481,8 +481,14 @@ def deploy_mtail(config):
 
 def deploy_iroh_relay(config) -> None:
     (url, sha256sum) = {
-            "x86_64": ("https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-x86_64-unknown-linux-musl.tar.gz", "8af7f6d29d17476ce5c3053c3161db5793cb2ac49057d0bcaf689436cdccbeab"),
-            "aarch64": ("https://github.com/n0-computer/iroh/releases/download/v0.27.0/iroh-relay-v0.27.0-aarch64-unknown-linux-musl.tar.gz", "18039f0d39df78922a5055a0d4a5a8fa98a2a0e19b1eaa4c3fe6db73b8698697")
+        "x86_64": (
+            "https://github.com/n0-computer/iroh/releases/download/v0.28.1/iroh-relay-v0.28.1-x86_64-unknown-linux-musl.tar.gz",
+            "2ffacf7c0622c26b67a5895ee8e07388769599f60e5f52a3bd40a3258db89b2c",
+        ),
+        "aarch64": (
+            "https://github.com/n0-computer/iroh/releases/download/v0.28.1/iroh-relay-v0.28.1-aarch64-unknown-linux-musl.tar.gz",
+            "b915037bcc1ff1110cc9fcb5de4a17c00ff576fd2f568cd339b3b2d54c420dc4",
+        ),
     }[host.get_fact(facts.server.Arch)]
 
     apt.packages(
@@ -493,7 +499,7 @@ def deploy_iroh_relay(config) -> None:
     server.shell(
         name="Download iroh-relay",
         commands=[
-            f"(echo '{sha256sum} /usr/local/bin/iroh-relay' | sha256sum -c) || curl -L {url} | gunzip | tar -x -f - ./iroh-relay -O >/usr/local/bin/iroh-relay",
+            f"(echo '{sha256sum} /usr/local/bin/iroh-relay' | sha256sum -c) || (curl -L {url} | gunzip | tar -x -f - ./iroh-relay -O >/usr/local/bin/iroh-relay.new && mv /usr/local/bin/iroh-relay.new /usr/local/bin/iroh-relay)",
             "chmod 755 /usr/local/bin/iroh-relay",
         ],
     )
@@ -502,9 +508,7 @@ def deploy_iroh_relay(config) -> None:
 
     systemd_unit = files.put(
         name="Upload iroh-relay systemd unit",
-        src=importlib.resources.files(__package__).joinpath(
-            "iroh-relay.service"
-        ),
+        src=importlib.resources.files(__package__).joinpath("iroh-relay.service"),
         dest="/etc/systemd/system/iroh-relay.service",
         user="root",
         group="root",
@@ -514,13 +518,11 @@ def deploy_iroh_relay(config) -> None:
 
     iroh_config = files.put(
         name=f"Upload iroh-relay config",
-        src=importlib.resources.files(__package__).joinpath(
-            "iroh-relay.toml"
-        ),
+        src=importlib.resources.files(__package__).joinpath("iroh-relay.toml"),
         dest=f"/etc/iroh-relay.toml",
-        user="iroh",
-        group="iroh",
-        mode="600",
+        user="root",
+        group="root",
+        mode="644",
     )
     need_restart |= iroh_config.changed
 
@@ -533,12 +535,11 @@ def deploy_iroh_relay(config) -> None:
     )
 
 
-def deploy_chatmail(config_path: Path, disable_mail: bool, require_iroh: bool) -> None:
+def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     """Deploy a chat-mail instance.
 
     :param config_path: path to chatmail.ini
     :param disable_mail: whether to disable postfix & dovecot
-    :param require_iroh: whether to request a TLS certificate for iroh.$mail_domain
     """
     config = read_config(config_path)
     check_config(config)
@@ -616,8 +617,6 @@ def deploy_chatmail(config_path: Path, disable_mail: bool, require_iroh: bool) -
 
     # Deploy acmetool to have TLS certificates.
     tls_domains = [mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"]
-    if require_iroh:
-        tls_domains.append(f"iroh.{mail_domain}")
     deploy_acmetool(
         domains=tls_domains,
     )

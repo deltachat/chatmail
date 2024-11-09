@@ -18,6 +18,7 @@ smtp      inet  n       -       y       -       -       smtpd
 submission inet n       -       y       -       5000    smtpd
   -o syslog_name=postfix/submission
   -o smtpd_tls_security_level=encrypt
+  -o smtpd_tls_mandatory_protocols=>=TLSv1.3
   -o smtpd_sasl_auth_enable=yes
   -o smtpd_sasl_type=dovecot
   -o smtpd_sasl_path=private/auth
@@ -36,6 +37,7 @@ smtps     inet  n       -       y       -       5000    smtpd
   -o syslog_name=postfix/smtps
   -o smtpd_tls_wrappermode=yes
   -o smtpd_tls_security_level=encrypt
+  -o smtpd_tls_mandatory_protocols=>=TLSv1.3
   -o smtpd_sasl_auth_enable=yes
   -o smtpd_sasl_type=dovecot
   -o smtpd_sasl_path=private/auth

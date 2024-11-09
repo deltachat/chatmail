@@ -217,8 +217,8 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
             commands=[
                 f"opendkim-genkey -D /etc/dkimkeys -d {domain} -s {dkim_selector}"
             ],
-            _sudo=True,
-            _sudo_user="opendkim",
+            _use_su_login=True,
+            _su_user="opendkim",
         )
 
     return need_restart

@@ -23,6 +23,9 @@
 - replace `Subject` with `[...]` for all outgoing mails.
   ([#481](https://github.com/deltachat/chatmail/pull/481))
 
+- opendkim: use su instead of sudo
+  ([#491](https://github.com/deltachat/chatmail/pull/491))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

@@ -616,7 +616,12 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
     deploy_iroh_relay(config)
 
     # Deploy acmetool to have TLS certificates.
-    tls_domains = [mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"]
+    tls_domains = [
+        mail_domain,
+        f"mta-sts.{mail_domain}",
+        f"www.{mail_domain}",
+        f"mx.{mail_domain}",
+    ]
     deploy_acmetool(
         domains=tls_domains,
     )

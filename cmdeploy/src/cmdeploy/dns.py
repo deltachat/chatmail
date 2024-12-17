@@ -40,7 +40,7 @@ def get_filled_zone_file(remote_data):
     return zonefile
 
 
-def check_full_zone(sshexec, remote_data, out, zonefile) -> int:
+def check_full_zone(sshexec, remote_data, out, zonefile, all) -> int:
     """Check existing DNS records, optionally write them to zone file
     and return (exitcode, remote_data) tuple."""
 
@@ -49,16 +49,18 @@ def check_full_zone(sshexec, remote_data, out, zonefile) -> int:
         kwargs=dict(zonefile=zonefile, mail_domain=remote_data["mail_domain"]),
     )
 
+    returncode = 0
     if required_diff:
         out.red("Please set required DNS entries at your DNS provider:\n")
         for line in required_diff:
             out(line)
-        return 1
-    elif recommended_diff:
+        print()
+        returncode += 1
+    if recommended_diff and (all or not required_diff):
         out("WARNING: these recommended DNS entries are not set:\n")
         for line in recommended_diff:
             out(line)
-        return 0
 
-    out.green("Great! All your DNS entries are verified and correct.")
-    return 0
+    if not (recommended_diff or required_diff):
+        out.green("Great! All your DNS entries are verified and correct.")
+    return returncode

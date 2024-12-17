@@ -29,7 +29,7 @@ def check_initial_remote_data(remote_data, *, print=print):
 def get_filled_zone_file(remote_data):
     sts_id = remote_data.get("sts_id")
     if not sts_id:
-        sts_id = datetime.datetime.now().strftime("%Y%m%d%H%M")
+        remote_data["sts_id"] = datetime.datetime.now().strftime("%Y%m%d%H%M")
 
     template = importlib.resources.files(__package__).joinpath("chatmail.zone.j2")
     content = template.read_text()

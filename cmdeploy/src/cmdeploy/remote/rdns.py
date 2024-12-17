@@ -10,6 +10,7 @@ All functions of this module
 - can freely call each other.
 """
 
+import datetime
 import re
 
 from .rshell import CalledProcessError, shell
@@ -34,7 +35,10 @@ def perform_initial_checks(mail_domain):
 
     # parse out sts-id if exists, example: "v=STSv1; id=2090123"
     parts = query_dns("TXT", f"_mta-sts.{mail_domain}").split("id=")
-    res["sts_id"] = parts[1].rstrip('"') if len(parts) == 2 else ""
+    if len(parts) == 2 and len(parts[1]) > 1:
+        res["sts_id"] = parts[1].rstrip('"')
+    else:
+        res["sts_id"] = datetime.datetime.now().strftime("%Y%m%d%H%M")
     return res
 
 

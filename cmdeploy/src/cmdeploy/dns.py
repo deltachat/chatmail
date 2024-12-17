@@ -55,11 +55,13 @@ def check_full_zone(sshexec, remote_data, out, zonefile, all) -> int:
         for line in required_diff:
             out(line)
         print()
-        returncode += 1
+        returncode = 1
     if recommended_diff and (all or not required_diff):
         out("WARNING: these recommended DNS entries are not set:\n")
         for line in recommended_diff:
             out(line)
+        if all:
+            returncode = 1
 
     if not (recommended_diff or required_diff):
         out.green("Great! All your DNS entries are verified and correct.")

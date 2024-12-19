@@ -110,7 +110,7 @@ class TestZonefileChecks:
         parse_zonefile_into_dict(zonefile_mocked, mockdns_base, only_required=True)
         mssh = MockSSHExec()
         mockdns_base["mail_domain"] = "some.domain"
-        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
+        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile, all=False)
         assert res == 0
         assert "WARNING" in mockout.captured_plain[0]
         assert len(mockout.captured_plain) == 9
@@ -120,7 +120,7 @@ class TestZonefileChecks:
         parse_zonefile_into_dict(zonefile, mockdns_base)
         mssh = MockSSHExec()
         mockdns_base["mail_domain"] = "some.domain"
-        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile)
+        res = check_full_zone(mssh, mockdns_base, out=mockout, zonefile=zonefile, all=True)
         assert res == 0
         assert not mockout.captured_red
         assert "correct" in mockout.captured_green[0]

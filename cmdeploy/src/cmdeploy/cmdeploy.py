@@ -106,6 +106,12 @@ def dns_cmd_options(parser):
         default=None,
         help="write out a zonefile",
     )
+    parser.add_argument(
+        "--all",
+        dest="all",
+        action="store_true",
+        help="check both required and recommended DNS records"
+    )
 
 
 def dns_cmd(args, out):
@@ -131,7 +137,7 @@ def dns_cmd(args, out):
         return 0
 
     retcode = dns.check_full_zone(
-        sshexec, remote_data=remote_data, zonefile=zonefile, out=out
+        sshexec, remote_data=remote_data, zonefile=zonefile, out=out, all=args.all
     )
     return retcode
 

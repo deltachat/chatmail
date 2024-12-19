@@ -2,6 +2,12 @@
 
 ## untagged
 
+- add `--all` to `cmdeploy dns`
+  ([#462](https://github.com/deltachat/chatmail/pull/462))
+
+- fix `_mta-sts` TXT DNS record
+  ([#461](https://github.com/deltachat/chatmail/pull/461)
+
 - deploy `iroh-relay` and also update "realtime relay services" in privacy policy. 
   ([#434](https://github.com/deltachat/chatmail/pull/434))
   ([#451](https://github.com/deltachat/chatmail/pull/451))

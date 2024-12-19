@@ -63,7 +63,7 @@ scripts/cmdeploy status
 To display and check all recommended DNS records:
 
 ```
-scripts/cmdeploy dns
+scripts/cmdeploy dns --all
 ```
 
 To test whether your chatmail service is working correctly:

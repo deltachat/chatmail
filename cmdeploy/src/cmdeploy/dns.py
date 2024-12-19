@@ -54,7 +54,7 @@ def check_full_zone(sshexec, remote_data, out, zonefile, all) -> int:
         out.red("Please set required DNS entries at your DNS provider:\n")
         for line in required_diff:
             out(line)
-        print()
+        out("")
         returncode = 1
     if recommended_diff and (all or not required_diff):
         out("WARNING: these recommended DNS entries are not set:\n")

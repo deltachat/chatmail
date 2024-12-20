@@ -94,5 +94,5 @@ jobs:
         run: CHATMAIL_DOMAIN2=nine.testrun.org cmdeploy test --slow
 
       - name: cmdeploy dns
-        run: cmdeploy dns -v --all
+        run: cmdeploy dns -v
 

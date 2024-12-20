@@ -2,6 +2,8 @@
 
 ## untagged
 
+## 1.5.0 2024-12-20
+
 - add `--all` to `cmdeploy dns`
   ([#462](https://github.com/deltachat/chatmail/pull/462))
 

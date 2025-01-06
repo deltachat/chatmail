@@ -281,7 +281,7 @@ to make sure you can connect with SSH.
    `ssh root@13.37.13.37 tar c /etc/dkimkeys | ssh root@13.12.23.42 tar x -C /etc/`
    so the DKIM DNS record stays correct.
 
-3. On the new server, run `chown root: -R /var/lib/acme` and `chown root: -R /etc/dkimkeys` to make sure the permissions are correct.
+3. On the new server, run `chown root: -R /var/lib/acme` and `chown opendkim: -R /etc/dkimkeys` to make sure the permissions are correct.
 
 4. Run `cmdeploy run --disable-mail --ssh-host 13.12.23.42` to install chatmail on the new machine.
    postfix and dovecot are disabled for now,

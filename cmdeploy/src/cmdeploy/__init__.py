@@ -522,7 +522,7 @@ def deploy_iroh_relay(config) -> None:
         dest=f"/etc/iroh-relay.toml",
         user="root",
         group="root",
-        mode="644",
+        mode="444",
     )
     need_restart |= iroh_config.changed
 

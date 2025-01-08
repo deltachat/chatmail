@@ -2,6 +2,12 @@
 
 ## untagged
 
+- cmdeploy dns: offer alternative DKIM record format for some web interfaces
+  ([#470](https://github.com/deltachat/chatmail/pull/470))
+
+- migration guide: let opendkim own the DKIM keys directory
+  ([#468](https://github.com/deltachat/chatmail/pull/468))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

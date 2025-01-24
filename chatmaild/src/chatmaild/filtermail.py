@@ -107,18 +107,17 @@ def is_securejoin(message):
         return False
     parts_count = 0
     for part in message.iter_parts():
-        if parts_count == 0:
-            if part.is_multipart():
-                return False
-            if part.get_content_type() != "text/plain":
-                return False
-
-            payload = part.get_payload().strip().lower()
-            if payload not in ("secure-join: vc-request", "secure-join: vg-request"):
-                return False
-        else:
-            return False
         parts_count += 1
+        if parts_count > 1:
+            return False
+        if part.is_multipart():
+            return False
+        if part.get_content_type() != "text/plain":
+            return False
+
+        payload = part.get_payload().strip().lower()
+        if payload not in ("secure-join: vc-request", "secure-join: vg-request"):
+            return False
     return True
 
 

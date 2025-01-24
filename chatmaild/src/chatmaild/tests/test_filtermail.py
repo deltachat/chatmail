@@ -55,6 +55,20 @@ def test_filtermail_no_encryption_detection(maildata):
     assert not check_encrypted(msg)
 
 
+def test_filtermail_securejoin_detection(maildata):
+    msg = maildata(
+        "securejoin-vc.eml", from_addr="some@example.org", to_addr="other@example.org"
+    )
+    assert is_securejoin(msg)
+
+    msg = maildata(
+        "securejoin-vc-fake.eml",
+        from_addr="some@example.org",
+        to_addr="other@example.org",
+    )
+    assert not is_securejoin(msg)
+
+
 def test_filtermail_encryption_detection(maildata):
     for subject in common_encrypted_subjects:
         msg = maildata(

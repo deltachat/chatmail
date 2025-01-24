@@ -56,12 +56,12 @@ def run_cmd_options(parser):
         "--disable-mail",
         dest="disable_mail",
         action="store_true",
-        help="install/upgrade the server, but disable postfix & dovecot for now"
+        help="install/upgrade the server, but disable postfix & dovecot for now",
     )
     parser.add_argument(
         "--ssh-host",
         dest="ssh_host",
-        help="specify an SSH host to deploy to; uses mail_domain from chatmail.ini by default"
+        help="specify an SSH host to deploy to; uses mail_domain from chatmail.ini by default",
     )
 
 

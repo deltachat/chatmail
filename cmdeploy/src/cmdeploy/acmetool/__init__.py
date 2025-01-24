@@ -70,6 +70,6 @@ def deploy_acmetool(email="", domains=[]):
     )
 
     server.shell(
-        name=f"Request certificate for: { ', '.join(domains) }",
-        commands=[f"acmetool want --xlog.severity=debug { ' '.join(domains)}"],
+        name=f"Request certificate for: {', '.join(domains)}",
+        commands=[f"acmetool want --xlog.severity=debug {' '.join(domains)}"],
     )

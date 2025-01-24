@@ -5,6 +5,7 @@ from chatmaild.filtermail import (
     SendRateLimiter,
     check_armored_payload,
     check_encrypted,
+    is_securejoin,
     common_encrypted_subjects,
 )
 

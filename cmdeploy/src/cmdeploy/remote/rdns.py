@@ -27,7 +27,9 @@ def perform_initial_checks(mail_domain):
 
     res = dict(mail_domain=mail_domain, A=A, AAAA=AAAA, MTA_STS=MTA_STS, WWW=WWW)
     res["acme_account_url"] = shell("acmetool account-url", fail_ok=True)
-    res["dkim_entry"], res["web_dkim_entry"] = get_dkim_entry(mail_domain, dkim_selector="opendkim")
+    res["dkim_entry"], res["web_dkim_entry"] = get_dkim_entry(
+        mail_domain, dkim_selector="opendkim"
+    )
 
     if not MTA_STS or not WWW or (not A and not AAAA):
         return res
@@ -48,7 +50,7 @@ def get_dkim_entry(mail_domain, dkim_selector):
         return
     dkim_value_raw = f"v=DKIM1;k=rsa;p={dkim_pubkey};s=email;t=s"
     dkim_value = '" "'.join(re.findall(".{1,255}", dkim_value_raw))
-    web_dkim_value = ''.join(re.findall(".{1,255}", dkim_value_raw))
+    web_dkim_value = "".join(re.findall(".{1,255}", dkim_value_raw))
     return (
         f'{dkim_selector}._domainkey.{mail_domain}. TXT "{dkim_value}"',
         f'{dkim_selector}._domainkey.{mail_domain}. TXT "{web_dkim_value}"',

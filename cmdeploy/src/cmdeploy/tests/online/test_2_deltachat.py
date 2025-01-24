@@ -85,7 +85,7 @@ class TestEndToEndDeltaChat:
         attachsize = 1 * 1024 * 1024
         num_to_send = quota // attachsize + 2
         lp.sec(f"ac1: send {num_to_send} large files to ac2")
-        lp.indent(f"per-user quota is assumed to be: {quota/(1024*1024)}MB")
+        lp.indent(f"per-user quota is assumed to be: {quota / (1024 * 1024)}MB")
         alphanumeric = "abcdefghijklmnopqrstuvwxyz1234567890"
         msgs = []
         for i in range(num_to_send):
@@ -97,7 +97,7 @@ class TestEndToEndDeltaChat:
 
             msg = chat.send_file(str(attachment))
             msgs.append(msg)
-            lp.indent(f"Sent out msg {i}, size {attachsize/(1024*1024)}MB")
+            lp.indent(f"Sent out msg {i}, size {attachsize / (1024 * 1024)}MB")
 
         lp.sec("ac2: check messages are arriving until quota is reached")
 

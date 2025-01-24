@@ -32,7 +32,7 @@ def migrate_from_db_to_maildir(config, chunking=10000):
     # don't transfer special/CI accounts
     rows = [row for row in all_rows if row[0][:3] not in ("ci-", "ac_")]
 
-    logging.info(f"ignoring {len(all_rows)-len(rows)} CI accounts")
+    logging.info(f"ignoring {len(all_rows) - len(rows)} CI accounts")
     logging.info(f"migrating {len(rows)} sqlite database passwords to user dirs")
 
     for i, row in enumerate(rows):

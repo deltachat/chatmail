@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from chatmaild.config import Config, read_config
-from pyinfra import host, facts
+from pyinfra import facts, host
 from pyinfra.facts.files import File
 from pyinfra.facts.systemd import SystemdEnabled
 from pyinfra.operations import apt, files, pip, server, systemd
@@ -517,9 +517,9 @@ def deploy_iroh_relay(config) -> None:
     need_restart |= systemd_unit.changed
 
     iroh_config = files.put(
-        name=f"Upload iroh-relay config",
+        name="Upload iroh-relay config",
         src=importlib.resources.files(__package__).joinpath("iroh-relay.toml"),
-        dest=f"/etc/iroh-relay.toml",
+        dest="/etc/iroh-relay.toml",
         user="root",
         group="root",
         mode="644",

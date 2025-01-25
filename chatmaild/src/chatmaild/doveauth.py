@@ -1,8 +1,9 @@
-import crypt
 import json
 import logging
 import os
 import sys
+
+import crypt_r
 
 from .config import Config, read_config
 from .dictproxy import DictProxy
@@ -13,7 +14,7 @@ NOCREATE_FILE = "/etc/chatmail-nocreate"
 
 def encrypt_password(password: str):
     # https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
-    passhash = crypt.crypt(password, crypt.METHOD_SHA512)
+    passhash = crypt_r.crypt(password, crypt_r.METHOD_SHA512)
     return "{SHA512-CRYPT}" + passhash
 
 

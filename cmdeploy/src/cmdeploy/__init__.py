@@ -78,6 +78,11 @@ def _install_remote_venv_with_chatmaild(config) -> None:
         always_copy=True,
     )
 
+    apt.packages(
+        name="install gcc to build crypt_r source package",
+        packages=["gcc"],
+    )
+
     server.shell(
         name=f"forced pip-install {dist_file.name}",
         commands=[

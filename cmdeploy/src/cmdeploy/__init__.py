@@ -79,8 +79,8 @@ def _install_remote_venv_with_chatmaild(config) -> None:
     )
 
     apt.packages(
-        name="install gcc to build crypt_r source package",
-        packages=["gcc"],
+        name="install gcc and headers to build crypt_r source package",
+        packages=["gcc", "python3-dev"],
     )
 
     server.shell(

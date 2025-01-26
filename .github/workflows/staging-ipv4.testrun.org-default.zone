@@ -17,5 +17,4 @@ $TTL 300
 ;; DNS records.
 @       IN      A       37.27.95.249
 mta-sts.staging-ipv4.testrun.org.    CNAME   staging-ipv4.testrun.org.
-iroh.staging-ipv4.testrun.org.       CNAME   staging-ipv4.testrun.org.
 www.staging-ipv4.testrun.org.        CNAME   staging-ipv4.testrun.org.

@@ -6,6 +6,7 @@ from chatmaild.filtermail import (
     check_armored_payload,
     check_encrypted,
     common_encrypted_subjects,
+    is_securejoin,
 )
 
 
@@ -53,6 +54,20 @@ def test_filtermail_no_encryption_detection(maildata):
         "fake-encrypted.eml", from_addr="some@example.org", to_addr="other@example.org"
     )
     assert not check_encrypted(msg)
+
+
+def test_filtermail_securejoin_detection(maildata):
+    msg = maildata(
+        "securejoin-vc.eml", from_addr="some@example.org", to_addr="other@example.org"
+    )
+    assert is_securejoin(msg)
+
+    msg = maildata(
+        "securejoin-vc-fake.eml",
+        from_addr="some@example.org",
+        to_addr="other@example.org",
+    )
+    assert not is_securejoin(msg)
 
 
 def test_filtermail_encryption_detection(maildata):

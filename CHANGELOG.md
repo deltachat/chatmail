@@ -8,6 +8,9 @@
 - migration guide: let opendkim own the DKIM keys directory
   ([#468](https://github.com/deltachat/chatmail/pull/468))
 
+- improve secure-join message detection
+  ([#473](https://github.com/deltachat/chatmail/pull/473))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

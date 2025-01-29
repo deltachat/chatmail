@@ -69,7 +69,7 @@ def maildata(request):
 
     assert datadir.exists(), datadir
 
-    def maildata(name, from_addr, to_addr, subject="..."):
+    def maildata(name, from_addr, to_addr, subject="[...]"):
         # Using `.read_bytes().decode()` instead of `.read_text()` to preserve newlines.
         data = datadir.joinpath(name).read_bytes().decode()
 

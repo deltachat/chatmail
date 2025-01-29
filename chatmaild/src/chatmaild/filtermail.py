@@ -12,7 +12,6 @@ from smtplib import SMTP as SMTPClient
 
 from aiosmtpd.controller import Controller
 
-from .common_encrypted_subjects import common_encrypted_subjects
 from .config import read_config
 
 
@@ -127,8 +126,6 @@ def check_encrypted(message):
     MIME structure of the message must correspond to <https://www.rfc-editor.org/rfc/rfc3156>.
     """
     if not message.is_multipart():
-        return False
-    if message.get("subject") not in common_encrypted_subjects:
         return False
     if message.get_content_type() != "multipart/encrypted":
         return False

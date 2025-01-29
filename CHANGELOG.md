@@ -17,6 +17,9 @@
 - remove MTA-STS daemon
   ([#488](https://github.com/deltachat/chatmail/pull/488))
 
+- replace `Subject` with `[...]` for all outgoing mails.
+  ([#481](https://github.com/deltachat/chatmail/pull/481))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

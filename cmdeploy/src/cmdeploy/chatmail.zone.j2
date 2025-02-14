@@ -16,7 +16,7 @@ www.{{ mail_domain }}.               CNAME {{ mail_domain }}.
 ;
 ; Recommended DNS entries for interoperability and security-hardening
 ;
-{{ mail_domain }}.                   TXT "v=spf1 a:{{ mail_domain }} ~all"
+{{ mail_domain }}.                   TXT "v=spf1 a ~all"
 _dmarc.{{ mail_domain }}.            TXT "v=DMARC1;p=reject;adkim=s;aspf=s"
 
 {% if acme_account_url %}

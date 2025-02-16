@@ -115,6 +115,27 @@ def test_reject_missing_dkim(cmsetup, maildata, from_addr):
             s.sendmail(from_addr=from_addr, to_addrs=recipient.addr, msg=msg)
 
 
+def test_rewrite_subject(cmsetup, maildata):
+    """Test that subject gets replaced with [...]."""
+    user1, user2 = cmsetup.gen_users(2)
+
+    sent_msg = maildata(
+        "encrypted.eml",
+        from_addr=user1.addr,
+        to_addr=user2.addr,
+        subject="Unencrypted subject",
+    ).as_string()
+    user1.smtp.sendmail(from_addr=user1.addr, to_addrs=[user2.addr], msg=sent_msg)
+
+    messages = user2.imap.fetch_all_messages()
+    assert len(messages) == 1
+    rcvd_msg = messages[0]
+    assert "Subject: [...]" not in sent_msg
+    assert "Subject: [...]" in rcvd_msg
+    assert "Subject: Unencrypted subject" in sent_msg
+    assert "Subject: Unencrypted subject" not in rcvd_msg
+
+
 @pytest.mark.slow
 def test_exceed_rate_limit(cmsetup, gencreds, maildata, chatmail_config):
     """Test that the per-account send-mail limit is exceeded."""

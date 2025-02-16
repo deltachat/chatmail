@@ -5,7 +5,6 @@ from chatmaild.filtermail import (
     SendRateLimiter,
     check_armored_payload,
     check_encrypted,
-    common_encrypted_subjects,
     is_securejoin,
 )
 
@@ -71,18 +70,13 @@ def test_filtermail_securejoin_detection(maildata):
 
 
 def test_filtermail_encryption_detection(maildata):
-    for subject in common_encrypted_subjects:
-        msg = maildata(
-            "encrypted.eml",
-            from_addr="1@example.org",
-            to_addr="2@example.org",
-            subject=subject,
-        )
-        assert check_encrypted(msg)
-
-    # if the subject is not a known encrypted subject value, it is not considered ac-encrypted
-    msg.replace_header("Subject", "Click this link")
-    assert not check_encrypted(msg)
+    msg = maildata(
+        "encrypted.eml",
+        from_addr="1@example.org",
+        to_addr="2@example.org",
+        subject="Subject does not matter, will be replaced anyway",
+    )
+    assert check_encrypted(msg)
 
 
 def test_filtermail_no_literal_packets(maildata):

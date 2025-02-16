@@ -2,3 +2,4 @@
 /^X-Originating-IP:/    IGNORE
 /^X-Mailer:/            IGNORE
 /^User-Agent:/          IGNORE
+/^Subject:/             REPLACE Subject: [...]

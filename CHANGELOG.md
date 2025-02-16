@@ -5,6 +5,9 @@
 - cmdeploy dns: offer alternative DKIM record format for some web interfaces
   ([#470](https://github.com/deltachat/chatmail/pull/470))
 
+- journald: remove old logs from disk
+  ([#490](https://github.com/deltachat/chatmail/pull/490))
+
 - migration guide: let opendkim own the DKIM keys directory
   ([#468](https://github.com/deltachat/chatmail/pull/468))
 

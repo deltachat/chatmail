@@ -20,9 +20,9 @@ smtpd_tls_key_file=/var/lib/acme/live/{{ config.mail_domain }}/privkey
 smtpd_tls_security_level=may
 
 smtp_tls_CApath=/etc/ssl/certs
-smtp_tls_security_level=may
+smtp_tls_security_level=verify
 smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
-smtp_tls_policy_maps = socketmap:inet:127.0.0.1:8461:postfix
+smtp_tls_policy_maps = inline:{nauta.cu=may}
 smtpd_tls_protocols = >=TLSv1.2
 
 # Disable anonymous cipher suites

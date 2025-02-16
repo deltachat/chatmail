@@ -3,7 +3,10 @@ import logging
 import os
 import sys
 
-import crypt_r
+try:
+    import crypt_r
+except ImportError:
+    import crypt as crypt_r
 
 from .config import Config, read_config
 from .dictproxy import DictProxy

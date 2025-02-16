@@ -17,6 +17,9 @@
 - use old crypt lib in python < 3.11
   ([#483](https://github.com/deltachat/chatmail/pull/483))
 
+- chatmaild: set umask to 0700 for doveauth + metadata
+  ([#490](https://github.com/deltachat/chatmail/pull/492))
+
 - remove MTA-STS daemon
   ([#488](https://github.com/deltachat/chatmail/pull/488))
 

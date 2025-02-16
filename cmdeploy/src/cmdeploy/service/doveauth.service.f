@@ -7,6 +7,7 @@ Restart=always
 RestartSec=30
 User=vmail
 RuntimeDirectory=doveauth
+UMask=0700
 
 [Install]
 WantedBy=multi-user.target

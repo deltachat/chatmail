@@ -7,6 +7,7 @@ Restart=always
 RestartSec=30
 User=vmail
 RuntimeDirectory=chatmail-metadata
+UMask=0700
 
 [Install]
 WantedBy=multi-user.target

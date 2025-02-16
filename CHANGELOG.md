@@ -11,6 +11,9 @@
 - improve secure-join message detection
   ([#473](https://github.com/deltachat/chatmail/pull/473))
 
+- use old crypt lib in python < 3.11
+  ([#483](https://github.com/deltachat/chatmail/pull/483))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

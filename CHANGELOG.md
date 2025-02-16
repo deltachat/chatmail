@@ -14,6 +14,9 @@
 - use old crypt lib in python < 3.11
   ([#483](https://github.com/deltachat/chatmail/pull/483))
 
+- remove MTA-STS daemon
+  ([#488](https://github.com/deltachat/chatmail/pull/488))
+
 ## 1.5.0 2024-12-20
 
 - cmdeploy dns: always show recommended DNS records

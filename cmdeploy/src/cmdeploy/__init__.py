@@ -705,6 +705,11 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         enabled=True,
         restarted=journald_conf.changed,
     )
+    files.directory(
+        name="Ensure old logs on disk are deleted",
+        path="/var/log/journal/",
+        present=False,
+    )
 
     apt.packages(
         name="Ensure cron is installed",

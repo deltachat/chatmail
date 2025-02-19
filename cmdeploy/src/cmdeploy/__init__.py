@@ -225,7 +225,7 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
         name="Configure opendkim to restart once a day",
         path="/lib/systemd/system/opendkim.service",
         text="Restart=on-failure",
-        replace="Restart=always\nRuntimeMaxSec=1d"
+        replace="Restart=always\\nRuntimeMaxSec=1d",
     )
     need_restart |= service_file.changed
 

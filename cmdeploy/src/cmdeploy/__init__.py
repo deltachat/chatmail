@@ -221,6 +221,14 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
             _su_user="opendkim",
         )
 
+    service_file = files.put(
+        name="Configure opendkim to restart once a day",
+        src=importlib.resources.files(__package__).joinpath("opendkim/systemd.conf"),
+        dest="/etc/systemd/system/opendkim.service.d/10-prevent-memory-leak.conf",
+    )
+    need_restart |= service_file.changed
+
+
     return need_restart
 
 
@@ -653,6 +661,7 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         service="opendkim.service",
         running=True,
         enabled=True,
+        daemon_reload=opendkim_need_restart,
         restarted=opendkim_need_restart,
     )
 

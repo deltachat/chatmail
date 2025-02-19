@@ -80,7 +80,9 @@ def check_armored_payload(payload: str):
         return False
     payload = payload.removeprefix(prefix)
 
-    suffix = "-----END PGP MESSAGE-----\r\n\r\n"
+    while payload.endswith("\r\n"):
+        payload = payload.removesuffix("\r\n")
+    suffix = "-----END PGP MESSAGE-----"
     if not payload.endswith(suffix):
         return False
     payload = payload.removesuffix(suffix)

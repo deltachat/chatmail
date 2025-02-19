@@ -2,6 +2,9 @@
 
 ## untagged
 
+- filtermail: don't require exactly 2 lines after openPGP payload
+  ([#497](https://github.com/chatmail/chatmail/pull/497))
+
 - cmdeploy dns: offer alternative DKIM record format for some web interfaces
   ([#470](https://github.com/deltachat/chatmail/pull/470))
 

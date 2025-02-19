@@ -11,6 +11,9 @@
 - journald: remove old logs from disk
   ([#490](https://github.com/deltachat/chatmail/pull/490))
 
+- opendkim: restart once every day to mend RAM leaks
+  ([#498](https://github.com/chatmail/chatmail/pull/498)
+
 - migration guide: let opendkim own the DKIM keys directory
   ([#468](https://github.com/deltachat/chatmail/pull/468))
 

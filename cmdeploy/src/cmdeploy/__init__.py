@@ -221,6 +221,15 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
             _su_user="opendkim",
         )
 
+    service_file = files.replace(
+        name="Configure opendkim to restart once a day",
+        path="/lib/systemd/system/opendkim.service",
+        text="Restart=on-failure",
+        replace="Restart=always\nRuntimeMaxSec=1d"
+    )
+    need_restart |= service_file.changed
+
+
     return need_restart
 
 
@@ -653,6 +662,7 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         service="opendkim.service",
         running=True,
         enabled=True,
+        daemon_reload=opendkim_need_restart,
         restarted=opendkim_need_restart,
     )
 

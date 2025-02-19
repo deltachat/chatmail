@@ -205,8 +205,18 @@ UN4fiB0KR9JyG2ayUdNJVkXZSZLnHyRgiaadlpUo16LVvw==\r
 =b5Kp\r
 -----END PGP MESSAGE-----\r
 \r
+\r
 """
 
+    assert check_armored_payload(payload) == True
+
+    payload = payload.removesuffix("\r\n")
+    assert check_armored_payload(payload) == True
+
+    payload = payload.removesuffix("\r\n")
+    assert check_armored_payload(payload) == True
+
+    payload = payload.removesuffix("\r\n")
     assert check_armored_payload(payload) == True
 
     payload = """-----BEGIN PGP MESSAGE-----\r

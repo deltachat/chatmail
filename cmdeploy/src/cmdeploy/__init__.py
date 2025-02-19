@@ -223,8 +223,8 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
 
     service_file = files.put(
         name="Configure opendkim to restart once a day",
-        src=importlib.resources.files(__package__).joinpath("opendkim/opendkim.service"),
-        dest="/etc/systemd/system/opendkim.service",
+        src=importlib.resources.files(__package__).joinpath("opendkim/systemd.conf"),
+        dest="/etc/systemd/system/opendkim.service.d/10-prevent-memory-leak.conf",
     )
     need_restart |= service_file.changed
 

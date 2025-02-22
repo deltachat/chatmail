@@ -81,7 +81,6 @@ filter    unix -        n       n       -       -       lmtp
 # Local SMTP server for reinjecting filered mail.
 localhost:{{ config.postfix_reinject_port }} inet  n       -       n       -       10      smtpd
   -o syslog_name=postfix/reinject
-  -o smtpd_milters=unix:opendkim/opendkim.sock
   -o cleanup_service_name=authclean
 
 # Cleanup `Received` headers for authenticated mail

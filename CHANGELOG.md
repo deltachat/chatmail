@@ -2,6 +2,9 @@
 
 ## untagged
 
+- mtail: fix getting logs from STDIN
+  ([#502](https://github.com/chatmail/chatmail/pull/502))
+
 - filtermail: don't require exactly 2 lines after openPGP payload
   ([#497](https://github.com/chatmail/chatmail/pull/497))
 
